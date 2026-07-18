@@ -8,12 +8,10 @@ import {
   documentEvaluationTable,
   chatMessageTable,
   checklistItemTable,
-  supportTicketTable,
   applicantTable,
   agencyTeamMemberTable,
   AGENCY_STAFF_STATUS,
   enterpriseInquiryTable,
-  SUPPORT_TICKET_STATUS,
 } from "@/db/schema";
 import { eq, sql, gte, isNull, isNotNull, desc, and, not } from "drizzle-orm";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -81,16 +79,6 @@ export interface PlatformStats {
     optional: number;
     byStatus: Record<string, number>;
   };
-  support: {
-    total: number;
-    open: number;
-    inProgress: number;
-    resolved: number;
-    closed: number;
-    byCategory: Record<string, number>;
-    byPriority: Record<string, number>;
-    avgResolutionHours: number | null;
-  };
 	  agencyTeam: {
 	    totalStaff: number;
 	    activeStaff: number;
@@ -143,8 +131,6 @@ export async function getPlatformStats(): Promise<PlatformStats> {
     totalEvals, evalAvgScore, evalsByRisk, evalsByConfidence,
     totalChat, chatByUser, chatByAssistant, appsWithChat,
     totalChecklist, requiredChecklist, checklistByStatus,
-    totalTickets, openTickets, inProgressTickets, resolvedTickets, closedTickets,
-    ticketsByCategory, ticketsByPriority, avgResolution,
 	    totalStaff, activeStaff, linkedStaff,
     totalEnterprise, enterpriseByStatus,
     userGrowth, appGrowth,
@@ -220,20 +206,6 @@ export async function getPlatformStats(): Promise<PlatformStats> {
     db.$count(checklistItemTable, eq(checklistItemTable.isRequired, true)),
     db.select({ status: checklistItemTable.status, count: sql<number>`count(*)` })
       .from(checklistItemTable).groupBy(checklistItemTable.status),
-
-    // Support
-    db.$count(supportTicketTable),
-    db.$count(supportTicketTable, eq(supportTicketTable.status, SUPPORT_TICKET_STATUS.OPEN)),
-    db.$count(supportTicketTable, eq(supportTicketTable.status, SUPPORT_TICKET_STATUS.IN_PROGRESS)),
-    db.$count(supportTicketTable, eq(supportTicketTable.status, SUPPORT_TICKET_STATUS.RESOLVED)),
-    db.$count(supportTicketTable, eq(supportTicketTable.status, SUPPORT_TICKET_STATUS.CLOSED)),
-    db.select({ category: supportTicketTable.category, count: sql<number>`count(*)` })
-      .from(supportTicketTable).groupBy(supportTicketTable.category),
-    db.select({ priority: supportTicketTable.priority, count: sql<number>`count(*)` })
-      .from(supportTicketTable).groupBy(supportTicketTable.priority),
-    db.select({
-      avg: sql<number>`avg((julianday(${supportTicketTable.resolvedAt}, 'unixepoch') - julianday(${supportTicketTable.createdAt}, 'unixepoch')) * 24)`,
-    }).from(supportTicketTable).where(isNotNull(supportTicketTable.resolvedAt)),
 
 	    // Agency team
 	    db.$count(agencyTeamMemberTable),
@@ -320,13 +292,6 @@ export async function getPlatformStats(): Promise<PlatformStats> {
     checklists: {
       total: totalChecklist, required: requiredChecklist, optional: totalChecklist - requiredChecklist,
       byStatus: toRecord(checklistByStatus, (r) => r.status),
-    },
-    support: {
-      total: totalTickets, open: openTickets, inProgress: inProgressTickets,
-      resolved: resolvedTickets, closed: closedTickets,
-      byCategory: toRecord(ticketsByCategory, (r) => r.category ?? "unknown"),
-      byPriority: toRecord(ticketsByPriority, (r) => r.priority ?? "unknown"),
-      avgResolutionHours: avgResolution[0]?.avg != null ? Math.round(Number(avgResolution[0].avg) * 10) / 10 : null,
     },
 	    agencyTeam: {
 	      totalStaff,

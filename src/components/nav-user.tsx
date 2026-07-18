@@ -1,8 +1,6 @@
 "use client"
 
 import {
-  BellIcon,
-  HelpCircleIcon,
   LogOutIcon,
   MoreVerticalIcon,
   SettingsIcon,
@@ -105,18 +103,6 @@ export function NavUser({
                 <Link href={"/settings" as Route} onClick={() => setOpenMobile(false)}>
                   <SettingsIcon />
                   Account Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={"/dashboard/support" as Route} onClick={() => setOpenMobile(false)}>
-                  <HelpCircleIcon />
-                  Help Center
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={"/dashboard/announcements" as Route} onClick={() => setOpenMobile(false)}>
-                  <BellIcon />
-                  Announcements
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

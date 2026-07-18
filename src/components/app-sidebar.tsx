@@ -6,14 +6,11 @@ import {
   BriefcaseBusinessIcon,
   CircleAlertIcon,
   FileTextIcon,
-  HelpCircleIcon,
-  LifeBuoyIcon,
   LayoutDashboardIcon,
   LibraryBigIcon,
   LineChartIcon,
   ShieldIcon,
   ActivityIcon,
-  MegaphoneIcon,
   SettingsIcon,
   UsersIcon,
 } from "lucide-react";
@@ -32,7 +29,6 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import type { Route } from "next";
-import { useSessionStore } from "@/state/session";
 import { AGENCY_NAV_ITEMS } from "@/lib/agency-workflow";
 
 const defaultUser = {
@@ -44,16 +40,12 @@ const defaultUser = {
 export function AppSidebar({
   user,
   isAdmin = false,
-  announcementsUnreadCount = 0,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user?: { name: string; email: string; avatar: string };
   isAdmin?: boolean;
-  announcementsUnreadCount?: number;
 }) {
   const { setOpenMobile } = useSidebar();
-  const unreadSupportCount = useSessionStore((s) => s.session?.unreadSupportTicketsCount);
-  const adminUnreadSupportCount = useSessionStore((s) => s.session?.adminUnreadSupportTicketsCount);
 
   const iconByTitle = {
     Dashboard: LayoutDashboardIcon,
@@ -74,22 +66,9 @@ export function AppSidebar({
   const secondaryItems: {
     title: string;
     url: string;
-    icon: typeof HelpCircleIcon;
+    icon: typeof ShieldIcon;
     badge?: number | string | null;
-  }[] = [
-    {
-      title: "Get Help",
-      url: "/dashboard/support",
-      icon: HelpCircleIcon,
-      badge: unreadSupportCount || null,
-    },
-    {
-      title: "Announcements",
-      url: "/dashboard/announcements",
-      icon: MegaphoneIcon,
-      badge: announcementsUnreadCount || null,
-    },
-  ];
+  }[] = [];
 
   if (isAdmin) {
     secondaryItems.unshift(
@@ -97,12 +76,6 @@ export function AppSidebar({
         title: "Admin",
         url: "/admin",
         icon: ShieldIcon,
-      },
-      {
-        title: "Support Inbox",
-        url: "/admin/support",
-        icon: LifeBuoyIcon,
-        badge: adminUnreadSupportCount || null,
       },
     );
     secondaryItems.push({
@@ -129,7 +102,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent className="gap-1.5">
         <NavMain items={navMain} />
-        <NavSecondary items={secondaryItems} className="mt-auto" />
+        {secondaryItems.length > 0 ? <NavSecondary items={secondaryItems} className="mt-auto" /> : null}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user || defaultUser} />

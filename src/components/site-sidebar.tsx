@@ -3,7 +3,6 @@ import "server-only";
 import { getSessionFromCookie } from "@/utils/auth";
 import { ROLES_ENUM } from "@/db/schema";
 import { AppSidebar } from "@/components/app-sidebar";
-import { getAnnouncementsUnreadCountForUser } from "@/server/announcements";
 
 /**
  * A server component wrapper for the agency navigation.
@@ -16,8 +15,6 @@ export async function SiteSidebar() {
   if (!session) {
     return null;
   }
-
-  const announcementsUnreadCount = await getAnnouncementsUnreadCountForUser(session.user.id);
 
   const userProps = {
     name:
@@ -35,7 +32,6 @@ export async function SiteSidebar() {
       <AppSidebar
         user={userProps}
         isAdmin={isAdmin}
-        announcementsUnreadCount={announcementsUnreadCount}
       />
     );
   }
@@ -44,7 +40,6 @@ export async function SiteSidebar() {
     <AppSidebar
       user={userProps}
       isAdmin={isAdmin}
-      announcementsUnreadCount={announcementsUnreadCount}
     />
   );
 }

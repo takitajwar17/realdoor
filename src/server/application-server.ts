@@ -7,14 +7,12 @@ import {
   applicationInvitationTable,
   applicationMembershipTable,
   agencyTeamMemberTable,
-  supportTicketTable,
-  supportMessageTable,
   uploadedDocumentTable,
   userTable,
   visaApplicationTable,
 } from "@/db/schema";
 import { ZSAError } from "zsa";
-import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
+import { and, eq, isNotNull, ne } from "drizzle-orm";
 import { updateAllSessionsOfUser, deleteAllSessionsOfUser } from "@/infra/kv-session";
 import { logger } from "@/infra/logger";
 import { requireApplicationPermission } from "@/utils/application-auth";
@@ -209,7 +207,7 @@ export async function transferOrDeleteOwnedApplicationsForUser({ userId }: { use
  * Delete a user from the admin panel with proper cascading:
  *  - Agency cases created by the user → transferred to another active staff member when possible
  *  - Agency cases with no remaining staff → deleted with R2/Vectorize cleanup
- *  - Legacy memberships, application invitations, support data, sessions → cleaned up
+ *  - Legacy memberships, application invitations, and sessions → cleaned up
  */
 export async function adminDeleteUser({ userId }: { userId: string }) {
   const db = getDB();
@@ -229,46 +227,10 @@ export async function adminDeleteUser({ userId }: { userId: string }) {
     .where(eq(applicationInvitationTable.acceptedBy, userId));
   await db.delete(agencyTeamMemberTable).where(eq(agencyTeamMemberTable.userId, userId));
 
-  // 4. Clean up support data (screenshots from R2, then messages, then tickets)
-  const tickets = await db
-    .select({ id: supportTicketTable.id, screenshotUrls: supportTicketTable.screenshotUrls })
-    .from(supportTicketTable)
-    .where(eq(supportTicketTable.userId, userId));
-
-  const ticketIds = tickets.map((t) => t.id);
-  let allScreenshotKeys = tickets.flatMap((t) => t.screenshotUrls ?? []);
-
-  if (ticketIds.length > 0) {
-    const messages = await db
-      .select({ screenshotUrls: supportMessageTable.screenshotUrls })
-      .from(supportMessageTable)
-      .where(inArray(supportMessageTable.ticketId, ticketIds));
-    allScreenshotKeys = allScreenshotKeys.concat(messages.flatMap((m) => m.screenshotUrls ?? []));
-  }
-
-  if (allScreenshotKeys.length > 0) {
-    try {
-      const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-      const { env } = await getCloudflareContext({ async: true });
-      if (env.R2) {
-        await Promise.all(allScreenshotKeys.map((key) => env.R2!.delete(key)));
-      }
-    } catch (error) {
-      logger.warn("R2 cleanup for support screenshots failed (admin delete)", { userId, error });
-    }
-  }
-
-  if (ticketIds.length > 0) {
-    for (const ticketId of ticketIds) {
-      await db.delete(supportMessageTable).where(eq(supportMessageTable.ticketId, ticketId));
-    }
-  }
-  await db.delete(supportTicketTable).where(eq(supportTicketTable.userId, userId));
-
-  // 5. Delete all KV sessions
+  // 4. Delete all KV sessions
   await deleteAllSessionsOfUser(userId);
 
-  // 6. Delete the user record
+  // 5. Delete the user record
   await db.delete(userTable).where(eq(userTable.id, userId));
 
   logger.info("User deleted by admin", { userId, appsTransferred, appsDeleted });

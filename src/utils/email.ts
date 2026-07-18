@@ -3,9 +3,6 @@ import "server-only";
 import { SITE_DOMAIN, SITE_URL, ADMIN_EMAIL, SITE_NAME } from "@/constants";
 import { resetPasswordText } from "@/react-email/reset-password";
 import { verifyEmailText } from "@/react-email/verify-email";
-import { supportTicketAdminText } from "@/react-email/support-ticket-admin";
-import { supportTicketReplyText } from "@/react-email/support-ticket-reply";
-import { supportTicketUserReplyText } from "@/react-email/support-ticket-user-reply";
 import { applicantInvitationText, applicantAddedNotificationText } from "@/react-email/applicant-invitation";
 import { agencyTeamAccessText } from "@/react-email/agency-team-access";
 import isProd from "./is-prod";
@@ -146,72 +143,6 @@ ${SITE_NAME}`;
   });
 }
 
-export async function sendSupportTicketAdminNotification({
-  ticketId,
-  subject,
-  category,
-  description,
-  userName,
-  userEmail,
-}: {
-  ticketId: string;
-  subject: string;
-  category: string;
-  description: string;
-  userName: string;
-  userEmail: string;
-}) {
-  const adminEmail = ADMIN_EMAIL;
-
-  if (!isProd) {
-    logger.warn('Support ticket submitted (admin notification skipped in dev)', { ticketId, subject })
-    return
-  }
-
-  const text = supportTicketAdminText({ ticketId, subject, category, description, userName, userEmail });
-  const emailSubject = `[Support] New ${category.replace(/_/g, ' ')} ticket: ${subject}`;
-
-  await sendEmail({
-    to: [adminEmail],
-    subject: emailSubject,
-    text,
-    tags: [{ name: "type", value: "support-ticket-admin" }],
-  });
-}
-
-export async function sendSupportTicketReplyNotification({
-  ticketId,
-  userEmail,
-  userName,
-  subject,
-  status,
-  adminReply,
-}: {
-  ticketId: string;
-  userEmail: string;
-  userName: string;
-  subject: string;
-  status: string;
-  adminReply: string;
-}) {
-  const supportUrl = `${SITE_URL}/dashboard/support/${ticketId}`;
-
-  if (!isProd) {
-    logger.warn('Support ticket reply notification skipped in dev', { ticketId, subject, status })
-    return
-  }
-
-  const text = supportTicketReplyText({ subject, status, adminReply, userName, supportUrl });
-  const emailSubject = `Re: ${subject} — Support Update from ${SITE_DOMAIN}`;
-
-  await sendEmail({
-    to: [userEmail],
-    subject: emailSubject,
-    text,
-    tags: [{ name: "type", value: "support-ticket-reply" }],
-  });
-}
-
 export async function sendApplicantInvitationEmail({
   email,
   inviterName,
@@ -283,77 +214,5 @@ export async function sendAgencyTeamAccessEmail({
     subject: `You've been added to the ${SITE_DOMAIN} agency workspace`,
     text,
     tags: [{ name: "type", value: "agency-team-access" }],
-  });
-}
-
-export async function sendSupportTicketUserReplyNotification({
-  ticketId,
-  subject,
-  category,
-  userName,
-  userEmail,
-  messageContent,
-}: {
-  ticketId: string;
-  subject: string;
-  category: string;
-  userName: string;
-  userEmail: string;
-  messageContent: string;
-}) {
-  const adminEmail = ADMIN_EMAIL;
-
-  if (!isProd) {
-    logger.warn('Support ticket user reply (admin notification skipped in dev)', { ticketId, subject, userEmail })
-    return
-  }
-
-  const text = supportTicketUserReplyText({ ticketId, subject, category, userName, userEmail, messageContent });
-  const emailSubject = `[Support] User replied: ${subject}`;
-
-  await sendEmail({
-    to: [adminEmail],
-    subject: emailSubject,
-    text,
-    tags: [{ name: "type", value: "support-ticket-user-reply" }],
-  });
-}
-
-export async function sendAnnouncementNotificationEmail({
-  to,
-  title,
-  type,
-  priority,
-}: {
-  to: string[];
-  title: string;
-  type: string;
-  priority: string;
-}) {
-  if (!isProd) {
-    logger.warn("Announcement email notification skipped in dev", {
-      recipients: to.length,
-      title,
-      type,
-      priority,
-    });
-    return;
-  }
-
-  const announcementUrl = `${SITE_URL}/dashboard/announcements`;
-  const text = [
-    `New internal ${type.replace(/_/g, " ")} announcement`,
-    "",
-    `Title: ${title}`,
-    `Priority: ${priority}`,
-    "",
-    `Read it here: ${announcementUrl}`,
-  ].join("\n");
-
-  await sendEmail({
-    to,
-    subject: `[${SITE_DOMAIN}] ${priority.toUpperCase()} announcement: ${title}`,
-    text,
-    tags: [{ name: "type", value: "announcement-notification" }],
   });
 }

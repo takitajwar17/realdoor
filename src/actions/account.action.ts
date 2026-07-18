@@ -10,8 +10,6 @@ import {
   agencyTeamMemberTable,
   userTable,
   visaApplicationTable,
-  supportTicketTable,
-  supportMessageTable,
   applicationMembershipTable,
   applicationInvitationTable,
 } from "@/db/schema";
@@ -60,57 +58,13 @@ export const deleteAccountAction = createServerAction()
       .set({ acceptedBy: null })
       .where(eq(applicationInvitationTable.acceptedBy, userId));
 
-    // 4. Delete support message screenshots from R2, then messages and tickets
-    const tickets = await db
-      .select({
-        id: supportTicketTable.id,
-        screenshotUrls: supportTicketTable.screenshotUrls,
-      })
-      .from(supportTicketTable)
-      .where(eq(supportTicketTable.userId, userId));
-
-    const ticketIds = tickets.map((t) => t.id);
-    let allScreenshotKeys = tickets.flatMap((t) => t.screenshotUrls ?? []);
-
-    // Also collect screenshots from support messages
-    if (ticketIds.length > 0) {
-      const messages = await db
-        .select({ screenshotUrls: supportMessageTable.screenshotUrls })
-        .from(supportMessageTable)
-        .where(inArray(supportMessageTable.ticketId, ticketIds));
-      allScreenshotKeys = allScreenshotKeys.concat(
-        messages.flatMap((m) => m.screenshotUrls ?? [])
-      );
-    }
-
-    // Best-effort R2 cleanup for all support screenshots
-    if (allScreenshotKeys.length > 0) {
-      try {
-        const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-        const { env } = await getCloudflareContext({ async: true });
-        if (env.R2) {
-          await Promise.all(allScreenshotKeys.map((key) => env.R2!.delete(key)));
-        }
-      } catch (error) {
-        logger.warn("R2 cleanup for support screenshots failed", { userId, error });
-      }
-    }
-
-    // Delete messages first (FK to ticket), then tickets (FK to user without cascade)
-    if (ticketIds.length > 0) {
-      for (const ticketId of ticketIds) {
-        await db.delete(supportMessageTable).where(eq(supportMessageTable.ticketId, ticketId));
-      }
-    }
-    await db.delete(supportTicketTable).where(eq(supportTicketTable.userId, userId));
-
-    // 5. Delete all KV sessions
+    // 4. Delete all KV sessions
     await deleteAllSessionsOfUser(userId);
 
-    // 6. Delete the user record (all FK references should now be cleared)
+    // 5. Delete the user record (all FK references should now be cleared)
     await db.delete(userTable).where(eq(userTable.id, userId));
 
-    // 7. Clear the session cookie
+    // 6. Clear the session cookie
     try {
       const cookieStore = await cookies();
       cookieStore.delete(SESSION_COOKIE_NAME);
@@ -221,20 +175,6 @@ export const exportUserDataAction = createServerAction()
         ]);
     }
 
-    // Fetch support tickets and messages
-    const supportTickets = await db
-      .select({
-        id: supportTicketTable.id,
-        subject: supportTicketTable.subject,
-        description: supportTicketTable.description,
-        category: supportTicketTable.category,
-        status: supportTicketTable.status,
-        priority: supportTicketTable.priority,
-        createdAt: supportTicketTable.createdAt,
-      })
-      .from(supportTicketTable)
-      .where(eq(supportTicketTable.userId, userId));
-
     const agencyStaffMembership = await db
       .select()
       .from(agencyTeamMemberTable)
@@ -267,7 +207,6 @@ export const exportUserDataAction = createServerAction()
           (i) => i.applicationId === app.id
         ),
 	      })),
-	      supportTickets,
 	      agencyStaffMembership,
 	      _notice:
         "This export contains all personal data held by Vidicy. " +

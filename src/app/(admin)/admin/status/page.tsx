@@ -23,7 +23,6 @@ import {
   DatabaseIcon,
   HardDriveIcon,
   ServerIcon,
-  LifeBuoyIcon,
   CheckCircle2Icon,
   XCircleIcon,
   AlertTriangleIcon,
@@ -508,41 +507,6 @@ export default async function StatusPage() {
                   ] as const).map(({ key, label, icon }) => (
                     <StatCard key={key} icon={icon} label={label} value={stats.checklists.byStatus[key] ?? 0} />
                   ))}
-                </div>
-              </section>
-
-              {/* ======== SUPPORT ======== */}
-              <section>
-                <SectionHeader icon={LifeBuoyIcon} title="Support Tickets" />
-                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-                  <StatCard icon={LifeBuoyIcon} label="Total Tickets" value={stats.support.total} />
-                  <StatCard icon={AlertTriangleIcon} label="Open" value={stats.support.open} />
-                  <StatCard icon={ActivityIcon} label="In Progress" value={stats.support.inProgress} />
-                  <StatCard icon={CheckCircle2Icon} label="Resolved / Closed" value={stats.support.resolved + stats.support.closed} sub={`${stats.support.resolved} resolved · ${stats.support.closed} closed`} />
-                  <StatCard icon={ClockIcon} label="Avg Resolution" value={stats.support.avgResolutionHours != null ? `${stats.support.avgResolutionHours}h` : "—"} />
-                </div>
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mt-4">
-                  <Card>
-                    <CardHeader><CardTitle className="text-sm font-medium">By Category</CardTitle></CardHeader>
-                    <CardContent className="space-y-3">
-                      {Object.entries(stats.support.byCategory).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
-                        <ProgressRow key={cat} label={cat.replace("_", " ")} count={count} total={stats.support.total} color="bg-blue-500" />
-                      ))}
-                      {Object.keys(stats.support.byCategory).length === 0 && <p className="text-sm text-muted-foreground">No tickets yet</p>}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader><CardTitle className="text-sm font-medium">By Priority</CardTitle></CardHeader>
-                    <CardContent className="space-y-3">
-                      {([
-                        { key: "high", label: "High", color: "bg-red-500" },
-                        { key: "medium", label: "Medium", color: "bg-amber-500" },
-                        { key: "low", label: "Low", color: "bg-status-info" },
-                      ]).map(({ key, label, color }) => (
-                        <ProgressRow key={key} label={label} count={stats.support.byPriority[key] ?? 0} total={stats.support.total} color={color} />
-                      ))}
-                    </CardContent>
-                  </Card>
                 </div>
               </section>
 

@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { getUserFromDB } from "@/utils/auth";
 import { getIP } from "@/utils/get-IP";
 import { MAX_SESSIONS_PER_USER } from "@/constants";
-import { getCachedUnreadCount, getCachedAdminUnreadCount } from "@/server/unread-counts";
 const SESSION_PREFIX = "session:";
 
 function getSessionKey(userId: string, sessionId: string): string {
@@ -30,14 +29,6 @@ export interface KVSession {
   userAgent?: string | null;
   authenticationType?: "password" | "google-oauth";
   /**
-   * Unread support tickets count
-   */
-  unreadSupportTicketsCount?: number;
-  /**
-   * Unread support tickets count for admins (counts all tickets with new activity since admin last viewed)
-   */
-  adminUnreadSupportTicketsCount?: number;
-  /**
    *  !!!!!!!!!!!!!!!!!!!!!
    *  !!!   IMPORTANT   !!!
    *  !!!!!!!!!!!!!!!!!!!!!
@@ -56,7 +47,7 @@ export interface KVSession {
  * IF YOU MAKE ANY CHANGES TO THE KVSESSION TYPE ABOVE, YOU NEED TO INCREMENT THIS VERSION.
  * THIS IS HOW WE TRACK WHEN WE NEED TO UPDATE THE SESSIONS IN THE KV STORE.
  */
-export const CURRENT_SESSION_VERSION = 11;
+export const CURRENT_SESSION_VERSION = 12;
 
 async function getKV() {
   const { env } = getCloudflareContext();
@@ -74,8 +65,6 @@ export async function createKVSession({
   expiresAt,
   user,
   authenticationType,
-  unreadSupportTicketsCount,
-  adminUnreadSupportTicketsCount,
 }: CreateKVSessionParams): Promise<KVSession> {
   const { cf } = getCloudflareContext();
   const headersList = await headers();
@@ -97,8 +86,6 @@ export async function createKVSession({
     userAgent: headersList.get('user-agent'),
     user,
     authenticationType,
-    unreadSupportTicketsCount,
-    adminUnreadSupportTicketsCount,
     version: CURRENT_SESSION_VERSION
   };
 
@@ -173,8 +160,6 @@ export async function updateKVSession(
   userId: string,
   expiresAt: Date,
   userData?: KVSessionUser,
-  unreadSupportTicketsCount?: number,
-  adminUnreadSupportTicketsCount?: number
 ): Promise<KVSession | null> {
   const session = await getKVSession(sessionId, userId);
   if (!session) return null;
@@ -190,8 +175,6 @@ export async function updateKVSession(
     version: CURRENT_SESSION_VERSION,
     expiresAt: expiresAt.getTime(),
     user: updatedUser,
-    unreadSupportTicketsCount: unreadSupportTicketsCount ?? session.unreadSupportTicketsCount,
-    adminUnreadSupportTicketsCount: adminUnreadSupportTicketsCount ?? session.adminUnreadSupportTicketsCount,
   };
 
   const kv = await getKV();
@@ -242,21 +225,13 @@ export async function getAllSessionIdsOfUser(userId: string) {
 /**
  * Update all sessions of a user. It can only be called in a server actions and api routes.
  * @param userId
- * @param unreadSupportTicketsCount
  */
 export async function updateAllSessionsOfUser(userId: string) {
   const sessions = await getAllSessionIdsOfUser(userId);
 
-  const [newUserData, unreadSupportTicketsCount] = await Promise.all([
-    getUserFromDB(userId),
-    getCachedUnreadCount(userId),
-  ]);
+  const newUserData = await getUserFromDB(userId);
 
   if (!newUserData) return;
-
-  const adminUnreadSupportTicketsCount = newUserData.role === "admin"
-    ? await getCachedAdminUnreadCount()
-    : undefined;
 
   await Promise.all(
     sessions.map((sessionObj) => {
@@ -266,7 +241,7 @@ export async function updateAllSessionsOfUser(userId: string) {
 
       // Only update non-expired sessions
       if (sessionObj.absoluteExpiration && sessionObj.absoluteExpiration.getTime() > Date.now()) {
-        return updateKVSession(sessionId, userId, sessionObj.absoluteExpiration, newUserData, unreadSupportTicketsCount, adminUnreadSupportTicketsCount);
+        return updateKVSession(sessionId, userId, sessionObj.absoluteExpiration, newUserData);
       }
 
       return Promise.resolve();

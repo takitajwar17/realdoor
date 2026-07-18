@@ -142,7 +142,6 @@ export function DangerZoneCard() {
                     <br />
                     • All chat history and generated review content
                     <br />
-                    • All support tickets
                     <br />
                     • Your account and profile information
                   </span>

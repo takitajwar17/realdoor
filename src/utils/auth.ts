@@ -22,7 +22,6 @@ import { SESSION_COOKIE_NAME, DISPOSABLE_EMAIL_CHECK_URL, MAILCHECK_API_URL } fr
 import { ZSAError } from "zsa";
 import { getInitials } from "./name-initials";
 import { logger } from "@/infra/logger";
-import { getCachedUnreadCount, getCachedAdminUnreadCount } from "@/server/unread-counts";
 
 const getSessionLength = () => {
   return ms("30d");
@@ -96,18 +95,11 @@ export async function createSession({
   const sessionId = await generateSessionId(token);
   const expiresAt = new Date(Date.now() + getSessionLength());
 
-  const [user, unreadSupportTicketsCount] = await Promise.all([
-    getUserFromDB(userId),
-    getCachedUnreadCount(userId),
-  ]);
+  const user = await getUserFromDB(userId);
 
   if (!user) {
     throw new Error("User not found");
   }
-
-  const adminUnreadSupportTicketsCount = user.role === "admin"
-    ? await getCachedAdminUnreadCount()
-    : undefined;
 
   return createKVSession({
     sessionId,
@@ -115,8 +107,6 @@ export async function createSession({
     expiresAt,
     user,
     authenticationType,
-    unreadSupportTicketsCount,
-    adminUnreadSupportTicketsCount,
   });
 }
 
@@ -161,24 +151,11 @@ async function validateSessionToken(token: string, userId: string): Promise<Sess
     // Update the user initials
     updatedSession.user.initials = getInitials(`${updatedSession.user.firstName} ${updatedSession.user.lastName}`);
 
-    // Compute unread counts (same as normal path)
-    updatedSession.unreadSupportTicketsCount = await getCachedUnreadCount(userId);
-    if (updatedSession.user.role === 'admin') {
-      updatedSession.adminUnreadSupportTicketsCount = await getCachedAdminUnreadCount();
-    }
-
     return updatedSession;
   }
 
   // Update the user initials
   session.user.initials = getInitials(`${session.user.firstName} ${session.user.lastName}`);
-
-  // Return cached unread counts — invalidated on ticket mutations, TTL 60s
-  session.unreadSupportTicketsCount = await getCachedUnreadCount(userId);
-
-  if (session.user.role === "admin") {
-    session.adminUnreadSupportTicketsCount = await getCachedAdminUnreadCount();
-  }
 
   return session;
 }

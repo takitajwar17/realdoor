@@ -2,9 +2,9 @@ import { execFileSync } from "node:child_process";
 
 const WRANGLER = "pnpm";
 const WRANGLER_BASE_ARGS = ["exec", "wrangler"];
-const DB_NAME = "visa-document-checker-db";
-const R2_BUCKET = "visa-documents";
-const VECTORIZE_INDEX = "visa-document-chunks";
+const DB_NAME = "hacknation-db";
+const R2_BUCKET = "hacknation-documents";
+const VECTORIZE_INDEX = "hacknation-document-chunks";
 const VECTOR_DELETE_BATCH_SIZE = 128;
 
 const targetArg = process.argv[2] ?? "both";

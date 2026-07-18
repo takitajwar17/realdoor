@@ -47,7 +47,9 @@ const MEDIA_QUERIES = {
 type MediaQuery = keyof typeof MEDIA_QUERIES;
 
 export const useMediaQuery = (query: MediaQuery) => {
-  return useMediaQueryHook(MEDIA_QUERIES[query])
+  return useMediaQueryHook(MEDIA_QUERIES[query], {
+    initializeWithValue: false,
+  })
 }
 
 /**

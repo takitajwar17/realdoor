@@ -12,7 +12,6 @@ import { checklistItemTable } from "./checklist";
 import { uploadedDocumentTable, documentEvaluationTable } from "./document";
 import { chatMessageTable, chatConversationTable } from "./chat";
 import { applicationMembershipTable, applicationRoleTable, applicationInvitationTable } from "./collaboration";
-import { supportTicketTable, supportMessageTable } from "./support";
 import {
   agencyClientTable,
   agencyTeamMemberTable,
@@ -21,7 +20,6 @@ import {
 } from "./agency";
 
 export const userRelations = relations(userTable, ({ many }) => ({
-  supportTickets: many(supportTicketTable),
   marketingContacts: many(marketingContactTable),
   marketingEnrollments: many(marketingSequenceEnrollmentTable),
   marketingEvents: many(marketingEventTable),
@@ -232,25 +230,6 @@ export const applicationInvitationRelations = relations(applicationInvitationTab
   }),
   acceptedByUser: one(userTable, {
     fields: [applicationInvitationTable.acceptedBy],
-    references: [userTable.id],
-  }),
-}));
-
-export const supportTicketRelations = relations(supportTicketTable, ({ many, one }) => ({
-  user: one(userTable, {
-    fields: [supportTicketTable.userId],
-    references: [userTable.id],
-  }),
-  messages: many(supportMessageTable),
-}));
-
-export const supportMessageRelations = relations(supportMessageTable, ({ one }) => ({
-  ticket: one(supportTicketTable, {
-    fields: [supportMessageTable.ticketId],
-    references: [supportTicketTable.id],
-  }),
-  user: one(userTable, {
-    fields: [supportMessageTable.userId],
     references: [userTable.id],
   }),
 }));
