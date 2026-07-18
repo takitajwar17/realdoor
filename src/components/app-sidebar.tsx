@@ -3,16 +3,13 @@
 import * as React from "react";
 import DashboardLogo from "@/components/dashboard-logo";
 import {
-  BriefcaseBusinessIcon,
-  CircleAlertIcon,
-  FileTextIcon,
+  BookOpenCheckIcon,
+  CircleUserRoundIcon,
+  DatabaseIcon,
+  HistoryIcon,
   LayoutDashboardIcon,
-  LibraryBigIcon,
-  LineChartIcon,
-  ShieldIcon,
-  ActivityIcon,
+  ListChecksIcon,
   SettingsIcon,
-  UsersIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -29,7 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import type { Route } from "next";
-import { AGENCY_NAV_ITEMS } from "@/lib/agency-workflow";
+import { useParams } from "next/navigation";
 
 const defaultUser = {
   name: "User",
@@ -39,51 +36,36 @@ const defaultUser = {
 
 export function AppSidebar({
   user,
-  isAdmin = false,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user?: { name: string; email: string; avatar: string };
-  isAdmin?: boolean;
 }) {
   const { setOpenMobile } = useSidebar();
+  const params = useParams<{ appId?: string }>();
+  const sessionId = typeof params.appId === "string" && params.appId.startsWith("rds_")
+    ? params.appId
+    : null;
+  const base = sessionId ? `/dashboard/${sessionId}` : null;
 
-  const iconByTitle = {
-    Dashboard: LayoutDashboardIcon,
-    Applications: BriefcaseBusinessIcon,
-    Issues: CircleAlertIcon,
-    Clients: UsersIcon,
-    Documents: LibraryBigIcon,
-    Team: ShieldIcon,
-    Reports: LineChartIcon,
-    Settings: SettingsIcon,
-  } as const;
-
-  const navMain = AGENCY_NAV_ITEMS.map((item) => ({
-    ...item,
-    icon: iconByTitle[item.title] ?? FileTextIcon,
-  }));
+  const navMain = [
+    { title: "Journey", url: "/dashboard", icon: LayoutDashboardIcon },
+    ...(base
+      ? [
+          { title: "Profile", url: `${base}/profile`, icon: CircleUserRoundIcon },
+          { title: "Understand", url: `${base}/understand`, icon: BookOpenCheckIcon },
+          { title: "Prepare", url: `${base}/prepare`, icon: ListChecksIcon },
+          { title: "Evidence trail", url: `${base}/evidence`, icon: HistoryIcon },
+        ]
+      : []),
+    { title: "Data we use", url: "/dashboard/data-we-use", icon: DatabaseIcon },
+  ];
 
   const secondaryItems: {
     title: string;
     url: string;
-    icon: typeof ShieldIcon;
+    icon: typeof SettingsIcon;
     badge?: number | string | null;
-  }[] = [];
-
-  if (isAdmin) {
-    secondaryItems.unshift(
-      {
-        title: "Admin",
-        url: "/admin",
-        icon: ShieldIcon,
-      },
-    );
-    secondaryItems.push({
-      title: "System Status",
-      url: "/admin/status",
-      icon: ActivityIcon,
-    });
-  }
+  }[] = [{ title: "Settings", url: "/settings", icon: SettingsIcon }];
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -101,7 +83,11 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="gap-1.5">
-        <NavMain items={navMain} />
+        <NavMain
+          items={navMain}
+          label="Application readiness"
+          action={{ title: "New rehearsal", url: "/dashboard?new=1" }}
+        />
         {secondaryItems.length > 0 ? <NavSecondary items={secondaryItems} className="mt-auto" /> : null}
       </SidebarContent>
       <SidebarFooter>

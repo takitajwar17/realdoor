@@ -1,335 +1,152 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { Route } from "next";
 import {
-  CheckCircle2Icon,
+  ArrowRightIcon,
+  BookOpenCheckIcon,
+  CircleUserRoundIcon,
   Clock3Icon,
-  FileWarningIcon,
-  FilesIcon,
-  LineChartIcon,
-  PlusIcon,
+  FileCheck2Icon,
+  ListChecksIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
 
-import { AgencyPageShell } from "@/components/agency/agency-page-shell";
-import {
-  AgencyTable,
-  AgencyTableCard,
-  CaseStatusBadge,
-  EmptyState,
-  MetricCard,
-  ReviewerAvatar,
-  RiskBadge,
-  formatShortDate,
-} from "@/components/agency/agency-ui";
+import { StartSessionForm } from "@/components/readiness/start-session-form";
+import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AGENCY_CASE_STATUS } from "@/db/schema";
-import { getDashboardDailyMovement } from "@/lib/agency-dashboard";
-import { getAgencyDashboardData } from "@/server/agency-data";
-import {
-  formatAgencyVisaLabel,
-  formatReviewerDisplayName,
-  getDisplayCaseNumber,
-} from "@/lib/agency-workflow";
+import { listReadinessSessions } from "@/features/readiness/server";
+import { requireVerifiedPageSession } from "@/utils/auth-page";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Application readiness",
 };
 
-function formatCountLabel(count: number, singular: string, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
+const journey = [
+  {
+    icon: CircleUserRoundIcon,
+    title: "Profile",
+    description: "Upload synthetic documents, inspect evidence, correct fields, and explicitly confirm facts.",
+  },
+  {
+    icon: BookOpenCheckIcon,
+    title: "Understand",
+    description: "See cited 2026 rehearsal rules and deterministic arithmetic without an eligibility judgment.",
+  },
+  {
+    icon: ListChecksIcon,
+    title: "Prepare",
+    description: "Resolve checklist items, choose packet contents, preview, and download—never auto-send.",
+  },
+] as const;
 
-function formatReadyRateDetail({
-  readyToSubmit,
-  totalApplications,
+export default async function DashboardPage({
+  searchParams,
 }: {
-  readyToSubmit: number;
-  totalApplications: number;
+  searchParams: Promise<{ new?: string; deleted?: string }>;
 }) {
-  if (totalApplications === 0) return "No client files yet";
-  return `${readyToSubmit} of ${formatCountLabel(totalApplications, "file")} ready`;
-}
-
-function formatIssuePatternDetail({
-  caseCount,
-  high,
-}: {
-  caseCount: number;
-  high: number;
-}) {
-  const caseLabel = formatCountLabel(caseCount, "case");
-  if (high === 0) return caseLabel;
-  return `${caseLabel} · ${formatCountLabel(high, "high-priority issue")}`;
-}
-
-export default async function DashboardPage() {
-  const data = await getAgencyDashboardData();
-  const movement = getDashboardDailyMovement({ cases: data.cases });
-  const readyToSubmit = data.stats.readyToSubmit ?? data.stats.completed ?? 0;
-  const needsClient = data.stats.needsClient ?? data.stats.flagged ?? 0;
-  const readyRate = data.stats.readyRate ?? data.stats.approvalReadyRate ?? 0;
+  const [auth, params] = await Promise.all([requireVerifiedPageSession("/dashboard"), searchParams]);
+  const sessions = await listReadinessSessions(auth.userId);
+  const showStart = params.new === "1" || sessions.length === 0;
 
   return (
-    <AgencyPageShell
-      breadcrumbs={[{ href: "/dashboard", label: "Dashboard" }]}
-      title="Dashboard"
-      description="Today's queue: files in review, clients waiting on fixes, and reviewers carrying the work."
-      actions={
-        <Button asChild>
-          <Link href={"/dashboard/applications/new" as Route}>
-            <PlusIcon className="h-4 w-4" />
-            New client file
-          </Link>
-        </Button>
-      }
-    >
-      {data.stats.totalApplications === 0 ? (
-        <EmptyState
-          title="No agency cases yet"
-          description="Add the first client, applicant, route, and reviewer. The case will appear here before documents arrive."
-          href="/dashboard/applications/new"
-          actionLabel="New client file"
-        />
-      ) : (
-        <>
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <MetricCard
-              icon={FilesIcon}
-              label="Client files"
-              value={data.stats.totalApplications}
-              detail="Every active client case"
-              tone="info"
-            />
-            <MetricCard
-              icon={CheckCircle2Icon}
-              label="Ready to submit"
-              value={readyToSubmit}
-              detail="Reviewer marked ready"
-              tone="success"
-            />
-            <MetricCard
-              icon={Clock3Icon}
-              label="In review"
-              value={data.stats.inReview}
-              detail="On a reviewer's desk"
-              tone="warning"
-            />
-            <MetricCard
-              icon={FileWarningIcon}
-              label="Needs client"
-              value={needsClient}
-              detail="Waiting on client fixes"
-              tone="danger"
-            />
-            <MetricCard
-              icon={LineChartIcon}
-              label="Ready rate"
-              value={`${readyRate}%`}
-              detail={formatReadyRateDetail({
-                readyToSubmit,
-                totalApplications: data.stats.totalApplications,
-              })}
-              tone="default"
-            />
-          </section>
+    <>
+      <PageHeader items={[{ href: "/dashboard", label: "Journey" }]} />
+      <main className="mx-auto flex w-full max-w-[1520px] flex-1 flex-col gap-5 px-4 py-5 md:px-6 md:py-6">
+        {params.deleted === "1" ? (
+          <p role="status" className="rounded-xl border border-status-success/25 bg-status-success/8 px-4 py-3 text-sm font-medium text-status-success">
+            The session and all content linked to it were deleted from Vidicy.
+          </p>
+        ) : null}
 
-          <section className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr_0.95fr]">
-            <Card className="rounded-xl shadow-[var(--shadow-dashboard)]">
-              <CardHeader className="flex-row items-center justify-between gap-3">
-                <CardTitle className="text-base">Files moving this week</CardTitle>
-                <span className="text-xs font-medium text-muted-foreground">Last 7 days</span>
-              </CardHeader>
-              <CardContent>
-                <div className="grid h-56 grid-cols-7 items-end gap-3 border-b border-border/80 pb-4">
-                  {movement.map((day) => (
-                    <div key={day.label} className="flex h-full flex-col justify-end gap-1.5">
-                      <div
-                        className="rounded-t bg-primary/80"
-                        style={{
-                          height: `${Math.max((day.submitted / day.max) * 100, day.submitted ? 10 : 0)}%`,
-                        }}
-                        title={`${day.submitted} submitted`}
-                      />
-                      <div
-                        className="rounded-t bg-status-success/80"
-                        style={{
-                          height: `${Math.max((day.completed / day.max) * 76, day.completed ? 8 : 0)}%`,
-                        }}
-                        title={`${day.completed} completed`}
-                      />
-                      <div
-                        className="rounded-t bg-destructive/75"
-                        style={{
-                          height: `${Math.max((day.flagged / day.max) * 52, day.flagged ? 6 : 0)}%`,
-                        }}
-                        title={`${day.flagged} flagged`}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 grid grid-cols-7 gap-3 text-center text-2xs font-semibold text-muted-foreground">
-                  {movement.map((day) => (
-                    <span key={day.label}>{day.label}</span>
-                  ))}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-primary" /> Received
+        <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-card px-5 py-7 shadow-[var(--shadow-dashboard)] md:px-8 md:py-9">
+          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
+          <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1.3fr)_minmax(340px,0.7fr)] xl:items-center">
+            <div className="max-w-3xl">
+              <Badge variant="outline" className="border-primary/20 bg-primary/7 text-primary">
+                Renter-controlled application readiness
+              </Badge>
+              <h1 className="mt-4 text-3xl font-bold tracking-[-0.04em] md:text-5xl">
+                Turn scattered documents into a clear, reviewable application packet.
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                Vidicy traces every conclusion back to document evidence and renter-confirmed facts. It explains
+                what is known, what is missing, and what remains unresolved—without deciding whether anyone is
+                eligible or likely to be approved.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5">
+                  <ShieldCheckIcon className="h-3.5 w-3.5 text-primary" /> Encrypted session content
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5">
+                  <FileCheck2Icon className="h-3.5 w-3.5 text-primary" /> Evidence before conclusions
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5">
+                  <Clock3Icon className="h-3.5 w-3.5 text-primary" /> Delete the session any time
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              {journey.map((step, index) => (
+                <div key={step.title} className="flex items-start gap-3 rounded-xl border border-border/75 bg-background/85 p-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <step.icon className="h-4 w-4" />
                   </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-status-success" /> Ready to submit
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-destructive" /> Needs client
-                  </span>
+                  <div>
+                    <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                      Step {index + 1}
+                    </p>
+                    <h2 className="mt-0.5 text-sm font-bold">{step.title}</h2>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{step.description}</p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          </div>
+        </section>
 
-            <Card className="rounded-xl shadow-[var(--shadow-dashboard)]">
-              <CardHeader className="flex-row items-center justify-between gap-3">
-                <CardTitle className="text-base">Most repeated issues</CardTitle>
-                <Link
-                  href={"/dashboard/issues" as Route}
-                  className="text-xs font-bold text-primary"
-                >
-                  View all
-                </Link>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {data.topFlaggedIssues.length > 0 ? (
-                  data.topFlaggedIssues.map((issue) => (
-                    <div
-                      key={issue.label}
-                      className="flex items-center justify-between gap-4 border-b border-border/70 pb-3 last:border-b-0 last:pb-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold">{issue.label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatIssuePatternDetail({
-                            caseCount: issue.caseCount,
-                            high: issue.high,
-                          })}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive">
-                        {issue.count}
-                      </span>
+        {sessions.length > 0 ? (
+          <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
+            <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70 bg-muted/20">
+              <div>
+                <CardTitle className="text-base">Your rehearsal sessions</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">Only you can open these authenticated workspaces.</p>
+              </div>
+              {!showStart ? (
+                <Button asChild variant="outline">
+                  <Link href="/dashboard?new=1">New rehearsal</Link>
+                </Button>
+              ) : null}
+            </CardHeader>
+            <CardContent className="divide-y divide-border/70 p-0">
+              {sessions.map((session) => (
+                <div key={session.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-bold">Boston LIHTC rehearsal</p>
+                      <Badge variant="outline" className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300">
+                        Synthetic 2026
+                      </Badge>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No repeated issue patterns yet.</p>
-                )}
-              </CardContent>
-            </Card>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {session.metro} · revision {session.revision} · last opened {session.lastAccessedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+                  <Button asChild>
+                    <Link href={`/dashboard/${session.id}/${session.stage}`}>
+                      Resume session
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
 
-            <Card className="rounded-xl shadow-[var(--shadow-dashboard)]">
-              <CardHeader className="flex-row items-center justify-between gap-3">
-                <CardTitle className="text-base">Reviewer workload</CardTitle>
-                <Link href={"/dashboard/team" as Route} className="text-xs font-bold text-primary">
-                  View team
-                </Link>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {data.workload.length > 0 ? (
-                  data.workload.slice(0, 5).map((member) => (
-                    <div
-                      key={member.userId ?? member.id}
-                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border/70 pb-3 last:border-b-0 last:pb-0"
-                    >
-                      <ReviewerAvatar
-                        name={member.displayName}
-                        email={member.user?.email ?? member.email}
-                        avatar={member.user?.avatar ?? null}
-                      />
-                      <div className="text-right">
-                        <p className="text-sm font-bold">
-                          {member.inReview === 0 ? "No active cases" : `${member.inReview} active`}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{member.completed} ready files</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No reviewers in the team yet.</p>
-                )}
-              </CardContent>
-            </Card>
-          </section>
-
-          <AgencyTableCard
-            title="Recent client files"
-            description="The latest passports, forms, and evidence moving through the desk."
-            actions={
-              <Link
-                href={"/dashboard/applications" as Route}
-                className="text-xs font-bold text-primary"
-              >
-                  View all client files
-              </Link>
-            }
-          >
-            <AgencyTable>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Case</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Applicant</TableHead>
-                  <TableHead>Visa</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Risk</TableHead>
-                  <TableHead>Reviewer</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.recentCases.map((row) => (
-                  <TableRow key={row.application.id}>
-                    <TableCell>
-                      <Link
-                        href={`/dashboard/${row.application.id}` as Route}
-                        className="font-bold text-primary"
-                      >
-                        {getDisplayCaseNumber(row.application.caseNumber, row.application.id)}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{row.application.clientName ?? "Unassigned"}</TableCell>
-                    <TableCell>{row.primaryApplicant?.name ?? "Applicant pending"}</TableCell>
-                    <TableCell>
-                      {formatAgencyVisaLabel({
-                        destinationCountry: row.application.destinationCountry,
-                        visaType: row.application.visaType,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      {formatShortDate(row.application.submittedAt ?? row.application.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <CaseStatusBadge
-                        status={row.application.agencyStatus ?? AGENCY_CASE_STATUS.INTAKE}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <RiskBadge
-                        riskLevel={row.latestEvaluation?.riskLevel ?? row.application.riskLevel}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <ReviewerAvatar
-                        name={row.reviewer ? formatReviewerDisplayName(row.reviewer) : null}
-                        email={row.reviewer?.email ?? null}
-                        avatar={row.reviewer?.avatar ?? null}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </AgencyTable>
-          </AgencyTableCard>
-        </>
-      )}
-    </AgencyPageShell>
+        {showStart ? <StartSessionForm /> : null}
+      </main>
+    </>
   );
 }

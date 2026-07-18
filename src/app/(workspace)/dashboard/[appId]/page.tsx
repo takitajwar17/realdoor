@@ -1,15 +1,21 @@
-import type { Metadata } from "next";
-import { AgencyCaseContent } from "./_agency-case-content";
+import { notFound, redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Application review",
-};
+import { getReadinessSession } from "@/features/readiness/server";
+import { requireVerifiedPageSession } from "@/utils/auth-page";
 
-export default async function ApplicationDetailPage({
+export default async function ReadinessSessionPage({
   params,
 }: {
-  params: Promise<{ appId: string }>
+  params: Promise<{ appId: string }>;
 }) {
-  const { appId } = await params
-  return await AgencyCaseContent({ appId })
+  const { appId } = await params;
+  const auth = await requireVerifiedPageSession(`/dashboard/${appId}`);
+
+  let session;
+  try {
+    session = await getReadinessSession(appId, auth.userId);
+  } catch {
+    notFound();
+  }
+  redirect(`/dashboard/${session.id}/${session.stage}`);
 }

@@ -62,7 +62,7 @@ export async function sealBytes(bytes: Uint8Array, options: CryptoOptions) {
       tagLength: 128,
     },
     key,
-    bytes,
+    new Uint8Array(bytes).buffer,
   );
 
   return concatBytes(Uint8Array.of(ENVELOPE_VERSION), iv, new Uint8Array(cipherBuffer));

@@ -1,0 +1,92 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  confirmFactSchema,
+  createSessionSchema,
+  manualIncomeSchema,
+  parseDocumentUploadMetadata,
+  ruleQuestionSchema,
+} from "./contracts";
+
+describe("readiness request contracts", () => {
+  it("requires explicit consent and an explicit synthetic-rehearsal choice", () => {
+    expect(
+      createSessionSchema.safeParse({ consent: false, useSyntheticRehearsal: true }).success,
+    ).toBe(false);
+    expect(
+      createSessionSchema.safeParse({ consent: true, useSyntheticRehearsal: false }).success,
+    ).toBe(false);
+    expect(
+      createSessionSchema.safeParse({ consent: true, useSyntheticRehearsal: true }).success,
+    ).toBe(true);
+  });
+
+  it("accepts bounded non-negative manual income facts", () => {
+    expect(
+      manualIncomeSchema.safeParse({
+        sessionId: "rds_abc123",
+        householdSize: 2,
+        employmentMonthlyIncome: 4200,
+        benefitsMonthlyIncome: 900,
+        otherMonthlyIncome: 0,
+      }).success,
+    ).toBe(true);
+
+    expect(
+      manualIncomeSchema.safeParse({
+        sessionId: "rds_abc123",
+        householdSize: 0,
+        employmentMonthlyIncome: -1,
+        benefitsMonthlyIncome: 0,
+        otherMonthlyIncome: 0,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("allows only the supported document media types and a 10 MB maximum", () => {
+    expect(
+      parseDocumentUploadMetadata({
+        name: "pay-stub.pdf",
+        type: "application/pdf",
+        size: 10 * 1024 * 1024,
+      }),
+    ).toMatchObject({ type: "application/pdf", extension: "pdf" });
+
+    expect(() =>
+      parseDocumentUploadMetadata({
+        name: "payload.html",
+        type: "text/html",
+        size: 100,
+      }),
+    ).toThrow("PDF, JPEG, or PNG");
+
+    expect(() =>
+      parseDocumentUploadMetadata({
+        name: "scan.png",
+        type: "image/png",
+        size: 10 * 1024 * 1024 + 1,
+      }),
+    ).toThrow("10 MB");
+  });
+
+  it("does not let a confirmation mutation address another session namespace", () => {
+    expect(
+      confirmFactSchema.safeParse({
+        sessionId: "application_legacy",
+        factId: "rdf_fact",
+        value: "4200",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("bounds rule questions before they reach the frozen-corpus answerer", () => {
+    expect(
+      ruleQuestionSchema.safeParse({ sessionId: "rds_abc123", question: "How is income annualized?" })
+        .success,
+    ).toBe(true);
+    expect(
+      ruleQuestionSchema.safeParse({ sessionId: "rds_abc123", question: "x".repeat(1001) })
+        .success,
+    ).toBe(false);
+  });
+});

@@ -3,6 +3,7 @@
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import type { Route } from "next"
+import { usePathname } from "next/navigation"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -16,6 +17,7 @@ import {
 export function NavMain({
   items,
   label,
+  action,
 }: {
   items: {
     title: string
@@ -24,8 +26,19 @@ export function NavMain({
     badge?: number | null
   }[]
   label?: string
+  action?: {
+    title: string
+    url: string
+    tooltip?: string
+  }
 }) {
   const { setOpenMobile } = useSidebar()
+  const pathname = usePathname()
+  const primaryAction = action ?? {
+    title: "New client file",
+    url: "/dashboard/applications/new",
+    tooltip: "New client file",
+  }
 
   return (
     <SidebarGroup>
@@ -34,12 +47,12 @@ export function NavMain({
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              tooltip="New client file"
+              tooltip={primaryAction.tooltip ?? primaryAction.title}
               className="min-w-8 rounded-full border border-[var(--sidebar-action-border)] bg-[var(--sidebar-action)] text-[var(--sidebar-action-foreground)] duration-200 ease-linear hover:bg-[var(--sidebar-action-hover)] hover:text-[var(--sidebar-action-foreground)] active:bg-[var(--sidebar-action-active)]"
             >
-              <Link href={"/dashboard/applications/new" as Route} onClick={() => setOpenMobile(false)}>
+              <Link href={primaryAction.url as Route} onClick={() => setOpenMobile(false)}>
                 <PlusCircleIcon />
-                <span>New client file</span>
+                <span>{primaryAction.title}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -48,7 +61,15 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild tooltip={item.title}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={
+                  item.url === "/dashboard"
+                    ? pathname === item.url
+                    : pathname === item.url || pathname.startsWith(`${item.url}/`)
+                }
+              >
                 <Link href={item.url as Route} onClick={() => setOpenMobile(false)}>
                   {item.icon ? <item.icon /> : null}
                   <span>{item.title}</span>

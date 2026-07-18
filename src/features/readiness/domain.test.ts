@@ -139,7 +139,9 @@ describe("deterministic income comparison", () => {
     });
 
     expect(result.status).toBe("unresolved");
-    expect(result.reason).toContain("No 2026 threshold");
+    if (result.status === "unresolved") {
+      expect(result.reason).toContain("No 2026 threshold");
+    }
   });
 
   it("compares values without returning an eligibility decision or score", () => {

@@ -1,7 +1,6 @@
 import "server-only";
 
 import { getSessionFromCookie } from "@/utils/auth";
-import { ROLES_ENUM } from "@/db/schema";
 import { AppSidebar } from "@/components/app-sidebar";
 
 /**
@@ -25,13 +24,10 @@ export async function SiteSidebar() {
     avatar: session.user.avatar ?? "",
   };
 
-  const isAdmin = session.user.role === ROLES_ENUM.ADMIN;
-
   if (!session.user.emailVerified) {
     return (
       <AppSidebar
         user={userProps}
-        isAdmin={isAdmin}
       />
     );
   }
@@ -39,7 +35,6 @@ export async function SiteSidebar() {
   return (
     <AppSidebar
       user={userProps}
-      isAdmin={isAdmin}
     />
   );
 }
