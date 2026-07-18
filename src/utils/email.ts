@@ -3,8 +3,6 @@ import "server-only";
 import { SITE_DOMAIN, SITE_URL, ADMIN_EMAIL, SITE_NAME } from "@/constants";
 import { resetPasswordText } from "@/react-email/reset-password";
 import { verifyEmailText } from "@/react-email/verify-email";
-import { applicantInvitationText, applicantAddedNotificationText } from "@/react-email/applicant-invitation";
-import { agencyTeamAccessText } from "@/react-email/agency-team-access";
 import isProd from "./is-prod";
 import { logger } from "@/infra/logger";
 
@@ -140,79 +138,5 @@ ${SITE_NAME}`;
     subject: `New user signup: ${name}`,
     text,
     tags: [{ name: "type", value: "new-user-signup" }],
-  });
-}
-
-export async function sendApplicantInvitationEmail({
-  email,
-  inviterName,
-  applicationName,
-}: {
-  email: string;
-  inviterName: string;
-  applicationName: string;
-}) {
-  if (!isProd) {
-    logger.warn("Applicant invitation email (skipped in dev)", { email, inviterName, applicationName });
-    return;
-  }
-
-  const text = applicantInvitationText({ inviterName, applicationName });
-
-  await sendEmail({
-    to: [email],
-    subject: `You've been added to a visa application on ${SITE_DOMAIN}`,
-    text,
-    tags: [{ name: "type", value: "applicant-invitation" }],
-  });
-}
-
-export async function sendApplicantAddedNotificationEmail({
-  email,
-  inviterName,
-  applicationName,
-  applicationId,
-}: {
-  email: string;
-  inviterName: string;
-  applicationName: string;
-  applicationId: string;
-}) {
-  if (!isProd) {
-    logger.warn("Applicant added notification (skipped in dev)", { email, inviterName, applicationName, applicationId });
-    return;
-  }
-
-  const text = applicantAddedNotificationText({ inviterName, applicationName, applicationId });
-
-  await sendEmail({
-    to: [email],
-    subject: `You've been added to a visa application on ${SITE_DOMAIN}`,
-    text,
-    tags: [{ name: "type", value: "applicant-added-notification" }],
-  });
-}
-
-export async function sendAgencyTeamAccessEmail({
-  email,
-  addedByName,
-  role,
-}: {
-  email: string;
-  addedByName: string;
-  role: string;
-}) {
-  if (!isProd) {
-    logger.warn("Agency team access email skipped in dev", { email, addedByName, role });
-    return;
-  }
-
-  const text = agencyTeamAccessText({ addedByName, role });
-
-  await sendEmail({
-    to: [email],
-    subject: `You've been added to the ${SITE_DOMAIN} agency workspace`,
-    text,
-    tags: [{ name: "type", value: "agency-team-access" }],
   });
 }

@@ -6,7 +6,6 @@ interface __BaseEnv_CloudflareEnv {
   APP_KV: KVNamespace;
   R2: R2Bucket;
   NEXT_TAG_CACHE_D1: D1Database;
-  VECTORIZE: VectorizeIndex;
   ASSETS: Fetcher;
   EMAIL_FROM: "noreply@mail.vidicy.com";
   EMAIL_FROM_NAME: "Vidicy";
@@ -18,6 +17,7 @@ interface __BaseEnv_CloudflareEnv {
   RESEND_WEBHOOK_SECRET: string;
   OPENAI_API_KEY: string;
   PERPLEXITY_API_KEY: string;
+  READINESS_ENCRYPTION_KEY: string;
   NEXT_PUBLIC_SITE_URL: string;
   NEXT_PUBLIC_APP_URL: string;
   WEB_BOT_AUTH_PUBLIC_JWK: string;

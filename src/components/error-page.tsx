@@ -73,7 +73,7 @@ export function ErrorPage({
             className={cn(buttonVariants({ variant: "default", size: "lg" }), "gap-2")}
           >
             <LayoutDashboardIcon className="h-4 w-4" />
-            My Applications
+            My journey
           </Link>
           {onRetry && (
             <button
@@ -94,17 +94,6 @@ export function ErrorPage({
         </div>
       </BlurFade>
 
-      <BlurFade delay={0.45} yOffset={8}>
-        <p className="mt-10 text-sm text-muted-foreground">
-          Need help?{" "}
-          <Link
-            href="/dashboard/support"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            Contact support
-          </Link>
-        </p>
-      </BlurFade>
     </div>
   );
 }

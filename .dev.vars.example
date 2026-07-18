@@ -28,6 +28,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 # AI services
 # OPENAI_API_KEY=
 # PERPLEXITY_API_KEY=
+# READINESS_ENCRYPTION_KEY=
 
 # Optional diagnostics
 # DB_SQL_LOG=

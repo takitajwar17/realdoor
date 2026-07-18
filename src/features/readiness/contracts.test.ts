@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   confirmFactSchema,
   createSessionSchema,
+  hasValidFileSignature,
   manualIncomeSchema,
   parseDocumentUploadMetadata,
   ruleQuestionSchema,
@@ -88,5 +89,21 @@ describe("readiness request contracts", () => {
       ruleQuestionSchema.safeParse({ sessionId: "rds_abc123", question: "x".repeat(1001) })
         .success,
     ).toBe(false);
+  });
+
+  it("checks PDF, PNG, and JPEG magic bytes before storage", () => {
+    expect(hasValidFileSignature(new TextEncoder().encode("%PDF-1.7"), "application/pdf")).toBe(
+      true,
+    );
+    expect(
+      hasValidFileSignature(
+        Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        "image/png",
+      ),
+    ).toBe(true);
+    expect(hasValidFileSignature(Uint8Array.from([0xff, 0xd8, 0xff]), "image/jpeg")).toBe(true);
+    expect(hasValidFileSignature(new TextEncoder().encode("<html>"), "application/pdf")).toBe(
+      false,
+    );
   });
 });

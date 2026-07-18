@@ -53,21 +53,28 @@ const mediaTypes = {
 
 export type ReadinessMediaType = keyof typeof mediaTypes;
 
+export class DocumentUploadInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DocumentUploadInputError";
+  }
+}
+
 export function parseDocumentUploadMetadata(input: {
   name: string;
   type: string;
   size: number;
 }) {
   if (!(input.type in mediaTypes)) {
-    throw new Error("Upload a PDF, JPEG, or PNG document.");
+    throw new DocumentUploadInputError("Upload a PDF, JPEG, or PNG document.");
   }
 
   if (!Number.isSafeInteger(input.size) || input.size <= 0) {
-    throw new Error("The selected document is empty or invalid.");
+    throw new DocumentUploadInputError("The selected document is empty or invalid.");
   }
 
   if (input.size > MAX_READINESS_DOCUMENT_BYTES) {
-    throw new Error("Each document must be 10 MB or smaller.");
+    throw new DocumentUploadInputError("Each document must be 10 MB or smaller.");
   }
 
   const baseName = input.name.split(/[\\/]/u).at(-1)?.trim() || "document";

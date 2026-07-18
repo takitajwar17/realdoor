@@ -58,7 +58,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
     <AuthShell
       testimonial={{
         quote:
-          "The morning pile of passports, forms, and bank statements became a same-day fix list for clients.",
+          "I could see exactly which document supported each field, correct it, and prepare a packet without giving up control.",
         author: "Operations Lead, Visa & Travel Agency",
       }}
     >
@@ -67,7 +67,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
           Sign in to Vidicy
         </h1>
         <p className="text-sm leading-6 text-muted-foreground/90">
-          Open the review desk your agency uses for client files.
+          Open your private application-readiness workspace.
         </p>
       </div>
 
@@ -81,7 +81,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <p className="text-sm leading-6 text-muted-foreground/90">
-            Enter the email your agency added to the review desk.
+            Enter the email connected to your Vidicy account.
           </p>
 
           <FormField

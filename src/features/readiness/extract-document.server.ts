@@ -4,13 +4,9 @@ import { z } from "zod";
 
 import { DOCUMENT_KIND } from "@/db/schema";
 import { getOpenAIClient } from "@/lib/openai";
-import {
-  extractTextFromImage,
-  extractTextFromPdf,
-  getPdfPageCount,
-} from "@/services/pdf-parser";
 
 import { FACT_KEYS, normalizeExtractedFact } from "./domain";
+import { getReadinessPdfPageCount, readReadinessDocumentText } from "./document-reader.server";
 import {
   buildExtractionPrompt,
   extractFactsFromSyntheticText,
@@ -103,22 +99,15 @@ export async function extractReadinessDocument(input: {
 }) {
   const pageCount =
     input.mimeType === "application/pdf"
-      ? await getPdfPageCount(input.bytes).catch(() => null)
+      ? await getReadinessPdfPageCount(input.bytes).catch(() => null)
       : 1;
-  const textResult =
-    input.mimeType === "application/pdf"
-      ? await extractTextFromPdf(input.bytes)
-      : await extractTextFromImage({
-          bytes: input.bytes,
-          mimeType: input.mimeType,
-          filename: input.name,
-        });
+  const documentText = await readReadinessDocumentText(input);
 
-  if (!textResult.success || !textResult.text.trim()) {
+  if (!documentText.trim()) {
     throw new Error("No readable text was found in this document");
   }
 
-  const text = textResult.text.slice(0, 60_000);
+  const text = documentText.slice(0, 60_000);
   const extraction = text.includes("VIDICY SYNTHETIC")
     ? extractFactsFromSyntheticText(text)
     : await extractWithFrozenAllowlist(text);

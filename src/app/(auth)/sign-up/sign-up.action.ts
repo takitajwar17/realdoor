@@ -19,7 +19,6 @@ import { validateTurnstileToken } from "@/infra/validate-captcha";
 import { isTurnstileEnabled } from "@/flags";
 import { logger } from "@/infra/logger";
 import { validateCsrfToken } from "@/infra/csrf";
-import { linkApplicantRecordsByEmail } from "@/server/applicant-server";
 import { sendEmailBestEffort } from "@/lib/best-effort-email";
 import { getPostAuthRedirectPath } from "@/utils/auth-redirect";
 
@@ -170,9 +169,6 @@ export const signUpAction = createServerAction()
             email: userEmail,
           },
         });
-
-        // Link any applicant records that were pre-created with this email (non-fatal, has own error handling)
-        await linkApplicantRecordsByEmail({ userId: user.id, email: userEmail });
 
         return {
           success: true,

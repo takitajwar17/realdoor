@@ -32,11 +32,10 @@ export default function WorkspaceError({
       heading={forbidden ? "You don't have access to this" : "Something went wrong"}
       body={
         forbidden
-          ? "This visa application belongs to a different account. Make sure you're signed in with the right email, or return to your own applications."
-          : "We hit an unexpected snag loading this page. This is usually temporary — try refreshing or head back to your applications."
+          ? "This readiness rehearsal belongs to a different account. Make sure you're signed in with the right email, or return to your own journey."
+          : "We hit an unexpected snag loading this page. This is usually temporary — try refreshing or head back to your journey."
       }
       onRetry={forbidden ? undefined : reset}
     />
   );
 }
-

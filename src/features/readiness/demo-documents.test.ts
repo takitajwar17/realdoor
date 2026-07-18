@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { extractText, getDocumentProxy } from "unpdf";
 
 import { buildSyntheticDemoPdf } from "./demo-documents";
 
@@ -19,5 +20,13 @@ describe("built-in synthetic demo documents", () => {
     expect(text).toContain("Monthly benefits: $900.00");
     expect(text.toLowerCase()).not.toContain("eligible");
     expect(text.toLowerCase()).not.toContain("approved");
+  });
+
+  it("produces documents that the production PDF reader can parse", async () => {
+    const pdf = await getDocumentProxy(buildSyntheticDemoPdf("pay_stub"));
+    const extracted = await extractText(pdf, { mergePages: true });
+
+    expect(pdf.numPages).toBe(1);
+    expect(extracted.text).toContain("Gross monthly pay: $4,200.00");
   });
 });

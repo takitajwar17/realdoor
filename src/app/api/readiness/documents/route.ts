@@ -7,8 +7,12 @@ import {
 } from "@/app/api/_utils/request-auth";
 import { checkActionRateLimit } from "@/infra/action-rate-limit";
 import { logger } from "@/infra/logger";
-import { getPdfPageCount, MAX_PDF_PAGE_COUNT } from "@/services/pdf-parser";
 import {
+  getReadinessPdfPageCount,
+  MAX_READINESS_PDF_PAGES,
+} from "@/features/readiness/document-reader.server";
+import {
+  DocumentUploadInputError,
   hasValidFileSignature,
   parseDocumentUploadMetadata,
 } from "@/features/readiness/contracts";
@@ -95,10 +99,10 @@ export async function POST(request: Request) {
     }
 
     const pageCount =
-      metadata.type === "application/pdf" ? await getPdfPageCount(bytes).catch(() => null) : 1;
-    if (pageCount !== null && pageCount > MAX_PDF_PAGE_COUNT) {
+      metadata.type === "application/pdf" ? await getReadinessPdfPageCount(bytes).catch(() => null) : 1;
+    if (pageCount !== null && pageCount > MAX_READINESS_PDF_PAGES) {
       return NextResponse.json(
-        { error: `PDFs can contain at most ${MAX_PDF_PAGE_COUNT} pages.` },
+        { error: `PDFs can contain at most ${MAX_READINESS_PDF_PAGES} pages.` },
         { status: 400 },
       );
     }
@@ -158,7 +162,9 @@ export async function POST(request: Request) {
       userId: routeSession.session.userId,
       errorName: error instanceof Error ? error.name : "UnknownError",
     });
-    const message = error instanceof Error ? error.message : "Document upload failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    if (error instanceof DocumentUploadInputError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Document upload failed. Please try again." }, { status: 500 });
   }
 }

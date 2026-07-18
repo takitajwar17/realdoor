@@ -110,7 +110,7 @@ export function SettingsForm() {
       <CardHeader>
         <CardTitle>Profile Settings</CardTitle>
         <CardDescription>
-          Set the name your team sees on assigned client files.
+          Set the name shown in your application-readiness workspace.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -156,7 +156,7 @@ export function SettingsForm() {
                 />
               </FormControl>
               <FormDescription>
-                This is the email your agency uses for access.
+                This is the email you use to access Vidicy.
               </FormDescription>
               <FormMessage />
             </FormItem>

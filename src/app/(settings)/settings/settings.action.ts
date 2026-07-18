@@ -2,7 +2,7 @@
 
 import { createServerAction, ZSAError } from "zsa";
 import { getDB } from "@/db";
-import { applicantTable, userTable } from "@/db/schema";
+import { userTable } from "@/db/schema";
 import { requireVerifiedEmail } from "@/utils/auth";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -31,8 +31,6 @@ export const updateUserProfileAction = createServerAction()
       try {
         const firstName = input.firstName.trim();
         const lastName = input.lastName.trim();
-        const fullName = [firstName, lastName].filter(Boolean).join(" ");
-
         await db
           .update(userTable)
           .set({
@@ -40,13 +38,6 @@ export const updateUserProfileAction = createServerAction()
             lastName,
           })
           .where(eq(userTable.id, session.user.id));
-
-        await db
-          .update(applicantTable)
-          .set({
-            name: fullName,
-          })
-          .where(eq(applicantTable.userId, session.user.id));
 
         await updateAllSessionsOfUser(session.user.id);
 

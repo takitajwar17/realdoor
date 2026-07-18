@@ -121,16 +121,16 @@ const SignUpPage = ({
     { title: string; description: string }
   > = {
     choice: {
-      title: "Create your agency account",
-      description: "Join the review desk your agency uses for passports, forms, and client fixes.",
+      title: "Create your Vidicy account",
+      description: "Build a private, renter-controlled application-readiness workspace.",
     },
     email: {
       title: "Create your account",
-      description: "Add the name your team should see beside assigned client files.",
+      description: "Add the name that should appear in your private workspace.",
     },
     details: {
       title: "Create your account",
-      description: "Add the name your team should see beside assigned client files.",
+      description: "Add the name that should appear in your private workspace.",
     },
   };
 

@@ -19,7 +19,6 @@ import { isGoogleSSOEnabled } from "@/flags";
 import { getIP } from "@/utils/get-IP";
 import { logger } from "@/infra/logger";
 import { sendNewUserSignupNotificationEmail } from "@/utils/email";
-import { linkApplicantRecordsByEmail } from "@/server/applicant-server";
 import { getPostAuthRedirectPath, normalizeRedirectPath } from "@/utils/auth-redirect";
 import { sendEmailBestEffort } from "@/lib/best-effort-email";
 
@@ -201,9 +200,6 @@ export const googleSSOCallbackAction = createServerAction()
         const userEmail = user.email;
 
         if (userEmail) {
-          // Link any applicant records that were pre-created with this email (non-fatal)
-          await linkApplicantRecordsByEmail({ userId: user.id, email: userEmail });
-
           const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || userEmail;
 
           await sendEmailBestEffort({

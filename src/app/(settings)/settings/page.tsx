@@ -96,7 +96,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <CardDescription>
-            Choose how the review desk looks on this device.
+            Choose how your readiness workspace looks on this device.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,7 +104,7 @@ export default async function SettingsPage() {
             <div className="space-y-0.5">
               <span className="text-sm font-medium">Interface Theme</span>
               <p className="text-xs text-muted-foreground">
-                Pick the theme you want while reviewing client files.
+                Pick the theme you want while preparing your application packet.
               </p>
             </div>
             <ThemeSwitch>Select Theme</ThemeSwitch>

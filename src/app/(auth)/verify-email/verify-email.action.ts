@@ -11,8 +11,6 @@ import { withRateLimit, RATE_LIMITS } from "@/infra/with-rate-limit";
 import { verifyEmailSchema } from "@/schemas/verify-email.schema";
 import { createServerAction, ZSAError } from "zsa";
 import { logger } from "@/infra/logger";
-import { recordMarketingEvent } from "@/server/marketing/events";
-import { MARKETING_EVENT_TYPE } from "@/db/schema";
 
 export const verifyEmailAction = createServerAction()
   .input(verifyEmailSchema)
@@ -70,12 +68,6 @@ export const verifyEmailAction = createServerAction()
           await db.update(userTable)
             .set({ emailVerified: new Date() })
             .where(eq(userTable.id, verificationToken.userId));
-
-          await recordMarketingEvent({
-            db,
-            type: MARKETING_EVENT_TYPE.USER_VERIFIED_EMAIL,
-            userId: verificationToken.userId,
-          });
 
           // Update all sessions of the user to reflect the new email verification status
           await updateAllSessionsOfUser(verificationToken.userId);

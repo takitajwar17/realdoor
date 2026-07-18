@@ -18,7 +18,7 @@ export default async function SecurityPage() {
           Security
         </h1>
         <p className="text-sm text-muted-foreground">
-          Password access and account safeguards for the review desk.
+          Password access and safeguards for your private workspace.
         </p>
       </div>
 
@@ -26,7 +26,7 @@ export default async function SecurityPage() {
         <CardHeader>
           <CardTitle>Account protection</CardTitle>
           <CardDescription>
-            Keep sign-in access current for the people reviewing client files.
+            Keep sign-in access current for your Vidicy account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
