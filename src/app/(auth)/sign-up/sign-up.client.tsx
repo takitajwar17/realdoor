@@ -113,11 +113,11 @@ const SignUpPage = ({
   const stepCopy: Record<EmailSignupStep, { title: string; description: string }> = {
     choice: {
       title: "Create your Vidicy account",
-      description: "Build a private, renter-controlled application-readiness workspace.",
+      description: "Build a private, renter-controlled application-readiness session.",
     },
     details: {
       title: "Create your account",
-      description: "Add the name that should appear in your private workspace.",
+      description: "Add the name that should appear in your private session.",
     },
   };
 
@@ -133,8 +133,8 @@ const SignUpPage = ({
     <AuthShell
       testimonial={{
         quote:
-          "Understand what the documents say, confirm what is true, and stay in control of what leaves the workspace.",
-        author: "Renter rehearsal principle",
+          "Understand what the documents say, confirm what is true, and stay in control of what leaves your session.",
+        author: "Renter control principle",
       }}
     >
       <div className="space-y-2.5">

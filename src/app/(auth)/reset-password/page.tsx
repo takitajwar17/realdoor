@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>
+  searchParams: Promise<{ token?: string }>;
 }) {
   const token = (await searchParams).token;
 
@@ -22,11 +22,11 @@ export default async function ResetPasswordPage({
 
   const { env } = getCloudflareContext();
 
-  if (!env?.NEXT_INC_CACHE_KV) {
+  if (!env?.APP_KV) {
     throw new Error("Can't connect to KV store");
   }
 
-  const resetTokenStr = await env.NEXT_INC_CACHE_KV.get(getResetTokenKey(token));
+  const resetTokenStr = await env.APP_KV.get(getResetTokenKey(token));
 
   if (!resetTokenStr) {
     return notFound();

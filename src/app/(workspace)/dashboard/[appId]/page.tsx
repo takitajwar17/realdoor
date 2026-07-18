@@ -11,11 +11,10 @@ export default async function ReadinessSessionPage({
   const { appId } = await params;
   const auth = await requireVerifiedPageSession(`/dashboard/${appId}`);
 
-  let session;
   try {
-    session = await getReadinessSession(appId, auth.userId);
+    await getReadinessSession(appId, auth.userId);
   } catch {
     notFound();
   }
-  redirect(`/dashboard/${session.id}/${session.stage}`);
+  redirect(`/dashboard/${appId}/profile`);
 }

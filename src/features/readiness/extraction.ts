@@ -33,14 +33,10 @@ function syntheticLineBox(index: number) {
 }
 
 export function extractFactsFromSyntheticText(text: string): ExtractionResult {
-  const lines = text
-    .split(/\r?\n/u)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const normalized = lines.join("\n");
-  const kind = normalized.includes("VIDICY SYNTHETIC PAY STATEMENT")
+  const normalized = text.replace(/\s+/gu, " ").trim();
+  const kind = normalized.includes("VIDICY PRACTICE PAY STATEMENT")
     ? DOCUMENT_KIND.PAY_STUB
-    : normalized.includes("VIDICY SYNTHETIC BENEFITS LETTER")
+    : normalized.includes("VIDICY PRACTICE BENEFITS LETTER")
       ? DOCUMENT_KIND.BENEFITS_LETTER
       : DOCUMENT_KIND.OTHER;
 
@@ -49,56 +45,61 @@ export function extractFactsFromSyntheticText(text: string): ExtractionResult {
     pattern: RegExp;
     clean?: (value: string) => string;
   }> = [
-    { key: "full_name", pattern: /^(?:Employee|Recipient):\s*(.+)$/iu },
-    { key: "current_address", pattern: /^Current address:\s*(.+)$/iu },
+    {
+      key: "full_name",
+      pattern:
+        /\b(?:Employee|Recipient):\s*(.+?)(?=\s+(?:Current address|Document date|Employer|Pay frequency|Gross monthly pay|Benefit type|Monthly benefits|Other monthly income|Household size):|$)/iu,
+    },
+    {
+      key: "current_address",
+      pattern:
+        /\bCurrent address:\s*(.+?)(?=\s+(?:Document date|Employer|Pay frequency|Gross monthly pay|Benefit type|Monthly benefits|Other monthly income|Household size|Employee|Recipient):|$)/iu,
+    },
     {
       key: "employment_monthly_income",
-      pattern: /^Gross monthly pay:\s*\$?([\d,]+(?:\.\d{1,2})?)$/iu,
+      pattern: /\bGross monthly pay:\s*\$?([\d,]+(?:\.\d{1,2})?)/iu,
       clean: (value) => value.replaceAll(",", ""),
     },
     {
       key: "benefits_monthly_income",
-      pattern: /^Monthly benefits:\s*\$?([\d,]+(?:\.\d{1,2})?)$/iu,
+      pattern: /\bMonthly benefits:\s*\$?([\d,]+(?:\.\d{1,2})?)/iu,
       clean: (value) => value.replaceAll(",", ""),
     },
     {
       key: "other_monthly_income",
-      pattern: /^Other monthly income:\s*\$?([\d,]+(?:\.\d{1,2})?)$/iu,
+      pattern: /\bOther monthly income:\s*\$?([\d,]+(?:\.\d{1,2})?)/iu,
       clean: (value) => value.replaceAll(",", ""),
     },
-    { key: "household_size", pattern: /^Household size:\s*(\d+)$/iu },
+    { key: "household_size", pattern: /\bHousehold size:\s*(\d+)/iu },
   ];
 
   const facts: ExtractionResult["facts"] = [];
 
-  for (const [index, line] of lines.entries()) {
-    for (const { key, pattern, clean } of factPatterns) {
-      const match = line.match(pattern);
-      if (!match?.[1]) continue;
-      const normalizedFact = normalizeExtractedFact({
-        key,
-        value: clean ? clean(match[1]) : match[1],
-        confidence: 0.99,
-        sourceQuote: line,
-        page: 1,
-        box: syntheticLineBox(index),
-      });
+  for (const [index, { key, pattern, clean }] of factPatterns.entries()) {
+    const match = normalized.match(pattern);
+    if (!match?.[1]) continue;
+    const normalizedFact = normalizeExtractedFact({
+      key,
+      value: clean ? clean(match[1]) : match[1],
+      confidence: 0.99,
+      sourceQuote: match[0],
+      page: 1,
+      box: syntheticLineBox(index),
+    });
 
-      if (normalizedFact) {
-        facts.push({
-          key: normalizedFact.key,
-          value: normalizedFact.value,
-          confidence: normalizedFact.confidence,
-          sourceQuote: normalizedFact.sourceQuote,
-          page: normalizedFact.page ?? null,
-          box: normalizedFact.box ?? null,
-        });
-      }
+    if (normalizedFact) {
+      facts.push({
+        key: normalizedFact.key,
+        value: normalizedFact.value,
+        confidence: normalizedFact.confidence,
+        sourceQuote: normalizedFact.sourceQuote,
+        page: normalizedFact.page ?? null,
+        box: normalizedFact.box ?? null,
+      });
     }
   }
 
-  const issuedLine = lines.find((line) => /^Document date:/iu.test(line));
-  const issuedOn = issuedLine?.match(/^Document date:\s*(\d{4}-\d{2}-\d{2})$/iu)?.[1] ?? null;
+  const issuedOn = normalized.match(/\bDocument date:\s*(\d{4}-\d{2}-\d{2})/iu)?.[1] ?? null;
 
   return {
     kind,

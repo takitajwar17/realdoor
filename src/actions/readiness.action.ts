@@ -25,16 +25,10 @@ import {
   saveRuleQuestion,
   setDocumentIncluded,
 } from "@/features/readiness/server";
+import type { ReadinessActionState } from "@/features/readiness/action-state";
 import { checkActionRateLimit } from "@/infra/action-rate-limit";
 import { logger } from "@/infra/logger";
 import { requireVerifiedEmail } from "@/utils/auth";
-
-export type ReadinessActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-};
-
-export const INITIAL_READINESS_ACTION_STATE: ReadinessActionState = { status: "idle" };
 
 function refreshSessionSurfaces(sessionId: string) {
   revalidatePath(`/dashboard/${sessionId}`);

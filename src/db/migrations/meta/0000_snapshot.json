@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "230bf48b-aa7b-4f1b-915c-509c439e15ad",
+  "id": "3e7ee98b-b847-4fdc-b649-537cd60b8e95",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "user": {
@@ -104,30 +104,22 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "email_idx": {
           "name": "email_idx",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": false
         },
         "google_account_id_idx": {
           "name": "google_account_id_idx",
-          "columns": [
-            "googleAccountId"
-          ],
+          "columns": ["googleAccountId"],
           "isUnique": false
         },
         "role_idx": {
           "name": "role_idx",
-          "columns": [
-            "role"
-          ],
+          "columns": ["role"],
           "isUnique": false
         }
       },
@@ -185,10 +177,7 @@
       "indexes": {
         "readiness_audit_session_idx": {
           "name": "readiness_audit_session_idx",
-          "columns": [
-            "sessionId",
-            "createdAt"
-          ],
+          "columns": ["sessionId", "createdAt"],
           "isUnique": false
         }
       },
@@ -197,12 +186,8 @@
           "name": "readiness_audit_sessionId_readiness_session_id_fk",
           "tableFrom": "readiness_audit",
           "tableTo": "readiness_session",
-          "columnsFrom": [
-            "sessionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sessionId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -328,25 +313,17 @@
       "indexes": {
         "readiness_document_session_idx": {
           "name": "readiness_document_session_idx",
-          "columns": [
-            "sessionId",
-            "createdAt"
-          ],
+          "columns": ["sessionId", "createdAt"],
           "isUnique": false
         },
         "readiness_document_r2_key_idx": {
           "name": "readiness_document_r2_key_idx",
-          "columns": [
-            "r2Key"
-          ],
+          "columns": ["r2Key"],
           "isUnique": true
         },
         "readiness_document_status_idx": {
           "name": "readiness_document_status_idx",
-          "columns": [
-            "sessionId",
-            "extractionStatus"
-          ],
+          "columns": ["sessionId", "extractionStatus"],
           "isUnique": false
         }
       },
@@ -355,12 +332,8 @@
           "name": "readiness_document_sessionId_readiness_session_id_fk",
           "tableFrom": "readiness_document",
           "tableTo": "readiness_session",
-          "columnsFrom": [
-            "sessionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sessionId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -462,18 +435,12 @@
       "indexes": {
         "readiness_fact_session_key_idx": {
           "name": "readiness_fact_session_key_idx",
-          "columns": [
-            "sessionId",
-            "key",
-            "status"
-          ],
+          "columns": ["sessionId", "key", "status"],
           "isUnique": false
         },
         "readiness_fact_document_idx": {
           "name": "readiness_fact_document_idx",
-          "columns": [
-            "documentId"
-          ],
+          "columns": ["documentId"],
           "isUnique": false
         }
       },
@@ -482,12 +449,8 @@
           "name": "readiness_fact_sessionId_readiness_session_id_fk",
           "tableFrom": "readiness_fact",
           "tableTo": "readiness_session",
-          "columnsFrom": [
-            "sessionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sessionId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -495,12 +458,8 @@
           "name": "readiness_fact_documentId_readiness_document_id_fk",
           "tableFrom": "readiness_fact",
           "tableTo": "readiness_document",
-          "columnsFrom": [
-            "documentId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["documentId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -566,10 +525,7 @@
       "indexes": {
         "readiness_question_session_idx": {
           "name": "readiness_question_session_idx",
-          "columns": [
-            "sessionId",
-            "createdAt"
-          ],
+          "columns": ["sessionId", "createdAt"],
           "isUnique": false
         }
       },
@@ -578,12 +534,8 @@
           "name": "readiness_question_sessionId_readiness_session_id_fk",
           "tableFrom": "readiness_question",
           "tableTo": "readiness_session",
-          "columnsFrom": [
-            "sessionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sessionId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -644,14 +596,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "stage": {
-          "name": "stage",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'profile'"
         },
         "targetYear": {
           "name": "targetYear",
@@ -722,18 +666,12 @@
       "indexes": {
         "readiness_session_user_updated_idx": {
           "name": "readiness_session_user_updated_idx",
-          "columns": [
-            "userId",
-            "updatedAt"
-          ],
+          "columns": ["userId", "updatedAt"],
           "isUnique": false
         },
         "readiness_session_user_accessed_idx": {
           "name": "readiness_session_user_accessed_idx",
-          "columns": [
-            "userId",
-            "lastAccessedAt"
-          ],
+          "columns": ["userId", "lastAccessedAt"],
           "isUnique": false
         }
       },
@@ -742,12 +680,8 @@
           "name": "readiness_session_userId_user_id_fk",
           "tableFrom": "readiness_session",
           "tableTo": "user",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -5,12 +5,6 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 import { commonColumns } from "./_common";
 import { userTable } from "./user";
 
-export const READINESS_STAGE = {
-  PROFILE: "profile",
-  UNDERSTAND: "understand",
-  PREPARE: "prepare",
-} as const;
-
 export const DOCUMENT_KIND = {
   PAY_STUB: "pay_stub",
   BENEFITS_LETTER: "benefits_letter",
@@ -48,9 +42,6 @@ export const readinessSessionTable = sqliteTable(
       .references(() => userTable.id, { onDelete: "cascade" }),
     consentVersion: text().notNull(),
     consentedAt: integer({ mode: "timestamp" }).notNull(),
-    stage: text({ enum: tuple(READINESS_STAGE) })
-      .default(READINESS_STAGE.PROFILE)
-      .notNull(),
     targetYear: integer().default(2026).notNull(),
     metro: text().notNull(),
     program: text().notNull(),

@@ -24,7 +24,7 @@ export async function AccountDetailsCard() {
     <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
       <CardHeader>
         <CardTitle>Account Details</CardTitle>
-        <CardDescription>Sign-in details for your private Vidicy workspace.</CardDescription>
+        <CardDescription>Sign-in details for your private Vidicy sessions.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Email */}

@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { SendIcon } from "lucide-react";
 
-import { INITIAL_READINESS_ACTION_STATE, saveRuleQuestionAction } from "@/actions/readiness.action";
+import { saveRuleQuestionAction } from "@/actions/readiness.action";
+import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

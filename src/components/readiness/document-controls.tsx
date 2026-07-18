@@ -5,7 +5,6 @@ import { SaveIcon, Trash2Icon } from "lucide-react";
 
 import {
   confirmDocumentDetailsAction,
-  INITIAL_READINESS_ACTION_STATE,
   removeReadinessDocumentAction,
 } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
@@ -23,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 
 const documentKinds = [
   ["pay_stub", "Pay statement"],

@@ -90,7 +90,6 @@ CREATE TABLE `readiness_session` (
 	`userId` text NOT NULL,
 	`consentVersion` text NOT NULL,
 	`consentedAt` integer NOT NULL,
-	`stage` text DEFAULT 'profile' NOT NULL,
 	`targetYear` integer DEFAULT 2026 NOT NULL,
 	`metro` text NOT NULL,
 	`program` text NOT NULL,

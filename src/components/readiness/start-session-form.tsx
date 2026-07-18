@@ -3,14 +3,12 @@
 import { useActionState } from "react";
 import { ArrowRightIcon, LockKeyholeIcon } from "lucide-react";
 
-import {
-  createReadinessSessionAction,
-  INITIAL_READINESS_ACTION_STATE,
-} from "@/actions/readiness.action";
+import { createReadinessSessionAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 
 export function StartSessionForm() {
   const [state, action, pending] = useActionState(
@@ -51,8 +49,8 @@ export function StartSessionForm() {
             <span>
               <span className="block text-sm font-semibold">Use the 2026 practice guide</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                The official 2026 materials needed for an authoritative result are not available in
-                this demo. Practice values are clearly labeled and are not official thresholds.
+                The official 2026 materials needed for a real application are not included here.
+                Practice values are clearly labeled and are not official limits.
               </span>
             </span>
           </label>

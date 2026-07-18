@@ -27,66 +27,61 @@ type GoogleSSOResponse = {
    * Issuer
    * Example: https://accounts.google.com
    */
-  iss: string
+  iss: string;
   /**
    * Authorized party
    * Example: 111111111111-x403h5fq3e4ts2qa022tcgdpm9lqhvj5.apps.googleusercontent.com
    */
-  azp: string
+  azp: string;
   /**
    * Audience
    * Example: 111111111111-x403h5fq3e4ts2qa022tcgdpm9lqhvj5.apps.googleusercontent.com
    */
-  aud: string
+  aud: string;
   /**
    * Subject
    * Example: 111111111111111111111
    */
-  sub: string
-  email: string
-  email_verified: boolean
+  sub: string;
+  email: string;
+  email_verified: boolean;
   /**
    * Access token hash
    * Example: HhYIlZToOmC0QB1-N_SzE
    */
-  at_hash: string
-  name: string
-  picture: string
-  given_name: string
-  family_name: string
-  iat: number
-  exp: number
-}
+  at_hash: string;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  iat: number;
+  exp: number;
+};
 
 export const googleSSOCallbackAction = createServerAction()
   .input(googleSSOCallbackSchema)
   .handler(async ({ input }) => {
     return withRateLimit(async () => {
       if (!(await isGoogleSSOEnabled())) {
-        throw new ZSAError(
-          "FORBIDDEN",
-          "Google SSO is not enabled"
-        );
+        throw new ZSAError("FORBIDDEN", "Google sign-in is not available right now.");
       }
 
       const cookieStore = await cookies();
       const cookieState = cookieStore.get(GOOGLE_OAUTH_STATE_COOKIE_NAME)?.value ?? null;
-      const cookieCodeVerifier = cookieStore.get(GOOGLE_OAUTH_CODE_VERIFIER_COOKIE_NAME)?.value ?? null;
+      const cookieCodeVerifier =
+        cookieStore.get(GOOGLE_OAUTH_CODE_VERIFIER_COOKIE_NAME)?.value ?? null;
       const verifiedRedirectPath = normalizeRedirectPath(
         cookieStore.get(GOOGLE_OAUTH_REDIRECT_COOKIE_NAME)?.value,
       );
 
       if (!cookieState || !cookieCodeVerifier) {
-        throw new ZSAError(
-          "NOT_AUTHORIZED",
-          "Missing required cookies"
-        );
+        throw new ZSAError("NOT_AUTHORIZED", "This sign-in attempt expired. Please start again.");
       }
 
       if (input.state !== cookieState) {
         throw new ZSAError(
           "NOT_AUTHORIZED",
-          "Invalid state parameter"
+          "This sign-in attempt could not be verified. Please start again.",
         );
       }
 
@@ -98,7 +93,7 @@ export const googleSSOCallbackAction = createServerAction()
         logger.error("Google OAuth callback: Error validating authorization code", { error });
         throw new ZSAError(
           "NOT_AUTHORIZED",
-          "Invalid authorization code"
+          "This Google sign-in attempt expired. Please start again.",
         );
       }
 
@@ -106,14 +101,14 @@ export const googleSSOCallbackAction = createServerAction()
 
       // Validate critical ID token claims (defense-in-depth)
       if (claims.iss !== "https://accounts.google.com" && claims.iss !== "accounts.google.com") {
-        throw new ZSAError("NOT_AUTHORIZED", "Invalid token issuer");
+        throw new ZSAError("NOT_AUTHORIZED", "We could not verify this Google sign-in.");
       }
       const expectedClientId = process.env.GOOGLE_CLIENT_ID;
       if (expectedClientId && claims.aud !== expectedClientId) {
-        throw new ZSAError("NOT_AUTHORIZED", "Invalid token audience");
+        throw new ZSAError("NOT_AUTHORIZED", "We could not verify this Google sign-in.");
       }
       if (claims.exp && claims.exp < Math.floor(Date.now() / 1000)) {
-        throw new ZSAError("NOT_AUTHORIZED", "Token has expired");
+        throw new ZSAError("NOT_AUTHORIZED", "This Google sign-in attempt expired.");
       }
 
       // Delete state/code_verifier cookies after validation to prevent replay
@@ -132,7 +127,7 @@ export const googleSSOCallbackAction = createServerAction()
       try {
         // First check if user exists with this Google account ID
         const existingUserWithGoogle = await db.query.userTable.findFirst({
-          where: eq(userTable.googleAccountId, googleAccountId)
+          where: eq(userTable.googleAccountId, googleAccountId),
         });
 
         if (existingUserWithGoogle?.id) {
@@ -148,7 +143,7 @@ export const googleSSOCallbackAction = createServerAction()
 
         // Then check if user exists with this email
         const existingUserWithEmail = await db.query.userTable.findFirst({
-          where: eq(userTable.email, email)
+          where: eq(userTable.email, email),
         });
 
         if (existingUserWithEmail?.id) {
@@ -156,7 +151,7 @@ export const googleSSOCallbackAction = createServerAction()
           if (!claims.email_verified) {
             throw new ZSAError(
               "FORBIDDEN",
-              "Cannot link account: Google email is not verified"
+              "Google did not confirm this email address. Please try another account.",
             );
           }
 
@@ -166,7 +161,8 @@ export const googleSSOCallbackAction = createServerAction()
             .set({
               googleAccountId,
               avatar: existingUserWithEmail.avatar || avatarUrl,
-              emailVerified: existingUserWithEmail.emailVerified || (claims?.email_verified ? new Date() : null),
+              emailVerified:
+                existingUserWithEmail.emailVerified || (claims?.email_verified ? new Date() : null),
             })
             .where(eq(userTable.id, existingUserWithEmail.id))
             .returning();
@@ -181,7 +177,8 @@ export const googleSSOCallbackAction = createServerAction()
           };
         }
 
-        const [user] = await db.insert(userTable)
+        const [user] = await db
+          .insert(userTable)
           .values({
             googleAccountId,
             firstName: claims.given_name || claims.name || null,
@@ -200,13 +197,15 @@ export const googleSSOCallbackAction = createServerAction()
         const userEmail = user.email;
 
         if (userEmail) {
-          const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || userEmail;
+          const fullName =
+            [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || userEmail;
 
           await sendEmailBestEffort({
-            send: () => sendNewUserSignupNotificationEmail({
-              email: userEmail,
-              name: fullName,
-            }),
+            send: () =>
+              sendNewUserSignupNotificationEmail({
+                email: userEmail,
+                name: fullName,
+              }),
             logger,
             message: "Failed to send new user signup notification (Google OAuth)",
             context: {
@@ -214,7 +213,6 @@ export const googleSSOCallbackAction = createServerAction()
               email: userEmail,
             },
           });
-
         }
 
         return {
@@ -224,7 +222,6 @@ export const googleSSOCallbackAction = createServerAction()
             verifiedRedirectPath,
           }),
         };
-
       } catch (error) {
         logger.error("Google OAuth callback error:", { error });
 
@@ -232,10 +229,7 @@ export const googleSSOCallbackAction = createServerAction()
           throw error;
         }
 
-        throw new ZSAError(
-          "INTERNAL_SERVER_ERROR",
-          "An unexpected error occurred"
-        );
+        throw new ZSAError("INTERNAL_SERVER_ERROR", "An unexpected error occurred");
       }
     }, RATE_LIMITS.GOOGLE_SSO_CALLBACK);
   });

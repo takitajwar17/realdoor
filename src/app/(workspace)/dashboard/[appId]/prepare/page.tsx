@@ -21,6 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { getRuleSource } from "@/features/readiness/rules";
+import {
+  formatFactValue,
+  getDocumentKindLabel,
+  getFactLabel,
+} from "@/features/readiness/presentation";
 import { cn } from "@/lib/utils";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
@@ -80,7 +85,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
           <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-base">Application checklist</CardTitle>
             <p className="text-sm text-muted-foreground">
-              No completion percentage is shown; ambiguity stays visible.
+              Each item stays present, missing, expired, or unresolved—without a score.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -133,8 +138,8 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
           <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-base">Choose packet documents</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Inclusion is explicit and reversible. Original files are not embedded in the summary
-              packet.
+              You can change this choice at any time. The packet lists the documents you choose; it
+              does not attach the original files.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -145,7 +150,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold">{document.payload.name}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {document.kind.replaceAll("_", " ")} ·{" "}
+                        {getDocumentKindLabel(document.kind)} ·{" "}
                         {document.payload.issuedOn ?? "date unresolved"}
                       </p>
                     </div>
@@ -186,7 +191,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
           <div>
             <CardTitle className="text-base">Packet preview</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              Exact summary to be downloaded · packet version {workspace.session.revision}
+              Exactly what your download will contain · version {workspace.session.revision}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -195,6 +200,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                 href={`/api/readiness/packet/${appId}?mode=preview`}
                 target="_blank"
                 rel="noreferrer"
+                prefetch={false}
               >
                 <EyeIcon className="h-4 w-4" /> Open full preview
               </Link>
@@ -225,8 +231,10 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                         key={fact.key}
                         className="flex justify-between gap-4 border-b border-slate-100 pb-2"
                       >
-                        <dt className="text-slate-500">{fact.key.replaceAll("_", " ")}</dt>
-                        <dd className="text-right font-semibold">{fact.value}</dd>
+                        <dt className="text-slate-500">{getFactLabel(fact.key)}</dt>
+                        <dd className="text-right font-semibold">
+                          {formatFactValue(fact.key, fact.value)}
+                        </dd>
                       </div>
                     ))}
                   </dl>
@@ -243,7 +251,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                       <strong>${workspace.comparison.annualIncome.toLocaleString("en-US")}</strong>
                     </p>
                     <p>
-                      <span className="text-slate-500">Synthetic benchmark:</span>{" "}
+                      <span className="text-slate-500">Practice benchmark:</span>{" "}
                       <strong>${workspace.comparison.incomeLimit.toLocaleString("en-US")}</strong>
                     </p>
                     <p className="font-mono text-xs">{workspace.comparison.formula}</p>
@@ -286,8 +294,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
               <div>
                 <p className="text-sm font-bold">Nothing has been sent</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Downloading creates a local HTML file with selectable text and structured
-                  headings. You choose what happens next.
+                  Downloading saves this packet to your device. You choose what happens next.
                 </p>
               </div>
             </div>

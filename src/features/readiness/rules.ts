@@ -13,7 +13,7 @@ const RULE_SOURCES = [
     title: "Vidicy practice calculation method",
     url: "/dashboard/data-we-use",
     passage:
-      "The rehearsal adds renter-confirmed monthly income sources and multiplies the total by 12. It never treats the result as an eligibility decision.",
+      "The practice calculation adds renter-confirmed monthly income sources and multiplies the total by 12. It never treats the result as an eligibility decision.",
   },
   {
     id: "hud-mtsp-source",
@@ -41,7 +41,7 @@ const RULE_SOURCES = [
     title: "Vidicy session data practice",
     url: "/dashboard/data-we-use",
     passage:
-      "Documents stay within the renter's authenticated session, are never sent automatically, and can be removed by deleting the session.",
+      "Documents stay within the renter's private session, are never sent automatically, and can be removed by deleting the session.",
   },
 ] as const satisfies readonly SourceCitation[];
 
@@ -126,7 +126,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "unresolved",
       answer:
-        "This copilot cannot determine eligibility, approval, denial, qualification, rank, or score. It can only organize renter-confirmed facts and show cited arithmetic.",
+        "Vidicy cannot determine eligibility, approval, denial, qualification, rank, or score. It can only organize facts you confirm and show the cited arithmetic.",
       sourceIds: [],
     };
   }
@@ -144,7 +144,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "answered",
       answer:
-        "For this rehearsal, confirmed monthly employment, benefits, and other income are added, then multiplied by 12. The arithmetic is shown line by line and is not an eligibility decision.",
+        "For this practice session, confirmed monthly employment, benefits, and other income are added, then multiplied by 12. The arithmetic is shown line by line and is not an eligibility decision.",
       sourceIds: ["rehearsal-calculation-method"],
     };
   }
@@ -162,7 +162,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "answered",
       answer:
-        "The rehearsal checklist looks for recent income verification and keeps an item unresolved when its date or meaning is unclear. A property or allocating agency—not this copilot—decides what its application requires.",
+        "The practice checklist looks for recent income verification and keeps an item unresolved when its date or meaning is unclear. The property or its housing agency—not Vidicy—decides what its application requires.",
       sourceIds: ["rehearsal-checklist-method", "irs-section-42-guide"],
     };
   }

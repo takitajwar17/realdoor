@@ -24,7 +24,7 @@ function normalizeIP(ip: string): string {
   try {
     const addr = ipaddr.parse(ip);
 
-    if (addr.kind() === 'ipv6') {
+    if (addr.kind() === "ipv6") {
       // Get the first 64 bits for IPv6
       const ipv6 = addr as ipaddr.IPv6;
       const bytes = ipv6.toByteArray();
@@ -53,7 +53,7 @@ export async function checkRateLimit({
   const { env } = getCloudflareContext();
   const now = Math.floor(Date.now() / 1000);
 
-  if (!env?.NEXT_INC_CACHE_KV) {
+  if (!env?.APP_KV) {
     throw new Error("Can't connect to KV store");
   }
 
@@ -61,14 +61,14 @@ export async function checkRateLimit({
   const normalizedKey = ipaddr.isValid(key) ? normalizeIP(key) : key;
 
   const windowKey = `rate-limit:${options.identifier}:${normalizedKey}:${Math.floor(
-    now / options.windowInSeconds
+    now / options.windowInSeconds,
   )}`;
 
   // Get the current count from KV
   // NOTE (R04): This read-check-write is not atomic — under concurrent burst traffic,
   // multiple requests can read the same count and all pass the check. At <10k concurrent
   // users this is acceptable. For true atomicity, migrate to Cloudflare Durable Objects.
-  const currentCount = parseInt((await env.NEXT_INC_CACHE_KV.get(windowKey)) || "0");
+  const currentCount = parseInt((await env.APP_KV.get(windowKey)) || "0");
   const reset = (Math.floor(now / options.windowInSeconds) + 1) * options.windowInSeconds;
 
   if (currentCount >= options.limit) {
@@ -81,7 +81,7 @@ export async function checkRateLimit({
   }
 
   // Increment the counter
-  await env.NEXT_INC_CACHE_KV.put(windowKey, (currentCount + 1).toString(), {
+  await env.APP_KV.put(windowKey, (currentCount + 1).toString(), {
     expirationTtl: options.windowInSeconds,
   });
 

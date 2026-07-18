@@ -58,8 +58,8 @@ export function ReadinessPageShell({
             >
               2026 · practice only
             </Badge>
-            <span className="font-mono text-2xs text-muted-foreground">
-              Session {session.id.slice(-8)} · packet version {session.revision}
+            <span className="text-2xs text-muted-foreground">
+              Packet version {session.revision}
             </span>
             <span className="text-2xs text-muted-foreground">
               Guide dated {session.ruleEffectiveDate} · checklist checked {session.asOfDate}

@@ -27,7 +27,7 @@ const journey = [
     icon: CircleUserRoundIcon,
     title: "Profile",
     description:
-      "Upload synthetic documents, inspect evidence, correct fields, and explicitly confirm facts.",
+      "Upload practice documents, check the supporting words, correct mistakes, and confirm each fact yourself.",
   },
   {
     icon: BookOpenCheckIcon,
@@ -125,14 +125,14 @@ export default async function DashboardPage({
           <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
             <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70 bg-muted/20">
               <div>
-                <CardTitle className="text-base">Your rehearsal sessions</CardTitle>
+                <CardTitle className="text-base">Your practice sessions</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Only you can open these authenticated workspaces.
+                  Only you can open these private sessions.
                 </p>
               </div>
               {!showStart ? (
                 <Button asChild variant="outline">
-                  <Link href="/dashboard?new=1">New rehearsal</Link>
+                  <Link href="/dashboard?new=1">New practice session</Link>
                 </Button>
               ) : null}
             </CardHeader>
@@ -144,12 +144,12 @@ export default async function DashboardPage({
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold">Boston LIHTC rehearsal</p>
+                      <p className="font-bold">Boston LIHTC practice journey</p>
                       <Badge
                         variant="outline"
                         className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300"
                       >
-                        Synthetic 2026
+                        2026 practice only
                       </Badge>
                     </div>
                     <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -162,8 +162,8 @@ export default async function DashboardPage({
                     </p>
                   </div>
                   <Button asChild>
-                    <Link href={`/dashboard/${session.id}/${session.stage}`}>
-                      Resume session
+                    <Link href={`/dashboard/${session.id}/profile`}>
+                      Open session
                       <ArrowRightIcon className="h-4 w-4" />
                     </Link>
                   </Button>

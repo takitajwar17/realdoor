@@ -66,7 +66,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
       testimonial={{
         quote:
           "I could see exactly which document supported each field, correct it, and prepare a packet without giving up control.",
-        author: "Renter rehearsal principle",
+        author: "Renter control principle",
       }}
     >
       <div className="space-y-2.5">
@@ -74,7 +74,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
           Sign in to Vidicy
         </h1>
         <p className="text-sm leading-6 text-muted-foreground/90">
-          Open your private application-readiness workspace.
+          Open your private application-readiness session.
         </p>
       </div>
 

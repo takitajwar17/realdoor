@@ -113,7 +113,7 @@ export async function extractReadinessDocument(input: {
   }
 
   const text = documentText.slice(0, 60_000);
-  const extraction = text.includes("VIDICY SYNTHETIC")
+  const extraction = text.includes("VIDICY PRACTICE")
     ? extractFactsFromSyntheticText(text)
     : await extractWithFrozenAllowlist(text);
 

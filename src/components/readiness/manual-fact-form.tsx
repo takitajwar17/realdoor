@@ -3,11 +3,12 @@
 import { useActionState, useState } from "react";
 import { SaveIcon } from "lucide-react";
 
-import { INITIAL_READINESS_ACTION_STATE, saveManualFactAction } from "@/actions/readiness.action";
+import { saveManualFactAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 
 const fields = [
   {

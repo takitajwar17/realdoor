@@ -103,9 +103,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">1. Add synthetic documents</CardTitle>
+            <CardTitle className="text-base">1. Add practice documents</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Download the built-in samples or upload your own synthetic PDF, JPEG, or PNG.
+              Download the built-in samples or upload your own practice PDF, JPEG, or PNG.
             </p>
           </CardHeader>
           <CardContent className="p-5">
@@ -159,6 +159,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                               href={`/api/readiness/documents/${document.id}?sessionId=${appId}`}
                               target="_blank"
                               rel="noreferrer"
+                              prefetch={false}
                             >
                               Open <ExternalLinkIcon className="h-3.5 w-3.5" />
                             </Link>
@@ -166,6 +167,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                         </div>
                       </div>
                       <DocumentControls
+                        key={`${document.id}:${document.kind}:${document.payload.issuedOn ?? ""}`}
                         sessionId={appId}
                         documentId={document.id}
                         kind={document.kind}
@@ -181,7 +183,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                 <FileTextIcon className="h-6 w-6 text-muted-foreground" />
                 <p className="mt-3 text-sm font-bold">No documents yet</p>
                 <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">
-                  Start with the two built-in PDFs to run the complete demo path.
+                  Start with the two practice PDFs to try the complete journey.
                 </p>
               </div>
             )}
@@ -194,9 +196,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
           <div className="flex items-start gap-3">
             <ShieldAlertIcon className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-base">2. Confirm the calculation inputs</CardTitle>
+              <CardTitle className="text-base">
+                2. Confirm the facts used in the comparison
+              </CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                These four fields are the only values used in the rehearsal arithmetic. Manual
+                These four fields are the only values used in the practice calculation. Manual
                 entries are always labeled.
               </p>
             </div>
@@ -214,7 +218,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
               3. Review every suggested field against its document
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {visibleFacts.length} visible field{visibleFacts.length === 1 ? "" : "s"} ·{" "}
+              {visibleFacts.length} fact{visibleFacts.length === 1 ? "" : "s"} ready for review ·{" "}
               {workspace.confirmedFacts.length} confirmed
             </p>
           </div>
@@ -240,8 +244,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
             <CheckCircle2Icon className="h-7 w-7 text-muted-foreground" />
             <h2 className="mt-3 text-base font-bold">No suggested fields to review</h2>
             <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">
-              Upload a synthetic document, or enter the calculation inputs manually above. Nothing
-              is inferred from an absent document.
+              Upload a practice document, or enter the calculation inputs manually above. Nothing is
+              guessed when a document is missing.
             </p>
           </div>
         )}

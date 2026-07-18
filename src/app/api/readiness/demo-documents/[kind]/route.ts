@@ -7,14 +7,11 @@ import {
 } from "@/features/readiness/demo-documents";
 
 const fileNames: Record<SyntheticDocumentKind, string> = {
-  pay_stub: "vidicy-synthetic-pay-statement.pdf",
-  benefits_letter: "vidicy-synthetic-benefits-letter.pdf",
+  pay_stub: "vidicy-practice-pay-statement.pdf",
+  benefits_letter: "vidicy-practice-benefits-letter.pdf",
 };
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ kind: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ kind: string }> }) {
   const routeSession = await requireRouteSession();
   if ("response" in routeSession) return routeSession.response;
 

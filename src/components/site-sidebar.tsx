@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 /**
  * Server wrapper for the authenticated readiness navigation.
- * The sidebar stays stable across a renter's rehearsal surfaces.
+ * The sidebar stays stable across a renter's readiness journey.
  */
 export async function SiteSidebar() {
   const session = await getSessionFromCookie();

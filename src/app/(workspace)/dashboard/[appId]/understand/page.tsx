@@ -72,9 +72,9 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       }
     >
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/7 px-4 py-3 text-sm leading-6 text-amber-950 dark:text-amber-100">
-        <strong>Practice-data boundary:</strong> the official 2026 materials needed for an
-        authoritative result are not available in this demo. Vidicy does not substitute an older
-        year. The values below only let you practice the review process.
+        <strong>For practice only:</strong> the official 2026 materials needed for a real
+        application are not included here. Vidicy does not substitute an older year. The values
+        below only let you practice the review process.
       </div>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
@@ -105,14 +105,14 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                     tone="primary"
                   />
                   <Metric
-                    label="Synthetic 60% benchmark"
+                    label="Practice 60% benchmark"
                     value={money.format(comparison.incomeLimit)}
                     tone="amber"
                   />
                   <Metric
                     label="Arithmetic difference"
                     value={money.format(Math.abs(comparison.difference))}
-                    detail={`${comparison.relationship} the synthetic benchmark`}
+                    detail={`${comparison.relationship} the practice benchmark`}
                     tone="neutral"
                   />
                 </div>
@@ -198,7 +198,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
             </p>
             <div className="rounded-xl border border-border bg-muted/25 p-4">
               <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                Selected context
+                Guide details
               </p>
               <dl className="mt-3 space-y-3 text-xs">
                 <ContextRow label="Program" value={workspace.rulePack.program} />

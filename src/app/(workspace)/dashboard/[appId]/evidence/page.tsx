@@ -38,6 +38,14 @@ const auditLabels: Record<string, string> = {
   packet_downloaded: "Packet downloaded to the renter",
 };
 
+const subjectLabels: Record<string, string> = {
+  session: "Practice session",
+  document: "Document",
+  fact: "Profile field",
+  question: "Rule question",
+  packet: "Packet",
+};
+
 export default async function EvidencePage({ params }: { params: Promise<{ appId: string }> }) {
   const { appId } = await params;
   const auth = await requireVerifiedPageSession(`/dashboard/${appId}/evidence`);
@@ -72,23 +80,23 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
           label="Encrypted documents"
           value={workspace.documents.length}
         />
-        <TrailMetric icon={FileSearchIcon} label="Field records" value={workspace.facts.length} />
+        <TrailMetric
+          icon={FileSearchIcon}
+          label="Suggested and entered facts"
+          value={workspace.facts.length}
+        />
         <TrailMetric icon={CheckCircle2Icon} label="Confirmed facts" value={confirmedCount} />
         <TrailMetric
           icon={GitCommitHorizontalIcon}
           label="Packet version"
           value={workspace.session.revision}
         />
-        <TrailMetric
-          icon={HistoryIcon}
-          label="Private activity entries"
-          value={workspace.audit.length}
-        />
+        <TrailMetric icon={HistoryIcon} label="Activity entries" value={workspace.audit.length} />
       </section>
 
       <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
         <CardHeader className="border-b border-border/70 bg-muted/20">
-          <CardTitle className="text-base">Trust chain</CardTitle>
+          <CardTitle className="text-base">How Vidicy uses your information</CardTitle>
           <p className="text-sm text-muted-foreground">
             Every suggested field waits for your confirmation before Vidicy uses it.
           </p>
@@ -126,9 +134,10 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">Session event log</CardTitle>
+            <CardTitle className="text-base">Your session activity</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Values, source text, questions, and answers are deliberately absent from this log.
+              This history shows what happened and when. It never shows your values, source text,
+              questions, or answers.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -145,9 +154,8 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
                         <p className="text-sm font-bold">
                           {auditLabels[event.action] ?? event.action.replaceAll("_", " ")}
                         </p>
-                        <p className="mt-1 font-mono text-2xs text-muted-foreground">
-                          {event.subjectType}
-                          {event.subjectId ? ` · ${event.subjectId.slice(-8)}` : ""}
+                        <p className="mt-1 text-2xs text-muted-foreground">
+                          {subjectLabels[event.subjectType] ?? "Session activity"}
                         </p>
                       </div>
                     </div>
@@ -166,14 +174,14 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
                 ))}
               </ol>
             ) : (
-              <p className="p-6 text-sm text-muted-foreground">No events recorded.</p>
+              <p className="p-6 text-sm text-muted-foreground">No activity yet.</p>
             )}
           </CardContent>
         </Card>
 
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">Data boundaries</CardTitle>
+            <CardTitle className="text-base">What Vidicy keeps—and what it never creates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 p-5 text-sm leading-6">
             <Boundary

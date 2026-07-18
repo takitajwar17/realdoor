@@ -10,27 +10,15 @@ import {
   Trash2Icon,
 } from "lucide-react";
 
-import {
-  confirmReadinessFactAction,
-  INITIAL_READINESS_ACTION_STATE,
-  rejectReadinessFactAction,
-} from "@/actions/readiness.action";
+import { confirmReadinessFactAction, rejectReadinessFactAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
+import { getFactLabel } from "@/features/readiness/presentation";
 import { cn } from "@/lib/utils";
-
-const FACT_LABELS: Record<string, string> = {
-  household_size: "Household size",
-  employment_monthly_income: "Employment income / month",
-  benefits_monthly_income: "Benefits income / month",
-  other_monthly_income: "Other income / month",
-  full_name: "Full name",
-  current_address: "Current address",
-  document_issued_on: "Document date",
-};
 
 export type FactReviewItem = {
   id: string;
@@ -66,7 +54,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
             <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
               Profile field
             </p>
-            <h3 className="mt-1 text-base font-bold">{FACT_LABELS[item.key] ?? item.key}</h3>
+            <h3 className="mt-1 text-base font-bold">{getFactLabel(item.key)}</h3>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {item.conflict ? (
@@ -163,6 +151,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
                 href={`/api/readiness/documents/${item.documentId}?sessionId=${sessionId}`}
                 target="_blank"
                 rel="noreferrer"
+                prefetch={false}
               >
                 Open
                 <ExternalLinkIcon className="h-3.5 w-3.5" />

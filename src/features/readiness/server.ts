@@ -8,7 +8,6 @@ import {
   DOCUMENT_KIND,
   EXTRACTION_STATUS,
   FACT_STATUS,
-  READINESS_STAGE,
   readinessAuditTable,
   readinessDocumentTable,
   readinessFactTable,
@@ -114,7 +113,6 @@ export async function createReadinessSession(userId: string, now = new Date()) {
       userId,
       consentVersion: "2026-07-19-v1",
       consentedAt: now,
-      stage: READINESS_STAGE.PROFILE,
       targetYear: 2026,
       metro: SYNTHETIC_2026_RULE_PACK.metro,
       program: SYNTHETIC_2026_RULE_PACK.program,
@@ -142,18 +140,6 @@ export async function getReadinessSession(sessionId: string, userId: string) {
     .set({ lastAccessedAt: new Date() })
     .where(eq(readinessSessionTable.id, sessionId));
   return session;
-}
-
-export async function setReadinessStage(
-  sessionId: string,
-  userId: string,
-  stage: (typeof READINESS_STAGE)[keyof typeof READINESS_STAGE],
-) {
-  await assertOwnedSession(sessionId, userId);
-  await getDB()
-    .update(readinessSessionTable)
-    .set({ stage, lastAccessedAt: new Date() })
-    .where(eq(readinessSessionTable.id, sessionId));
 }
 
 async function decryptDocument(record: ReadinessDocumentRecord) {

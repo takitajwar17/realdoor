@@ -61,8 +61,8 @@ export default function PendingVerificationClient({ email }: { email: string }) 
     <AuthShell
       testimonial={{
         quote:
-          "Understand what the documents say, confirm what is true, and stay in control of what leaves the workspace.",
-        author: "Renter rehearsal principle",
+          "Understand what the documents say, confirm what is true, and stay in control of what leaves your session.",
+        author: "Renter control principle",
       }}
     >
       <div className="space-y-2.5">

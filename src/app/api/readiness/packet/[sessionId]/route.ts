@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { requireRouteSession } from "@/app/api/_utils/request-auth";
+import {
+  formatFactValue,
+  getDocumentKindLabel,
+  getFactLabel,
+} from "@/features/readiness/presentation";
 import { getReadinessWorkspace, recordPacketDownloaded } from "@/features/readiness/server";
 
 function escapeHtml(value: string | number) {
@@ -26,28 +31,38 @@ export async function GET(
     const confirmedRows = workspace.confirmedFacts
       .map(
         (fact) =>
-          `<tr><th scope="row">${escapeHtml(fact.key.replaceAll("_", " "))}</th><td>${escapeHtml(fact.value)}</td></tr>`,
+          `<tr><th scope="row">${escapeHtml(getFactLabel(fact.key))}</th><td>${escapeHtml(formatFactValue(fact.key, fact.value))}</td></tr>`,
       )
       .join("");
     const checklistRows = workspace.checklist
       .map(
         (item) =>
-          `<tr><th scope="row">${escapeHtml(item.label)}</th><td>${escapeHtml(item.state.replaceAll("_", " "))}</td><td>${escapeHtml(item.reason)}</td></tr>`,
+          `<tr><th scope="row">${escapeHtml(item.label)}</th><td>${escapeHtml(item.state[0].toUpperCase() + item.state.slice(1))}</td><td>${escapeHtml(item.reason)}</td></tr>`,
       )
       .join("");
     const documentItems = workspace.documents
       .filter((document) => document.included)
       .map(
         (document) =>
-          `<li>${escapeHtml(document.payload.name)} — ${escapeHtml(document.kind.replaceAll("_", " "))}</li>`,
+          `<li>${escapeHtml(document.payload.name)} — ${escapeHtml(getDocumentKindLabel(document.kind))}</li>`,
       )
       .join("");
     const comparison =
       workspace.comparison.status === "complete"
         ? `<p><strong>Confirmed annual income:</strong> $${escapeHtml(workspace.comparison.annualIncome.toLocaleString("en-US"))}</p>
-         <p><strong>Synthetic 60% benchmark:</strong> $${escapeHtml(workspace.comparison.incomeLimit.toLocaleString("en-US"))}</p>
+         <p><strong>Practice 60% benchmark:</strong> $${escapeHtml(workspace.comparison.incomeLimit.toLocaleString("en-US"))}</p>
          <p><strong>Arithmetic:</strong> <code>${escapeHtml(workspace.comparison.formula)}</code></p>`
         : `<p><strong>Unresolved:</strong> ${escapeHtml(workspace.comparison.reason)}</p>`;
+
+    const createdAt = `${new Date().toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "UTC",
+    })} UTC`;
+    const packetMoment = preview ? `Preview generated ${createdAt}` : `Downloaded ${createdAt}`;
+    const packetFooter = preview
+      ? "Previewed by the renter. Vidicy does not auto-send documents or packet content."
+      : "Downloaded by the renter. Vidicy does not auto-send documents or packet content.";
 
     const html = `<!doctype html>
 <html lang="en">
@@ -77,15 +92,15 @@ export async function GET(
   <header>
     <p class="eyebrow">Vidicy application-readiness packet</p>
     <h1>Boston LIHTC practice journey</h1>
-    <p>Renter-controlled summary · packet version ${escapeHtml(workspace.session.revision)} · downloaded ${escapeHtml(new Date().toISOString())}</p>
+    <p>Renter-controlled summary · packet version ${escapeHtml(workspace.session.revision)} · ${escapeHtml(packetMoment)}</p>
   </header>
-  <aside class="notice" aria-label="Important limitation"><strong>Not an eligibility decision.</strong> This packet uses clearly labeled demonstration values. It does not replace a property's requirements and has not been sent to anyone.</aside>
+  <aside class="notice" aria-label="Important limitation"><strong>Not an eligibility decision.</strong> This packet uses clearly labeled practice values. It does not replace a property's requirements and has not been sent to anyone.</aside>
   <section aria-labelledby="facts"><h2 id="facts">Renter-confirmed facts</h2><table><tbody>${confirmedRows || "<tr><td>No confirmed facts</td></tr>"}</tbody></table></section>
   <section aria-labelledby="comparison"><h2 id="comparison">Cited arithmetic</h2>${comparison}</section>
   <section aria-labelledby="checklist"><h2 id="checklist">Checklist states</h2><table><thead><tr><th scope="col">Item</th><th scope="col">State</th><th scope="col">Reason</th></tr></thead><tbody>${checklistRows}</tbody></table></section>
   <section aria-labelledby="documents"><h2 id="documents">Documents selected for the packet</h2><ul>${documentItems || "<li>No documents selected</li>"}</ul></section>
   <section aria-labelledby="sources"><h2 id="sources">Practice guide and sources</h2><p>${escapeHtml(workspace.rulePack.label)} · ${escapeHtml(workspace.rulePack.version)} · dated ${escapeHtml(workspace.rulePack.effectiveDate)}</p><ul>${workspace.rulePack.sources.map((source) => `<li><a href="${escapeHtml(source.url)}">${escapeHtml(source.title)}</a>: ${escapeHtml(source.passage)}</li>`).join("")}</ul></section>
-  <footer><p>Downloaded by the renter. Vidicy does not auto-send documents or packet content.</p></footer>
+  <footer><p>${escapeHtml(packetFooter)}</p></footer>
 </main>
 </body>
 </html>`;

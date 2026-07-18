@@ -81,15 +81,17 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground">Need demo files?</span>
+        <span className="text-xs font-semibold text-muted-foreground">
+          Want to try practice files?
+        </span>
         <Button asChild type="button" variant="outline" size="sm">
-          <Link href="/api/readiness/demo-documents/pay_stub">
+          <Link href="/api/readiness/demo-documents/pay_stub" prefetch={false}>
             <DownloadIcon className="h-3.5 w-3.5" />
             Practice pay statement
           </Link>
         </Button>
         <Button asChild type="button" variant="outline" size="sm">
-          <Link href="/api/readiness/demo-documents/benefits_letter">
+          <Link href="/api/readiness/demo-documents/benefits_letter" prefetch={false}>
             <DownloadIcon className="h-3.5 w-3.5" />
             Practice benefits letter
           </Link>

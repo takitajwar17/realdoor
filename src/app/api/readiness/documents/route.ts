@@ -78,6 +78,7 @@ export async function POST(request: Request) {
     );
   }
 
+  let phase = "validate upload";
   try {
     await checkActionRateLimit("readinessDocumentUpload", routeSession.session.userId, 30);
     const formData = await request.formData();
@@ -107,6 +108,7 @@ export async function POST(request: Request) {
       );
     }
 
+    phase = "read document";
     const pageCount =
       metadata.type === "application/pdf"
         ? await getReadinessPdfPageCount(bytes).catch(() => null)
@@ -118,6 +120,7 @@ export async function POST(request: Request) {
       );
     }
 
+    phase = "connect document storage";
     const { env, ctx } = await getCloudflareContext({ async: true });
     if (!env.R2) {
       return NextResponse.json({ error: "Document storage is unavailable." }, { status: 503 });
@@ -125,17 +128,20 @@ export async function POST(request: Request) {
 
     const documentId = `rdd_${crypto.randomUUID().replaceAll("-", "")}`;
     const r2Key = `readiness/${routeSession.session.userId}/${sessionId}/${documentId}.${metadata.extension}.rd1`;
+    phase = "encrypt document";
     const encryptedBytes = await sealBytes(bytes, {
       secret: getReadinessEncryptionSecret(),
       context: documentContentContext(sessionId, documentId),
     });
     const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 
+    phase = "save encrypted document";
     await env.R2.put(r2Key, encryptedBytes, {
       httpMetadata: { contentType: "application/octet-stream" },
       customMetadata: { sessionId, documentId, encrypted: "aes-256-gcm" },
     });
 
+    phase = "save document record";
     try {
       await insertReadinessDocument({
         id: documentId,
@@ -153,6 +159,7 @@ export async function POST(request: Request) {
       throw error;
     }
 
+    phase = "start document reading";
     ctx.waitUntil(
       processUploadedDocument({
         bytes,
@@ -171,7 +178,12 @@ export async function POST(request: Request) {
   } catch (error) {
     logger.error("Readiness upload failed", {
       userId: routeSession.session.userId,
+      phase,
       errorName: error instanceof Error ? error.name : "UnknownError",
+      errorMessage:
+        phase === "encrypt document" && error instanceof Error
+          ? error.message.slice(0, 200)
+          : undefined,
     });
     if (error instanceof DocumentUploadInputError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

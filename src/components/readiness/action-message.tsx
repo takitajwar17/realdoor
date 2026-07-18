@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReadinessActionState } from "@/actions/readiness.action";
+import type { ReadinessActionState } from "@/features/readiness/action-state";
 import { cn } from "@/lib/utils";
 
 export function ActionMessage({ state }: { state: ReadinessActionState }) {

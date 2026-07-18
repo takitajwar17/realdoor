@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Instrument_Serif } from "next/font/google";
 import { Inria_Serif } from "next/font/google";
 import { Manrope } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import "server-only";
 
 import { ThemeProvider } from "@/components/providers";
+import { PublicAnalytics } from "@/components/public-analytics";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NextTopLoader from "nextjs-toploader";
@@ -21,11 +21,7 @@ import {
 } from "@/constants";
 import { siteFaviconIcons } from "@/lib/site-icons";
 
-const ExternalScript = Script as unknown as ComponentType<{
-  src: string;
-  strategy?: "lazyOnload" | "afterInteractive" | "worker";
-  "data-key"?: string;
-}>;
+const THEME_BOOTSTRAP = `(()=>{try{const value=localStorage.getItem("theme");const selected=value==="dark"||value==="system"?value:"light";const resolved=selected==="system"&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":selected==="system"?"light":selected;const root=document.documentElement;root.classList.remove("light","dark");root.classList.add(resolved);root.style.colorScheme=resolved}catch{}})();`;
 
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
@@ -120,6 +116,9 @@ export default function BaseLayout({
       suppressHydrationWarning
       className={`${instrumentSerif.variable} ${inriaSerif.variable} ${manrope.variable}`}
     >
+      <head>
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+      </head>
       <body
         suppressHydrationWarning
         className="font-sans antialiased text-foreground bg-background"
@@ -130,21 +129,13 @@ export default function BaseLayout({
           height={4}
           showSpinner={false}
         />
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <ThemeProvider>
           <TooltipProvider delayDuration={100} skipDelayDuration={50}>
             {children}
           </TooltipProvider>
         </ThemeProvider>
         <Toaster closeButton position="top-right" expand duration={7000} />
-        <ExternalScript
-          src="https://analytics.ahrefs.com/analytics.js"
-          data-key="oZe+17dcsEEpe8y02wK7mA"
-          strategy="lazyOnload"
-        />
-        <ExternalScript
-          src="https://aromatic-caribou-889.convex.site/api/a/am_rLALT9FXrq74hEOQ"
-          strategy="lazyOnload"
-        />
+        <PublicAnalytics />
       </body>
     </html>
   );

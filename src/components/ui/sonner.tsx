@@ -1,13 +1,14 @@
 "use client";
 
 import { CircleCheck, Info, OctagonX, TriangleAlert } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
+
+import { useAppTheme } from "@/components/providers";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
+  const { theme } = useAppTheme();
 
   return (
     <Sonner
@@ -27,8 +28,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           description: "group-[.toast]:text-muted-foreground",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground font-medium",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-foreground font-medium",
+          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-foreground font-medium",
           closeButton:
             "group-[.toast]:border-border/60 group-[.toast]:bg-card/80 group-[.toast]:text-muted-foreground hover:group-[.toast]:bg-accent/60 hover:group-[.toast]:text-foreground transition-colors",
           success: "[&>[data-icon]]:text-status-success",

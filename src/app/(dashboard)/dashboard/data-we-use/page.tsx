@@ -60,7 +60,7 @@ export default function DataWeUsePage() {
             icon={Trash2Icon}
             title="Deletion"
             badge="Renter controlled"
-            body="Deleting a session removes its saved files and private workspace records. If Vidicy cannot remove every saved file, it will not claim that deletion succeeded. A packet already downloaded to your device stays under your control."
+            body="Deleting a session removes its saved files and private session details. If Vidicy cannot remove every saved file, it will not claim that deletion succeeded. A packet already downloaded to your device stays under your control."
           />
         </section>
 

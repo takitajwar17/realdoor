@@ -3,10 +3,7 @@
 import { useActionState, useState } from "react";
 import { Trash2Icon } from "lucide-react";
 
-import {
-  deleteReadinessSessionAction,
-  INITIAL_READINESS_ACTION_STATE,
-} from "@/actions/readiness.action";
+import { deleteReadinessSessionAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import {
   AlertDialog,
@@ -21,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 import { Label } from "@/components/ui/label";
 
 export function DeleteSessionDialog({ sessionId }: { sessionId: string }) {
@@ -40,10 +38,10 @@ export function DeleteSessionDialog({ sessionId }: { sessionId: string }) {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete this rehearsal session?</AlertDialogTitle>
+          <AlertDialogTitle>Delete this practice session?</AlertDialogTitle>
           <AlertDialogDescription>
-            Vidicy will remove its linked facts, questions, audit entries, and encrypted document objects. A packet
-            you already downloaded stays on your device. This cannot be undone.
+            Vidicy will remove its linked facts, questions, activity history, and encrypted
+            documents. A packet you already downloaded stays on your device. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <form action={action} className="space-y-4">

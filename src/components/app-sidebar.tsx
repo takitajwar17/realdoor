@@ -42,9 +42,8 @@ export function AppSidebar({
 }) {
   const { setOpenMobile } = useSidebar();
   const params = useParams<{ appId?: string }>();
-  const sessionId = typeof params.appId === "string" && params.appId.startsWith("rds_")
-    ? params.appId
-    : null;
+  const sessionId =
+    typeof params.appId === "string" && params.appId.startsWith("rds_") ? params.appId : null;
   const base = sessionId ? `/dashboard/${sessionId}` : null;
 
   const navMain = [
@@ -86,9 +85,11 @@ export function AppSidebar({
         <NavMain
           items={navMain}
           label="Application readiness"
-          action={{ title: "New rehearsal", url: "/dashboard?new=1" }}
+          action={{ title: "New practice session", url: "/dashboard?new=1" }}
         />
-        {secondaryItems.length > 0 ? <NavSecondary items={secondaryItems} className="mt-auto" /> : null}
+        {secondaryItems.length > 0 ? (
+          <NavSecondary items={secondaryItems} className="mt-auto" />
+        ) : null}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user || defaultUser} />
