@@ -14,11 +14,7 @@ import useSignOut from "@/hooks/useSignOut";
 import isProd from "@/utils/is-prod";
 import { AuthShell } from "../_components/auth-shell";
 
-export default function PendingVerificationClient({
-  email,
-}: {
-  email: string;
-}) {
+export default function PendingVerificationClient({ email }: { email: string }) {
   const router = useRouter();
   const { signOut } = useSignOut();
   const [lastResendTime, setLastResendTime] = useState<number | null>(null);
@@ -65,8 +61,8 @@ export default function PendingVerificationClient({
     <AuthShell
       testimonial={{
         quote:
-          "Our reviewers turned the morning file backlog into exact client fixes before lunch.",
-        author: "Agency Operations Manager",
+          "Understand what the documents say, confirm what is true, and stay in control of what leaves the workspace.",
+        author: "Renter rehearsal principle",
       }}
     >
       <div className="space-y-2.5">
@@ -75,8 +71,8 @@ export default function PendingVerificationClient({
         </h1>
         <p className="text-sm leading-6 text-muted-foreground/90">
           Your account is ready, but you need to verify{" "}
-          <span className="font-medium text-foreground">{email}</span> before you can continue.
-          The verification link expires in{" "}
+          <span className="font-medium text-foreground">{email}</span> before you can continue. The
+          verification link expires in{" "}
           {Math.floor(EMAIL_VERIFICATION_TOKEN_EXPIRATION_SECONDS / 3600)} hours.
         </p>
       </div>

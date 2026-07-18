@@ -55,7 +55,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       session={workspace.session}
       current="understand"
       title="Understand the arithmetic and its limits"
-      description="Every number below comes from a renter-confirmed field or the visibly labeled synthetic rule pack. The comparison is an explanation, not an application outcome."
+      description="Every number below comes from a fact you confirmed or the clearly labeled practice guide. The comparison is an explanation, not an application outcome."
       actions={
         <div className="flex gap-2">
           <Button asChild variant="outline">
@@ -72,7 +72,9 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       }
     >
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/7 px-4 py-3 text-sm leading-6 text-amber-950 dark:text-amber-100">
-        <strong>Synthetic rehearsal boundary:</strong> the repository contains FY2025 source files but no organizer-provided or official FY2026 MTSP pack. Vidicy does not substitute the prior year. The values on this page exist only to demonstrate the interaction and trust chain.
+        <strong>Practice-data boundary:</strong> the official 2026 materials needed for an
+        authoritative result are not available in this demo. Vidicy does not substitute an older
+        year. The values below only let you practice the review process.
       </div>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
@@ -83,9 +85,12 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                 <CalculatorIcon className="h-5 w-5" />
               </span>
               <div>
-                <CardTitle className="text-base">Deterministic income trace</CardTitle>
+                <CardTitle className="text-base">
+                  How your income comparison was calculated
+                </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Confirmed inputs → annualized total → cited synthetic benchmark → arithmetic difference.
+                  Your confirmed monthly amounts → annual total → cited practice benchmark →
+                  difference.
                 </p>
               </div>
             </div>
@@ -94,8 +99,16 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
             {comparison.status === "complete" && income.status === "complete" ? (
               <div className="space-y-5">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Metric label="Confirmed annual income" value={money.format(comparison.annualIncome)} tone="primary" />
-                  <Metric label="Synthetic 60% benchmark" value={money.format(comparison.incomeLimit)} tone="amber" />
+                  <Metric
+                    label="Confirmed annual income"
+                    value={money.format(comparison.annualIncome)}
+                    tone="primary"
+                  />
+                  <Metric
+                    label="Synthetic 60% benchmark"
+                    value={money.format(comparison.incomeLimit)}
+                    tone="amber"
+                  />
                   <Metric
                     label="Arithmetic difference"
                     value={money.format(Math.abs(comparison.difference))}
@@ -105,7 +118,9 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                 </div>
 
                 <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">Formula</p>
+                  <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    Formula
+                  </p>
                   <p className="mt-2 font-mono text-sm font-semibold">{income.formula}</p>
                   <div className="my-4 flex items-center gap-3 text-muted-foreground">
                     <Separator className="flex-1" />
@@ -119,10 +134,15 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                   {workspace.confirmedFacts
                     .filter((fact) => fact.key in factLabels)
                     .map((fact) => (
-                      <div key={fact.key} className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5 text-sm">
+                      <div
+                        key={fact.key}
+                        className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5 text-sm"
+                      >
                         <span className="text-muted-foreground">{factLabels[fact.key]}</span>
                         <span className="font-bold">
-                          {fact.key === "household_size" ? fact.value : `${money.format(Number(fact.value))} / month`}
+                          {fact.key === "household_size"
+                            ? fact.value
+                            : `${money.format(Number(fact.value))} / month`}
                         </span>
                       </div>
                     ))}
@@ -150,7 +170,9 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                 <ShieldAlertIcon className="h-7 w-7 text-status-warning" />
                 <h2 className="mt-3 text-base font-bold">Arithmetic remains unresolved</h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                  {comparison.status === "unresolved" ? comparison.reason : "Confirm all four calculation inputs first."}
+                  {comparison.status === "unresolved"
+                    ? comparison.reason
+                    : "Confirm all four calculation inputs first."}
                 </p>
                 <Button asChild className="mt-5">
                   <Link href={`/dashboard/${appId}/profile`}>Review Profile inputs</Link>
@@ -166,18 +188,23 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
           </CardHeader>
           <CardContent className="space-y-4 p-5 text-sm leading-6">
             <p>
-              This comparison does <strong>not</strong> determine eligibility, qualification, approval, denial, priority, or likelihood.
+              This comparison does <strong>not</strong> determine eligibility, qualification,
+              approval, denial, priority, or likelihood.
             </p>
             <p className="text-muted-foreground">
-              A real property may use unit designations, income definitions, asset rules, verification dates, household composition rules, and local procedures that are not present in this rehearsal pack.
+              A real property may use unit designations, income definitions, asset rules,
+              verification dates, household composition rules, and local procedures that are not
+              present in this practice guide.
             </p>
             <div className="rounded-xl border border-border bg-muted/25 p-4">
-              <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">Selected context</p>
+              <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Selected context
+              </p>
               <dl className="mt-3 space-y-3 text-xs">
                 <ContextRow label="Program" value={workspace.rulePack.program} />
                 <ContextRow label="Metro" value={workspace.rulePack.metro} />
-                <ContextRow label="Pack" value={workspace.rulePack.version} />
-                <ContextRow label="Effective" value={workspace.rulePack.effectiveDate} />
+                <ContextRow label="Version" value={workspace.rulePack.version} />
+                <ContextRow label="Guide date" value={workspace.rulePack.effectiveDate} />
               </dl>
             </div>
           </CardContent>
@@ -191,7 +218,9 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
               <CircleHelpIcon className="mt-0.5 h-5 w-5 text-primary" />
               <div>
                 <CardTitle className="text-base">Ask a rule question</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">Answers are constrained to the frozen corpus.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Answers use only the saved practice guide shown here.
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -212,26 +241,36 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                   return (
                     <article key={question.id} className="space-y-3 p-5">
                       <p className="text-sm font-bold">{question.payload.question}</p>
-                      <p className="text-sm leading-6 text-muted-foreground">{question.payload.answer}</p>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        {question.payload.answer}
+                      </p>
                       <div className="flex flex-wrap gap-2">
-                        {sourceIds.length > 0 ? sourceIds.map((sourceId) => {
-                          const source = getRuleSource(sourceId);
-                          return source ? (
-                            <SourceCitationDialog
-                              key={source.id}
-                              source={source}
-                              version={workspace.rulePack.version}
-                              effectiveDate={workspace.rulePack.effectiveDate}
-                            />
-                          ) : null;
-                        }) : <Badge variant="outline">Abstained · no source applied</Badge>}
+                        {sourceIds.length > 0 ? (
+                          sourceIds.map((sourceId) => {
+                            const source = getRuleSource(sourceId);
+                            return source ? (
+                              <SourceCitationDialog
+                                key={source.id}
+                                source={source}
+                                version={workspace.rulePack.version}
+                                effectiveDate={workspace.rulePack.effectiveDate}
+                              />
+                            ) : null;
+                          })
+                        ) : (
+                          <Badge variant="outline">
+                            No answer shown · guide did not cover this
+                          </Badge>
+                        )}
                       </div>
                     </article>
                   );
                 })}
               </div>
             ) : (
-              <p className="p-6 text-sm text-muted-foreground">No questions yet. Try “How is monthly income annualized?”</p>
+              <p className="p-6 text-sm text-muted-foreground">
+                No questions yet. Try “How is monthly income annualized?”
+              </p>
             )}
           </CardContent>
         </Card>
@@ -240,8 +279,23 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
   );
 }
 
-function Metric({ label, value, detail, tone }: { label: string; value: string; detail?: string; tone: "primary" | "amber" | "neutral" }) {
-  const className = tone === "primary" ? "bg-primary/8 text-primary" : tone === "amber" ? "bg-amber-500/8 text-amber-700 dark:text-amber-300" : "bg-muted/50 text-foreground";
+function Metric({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+  tone: "primary" | "amber" | "neutral";
+}) {
+  const className =
+    tone === "primary"
+      ? "bg-primary/8 text-primary"
+      : tone === "amber"
+        ? "bg-amber-500/8 text-amber-700 dark:text-amber-300"
+        : "bg-muted/50 text-foreground";
   return (
     <div className={`rounded-xl border border-border p-4 ${className}`}>
       <p className="text-xs font-semibold opacity-75">{label}</p>

@@ -7,17 +7,21 @@ import {
   confirmFactSchema,
   createSessionSchema,
   deleteSessionSchema,
-  manualIncomeSchema,
+  documentMetadataSchema,
+  manualFactSchema,
   rejectFactSchema,
+  removeDocumentSchema,
   ruleQuestionSchema,
   updateDocumentSchema,
 } from "@/features/readiness/contracts";
 import {
   confirmReadinessFact,
+  confirmReadinessDocumentMetadata,
   createReadinessSession,
+  deleteReadinessDocumentRecord,
   deleteReadinessSessionRecord,
   rejectReadinessFact,
-  saveManualIncomeFacts,
+  saveManualFact,
   saveRuleQuestion,
   setDocumentIncluded,
 } from "@/features/readiness/server";
@@ -59,7 +63,7 @@ export async function createReadinessSessionAction(
     useSyntheticRehearsal: formData.get("useSyntheticRehearsal") === "on",
   });
   if (!parsed.success) {
-    return errorState("Confirm both acknowledgements to start a synthetic rehearsal session.");
+    return errorState("Confirm both acknowledgements to start your practice session.");
   }
 
   const auth = await requireReadinessActionAuth();
@@ -68,26 +72,72 @@ export async function createReadinessSessionAction(
   redirect(`/dashboard/${readinessSession.id}/profile`);
 }
 
-export async function saveManualIncomeAction(
+export async function saveManualFactAction(
   _previousState: ReadinessActionState,
   formData: FormData,
 ): Promise<ReadinessActionState> {
-  const parsed = manualIncomeSchema.safeParse(Object.fromEntries(formData));
+  const parsed = manualFactSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return errorState("Enter a household size from 1–8 and non-negative monthly amounts.");
+    return errorState("Enter a valid value. Household size must be a whole number from 1–8.");
   }
 
   try {
     const auth = await requireReadinessActionAuth();
     await checkActionRateLimit("saveManualReadinessFacts", auth.userId, 60);
-    await saveManualIncomeFacts({ ...parsed.data, userId: auth.userId });
+    await saveManualFact({ ...parsed.data, userId: auth.userId });
     refreshSessionSurfaces(parsed.data.sessionId);
-    return { status: "success", message: "Confirmed facts saved. Derived surfaces were refreshed." };
+    return { status: "success", message: "Saved. Your comparison and packet are up to date." };
   } catch (error) {
     logger.warn("Manual readiness fact update failed", {
       errorName: error instanceof Error ? error.name : "UnknownError",
     });
-    return errorState("We could not save those facts. Refresh and try again.");
+    return errorState("We could not save that value. Refresh and try again.");
+  }
+}
+
+export async function confirmDocumentDetailsAction(
+  _previousState: ReadinessActionState,
+  formData: FormData,
+): Promise<ReadinessActionState> {
+  const parsed = documentMetadataSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return errorState("Choose a document type and enter a valid date, or leave the date blank.");
+  }
+
+  try {
+    const auth = await requireReadinessActionAuth();
+    await checkActionRateLimit("confirmReadinessDocumentDetails", auth.userId, 120);
+    await confirmReadinessDocumentMetadata({ ...parsed.data, userId: auth.userId });
+    refreshSessionSurfaces(parsed.data.sessionId);
+    return { status: "success", message: "Document details confirmed." };
+  } catch (error) {
+    logger.warn("Readiness document detail confirmation failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
+    return errorState("We could not save these document details. Refresh and try again.");
+  }
+}
+
+export async function removeReadinessDocumentAction(
+  _previousState: ReadinessActionState,
+  formData: FormData,
+): Promise<ReadinessActionState> {
+  const parsed = removeDocumentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return errorState("This document could not be identified.");
+
+  try {
+    const auth = await requireReadinessActionAuth();
+    await checkActionRateLimit("removeReadinessDocument", auth.userId, 60);
+    await deleteReadinessDocumentRecord({ ...parsed.data, userId: auth.userId });
+    refreshSessionSurfaces(parsed.data.sessionId);
+    return { status: "success", message: "Document and its suggested fields were removed." };
+  } catch (error) {
+    logger.error("Readiness document removal failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
+    return errorState(
+      "The document was not removed because all linked copies could not be deleted.",
+    );
   }
 }
 
@@ -103,7 +153,10 @@ export async function confirmReadinessFactAction(
     await checkActionRateLimit("confirmReadinessFact", auth.userId, 120);
     await confirmReadinessFact({ ...parsed.data, userId: auth.userId });
     refreshSessionSurfaces(parsed.data.sessionId);
-    return { status: "success", message: "Field confirmed and downstream views refreshed." };
+    return {
+      status: "success",
+      message: "Field confirmed. Your comparison and packet are up to date.",
+    };
   } catch (error) {
     logger.warn("Readiness fact confirmation failed", {
       errorName: error instanceof Error ? error.name : "UnknownError",
@@ -136,7 +189,10 @@ export async function saveRuleQuestionAction(
     refreshSessionSurfaces(parsed.data.sessionId);
     return {
       status: "success",
-      message: answer.status === "answered" ? "Answered from the frozen corpus." : "The corpus abstained.",
+      message:
+        answer.status === "answered"
+          ? "Answered from the saved practice guide."
+          : "The available guide does not support an answer to that question.",
     };
   } catch (error) {
     logger.warn("Readiness rule question failed", {
@@ -174,7 +230,9 @@ export async function deleteReadinessSessionAction(
     logger.error("Readiness session deletion failed", {
       errorName: error instanceof Error ? error.name : "UnknownError",
     });
-    return errorState("The session was not deleted because every linked record could not be removed.");
+    return errorState(
+      "The session was not deleted because every linked record could not be removed.",
+    );
   }
 
   revalidatePath("/dashboard");

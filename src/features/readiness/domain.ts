@@ -53,7 +53,17 @@ export type RulePack = {
   version: string;
   authority: "official" | "organizer" | "synthetic-rehearsal";
   incomeLimits60Percent: Partial<Record<number, number>>;
+  calculationSourceIds: string[];
+  checklistRequirements: ChecklistRequirement[];
   sources: SourceCitation[];
+};
+
+export type ChecklistRequirement = {
+  id: string;
+  label: string;
+  kind: ReadinessDocument["kind"];
+  maxAgeDays: number | null;
+  sourceId: string;
 };
 
 export type ReadinessDocument = {
@@ -62,6 +72,7 @@ export type ReadinessDocument = {
   name: string;
   issuedOn: string | null;
   included: boolean;
+  metadataConfirmed: boolean;
 };
 
 function clampUnit(value: number) {
@@ -102,9 +113,7 @@ export function normalizeExtractedFact(input: {
     value,
     confidence: clampUnit(input.confidence),
     sourceQuote,
-    ...(typeof input.page === "number" && input.page > 0
-      ? { page: Math.floor(input.page) }
-      : {}),
+    ...(typeof input.page === "number" && input.page > 0 ? { page: Math.floor(input.page) } : {}),
     ...(input.box ? { box: normalizeEvidenceBox(input.box) } : {}),
     status: "extracted",
   };
@@ -250,7 +259,7 @@ export function calculateIncomeComparison(input: {
     difference,
     relationship: difference < 0 ? "below" : difference > 0 ? "above" : "equal",
     formula: `${formatCurrency(summary.annualIncome)} − ${formatCurrency(incomeLimit)} = ${formatCurrency(difference)}`,
-    sourceIds: input.rulePack.sources.map(({ id }) => id),
+    sourceIds: input.rulePack.calculationSourceIds,
   };
 }
 
@@ -267,40 +276,36 @@ export function validateRulePack(pack: RulePack, sessionYear: number): RulePack 
     throw new Error("Rule pack must include at least one source citation");
   }
 
+  const sourceIds = new Set(pack.sources.map(({ id }) => id));
+  if (
+    pack.calculationSourceIds.length === 0 ||
+    pack.calculationSourceIds.some((id) => !sourceIds.has(id))
+  ) {
+    throw new Error("Calculation sources must resolve to saved source passages");
+  }
+
+  if (
+    pack.checklistRequirements.length === 0 ||
+    pack.checklistRequirements.some((requirement) => !sourceIds.has(requirement.sourceId))
+  ) {
+    throw new Error("Checklist requirements must resolve to saved source passages");
+  }
+
   return pack;
 }
 
 export type ChecklistState = "present" | "missing" | "expired" | "unresolved";
 
-type ChecklistItem = {
+export type ChecklistItem = {
   id: string;
   label: string;
   state: ChecklistState;
   reason: string;
+  sourceId: string;
+  asOf: string;
+  maxAgeDays: number | null;
   documentId?: string;
 };
-
-const CHECKLIST_REQUIREMENTS: Array<{
-  id: string;
-  label: string;
-  kind: ReadinessDocument["kind"];
-  maxAgeDays: number | null;
-}> = [
-  { id: "pay-stub", label: "Recent pay stub", kind: "pay_stub", maxAgeDays: 120 },
-  {
-    id: "benefits-letter",
-    label: "Benefits verification letter",
-    kind: "benefits_letter",
-    maxAgeDays: 365,
-  },
-  { id: "photo-id", label: "Photo identification", kind: "photo_id", maxAgeDays: null },
-  {
-    id: "bank-statement",
-    label: "Recent bank statement",
-    kind: "bank_statement",
-    maxAgeDays: 90,
-  },
-];
 
 function daysBetween(earlierIsoDate: string, laterIsoDate: string) {
   const earlier = Date.parse(`${earlierIsoDate}T00:00:00.000Z`);
@@ -316,7 +321,7 @@ export function deriveChecklist(input: {
 }): ChecklistItem[] {
   validateRulePack(input.rules, 2026);
 
-  return CHECKLIST_REQUIREMENTS.map((requirement) => {
+  return input.rules.checklistRequirements.map((requirement) => {
     const document = input.documents.find(({ kind }) => kind === requirement.kind);
     if (!document) {
       return {
@@ -324,6 +329,22 @@ export function deriveChecklist(input: {
         label: requirement.label,
         state: "missing",
         reason: "Missing from this session.",
+        sourceId: requirement.sourceId,
+        asOf: input.asOf,
+        maxAgeDays: requirement.maxAgeDays,
+      };
+    }
+
+    if (!document.metadataConfirmed) {
+      return {
+        id: requirement.id,
+        label: requirement.label,
+        state: "unresolved",
+        reason: "Confirm the document type and date before this item can be used.",
+        sourceId: requirement.sourceId,
+        asOf: input.asOf,
+        maxAgeDays: requirement.maxAgeDays,
+        documentId: document.id,
       };
     }
 
@@ -333,6 +354,9 @@ export function deriveChecklist(input: {
         label: requirement.label,
         state: "present",
         reason: "Present in this session.",
+        sourceId: requirement.sourceId,
+        asOf: input.asOf,
+        maxAgeDays: requirement.maxAgeDays,
         documentId: document.id,
       };
     }
@@ -343,6 +367,9 @@ export function deriveChecklist(input: {
         label: requirement.label,
         state: "unresolved",
         reason: "Present in this session, but its issue date is unresolved.",
+        sourceId: requirement.sourceId,
+        asOf: input.asOf,
+        maxAgeDays: requirement.maxAgeDays,
         documentId: document.id,
       };
     }
@@ -354,6 +381,9 @@ export function deriveChecklist(input: {
         label: requirement.label,
         state: "unresolved",
         reason: "The document date could not be verified.",
+        sourceId: requirement.sourceId,
+        asOf: input.asOf,
+        maxAgeDays: requirement.maxAgeDays,
         documentId: document.id,
       };
     }
@@ -363,7 +393,10 @@ export function deriveChecklist(input: {
         id: requirement.id,
         label: requirement.label,
         state: "expired",
-        reason: `Expired per this checklist (${ageDays} days old; limit ${requirement.maxAgeDays}).`,
+        reason: `Dated ${document.issuedOn}; ${ageDays} days old on ${input.asOf}. This practice guide uses a ${requirement.maxAgeDays}-day window.`,
+        sourceId: requirement.sourceId,
+        asOf: input.asOf,
+        maxAgeDays: requirement.maxAgeDays,
         documentId: document.id,
       };
     }
@@ -372,17 +405,22 @@ export function deriveChecklist(input: {
       id: requirement.id,
       label: requirement.label,
       state: "present",
-      reason: "Present in this session and within this checklist's date window.",
+      reason: `Dated ${document.issuedOn}; within this practice guide's ${requirement.maxAgeDays}-day window as of ${input.asOf}.`,
+      sourceId: requirement.sourceId,
+      asOf: input.asOf,
+      maxAgeDays: requirement.maxAgeDays,
       documentId: document.id,
     };
   });
 }
 
-export function buildAuditEntry<T extends {
-  action: string;
-  sessionId: string;
-  subjectId?: string;
-  occurredAt: string;
-}>(input: T): T {
+export function buildAuditEntry<
+  T extends {
+    action: string;
+    sessionId: string;
+    subjectId?: string;
+    occurredAt: string;
+  },
+>(input: T): T {
   return input;
 }

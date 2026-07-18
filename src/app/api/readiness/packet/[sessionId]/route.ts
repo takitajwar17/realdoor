@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireRouteSession } from "@/app/api/_utils/request-auth";
-import { getReadinessWorkspace } from "@/features/readiness/server";
+import { getReadinessWorkspace, recordPacketDownloaded } from "@/features/readiness/server";
 
 function escapeHtml(value: string | number) {
   return String(value)
@@ -37,13 +37,17 @@ export async function GET(
       .join("");
     const documentItems = workspace.documents
       .filter((document) => document.included)
-      .map((document) => `<li>${escapeHtml(document.payload.name)} — ${escapeHtml(document.kind.replaceAll("_", " "))}</li>`)
+      .map(
+        (document) =>
+          `<li>${escapeHtml(document.payload.name)} — ${escapeHtml(document.kind.replaceAll("_", " "))}</li>`,
+      )
       .join("");
-    const comparison = workspace.comparison.status === "complete"
-      ? `<p><strong>Confirmed annual income:</strong> $${escapeHtml(workspace.comparison.annualIncome.toLocaleString("en-US"))}</p>
+    const comparison =
+      workspace.comparison.status === "complete"
+        ? `<p><strong>Confirmed annual income:</strong> $${escapeHtml(workspace.comparison.annualIncome.toLocaleString("en-US"))}</p>
          <p><strong>Synthetic 60% benchmark:</strong> $${escapeHtml(workspace.comparison.incomeLimit.toLocaleString("en-US"))}</p>
          <p><strong>Arithmetic:</strong> <code>${escapeHtml(workspace.comparison.formula)}</code></p>`
-      : `<p><strong>Unresolved:</strong> ${escapeHtml(workspace.comparison.reason)}</p>`;
+        : `<p><strong>Unresolved:</strong> ${escapeHtml(workspace.comparison.reason)}</p>`;
 
     const html = `<!doctype html>
 <html lang="en">
@@ -72,19 +76,23 @@ export async function GET(
 <main>
   <header>
     <p class="eyebrow">Vidicy application-readiness packet</p>
-    <h1>Boston LIHTC synthetic rehearsal</h1>
-    <p>Renter-controlled summary · session revision ${escapeHtml(workspace.session.revision)} · generated ${escapeHtml(new Date().toISOString())}</p>
+    <h1>Boston LIHTC practice journey</h1>
+    <p>Renter-controlled summary · packet version ${escapeHtml(workspace.session.revision)} · downloaded ${escapeHtml(new Date().toISOString())}</p>
   </header>
-  <aside class="notice" aria-label="Important limitation"><strong>Not an eligibility decision.</strong> This packet uses a synthetic 2026 rehearsal pack because the organizer-provided 2026 corpus is absent. It has not been sent to anyone.</aside>
-  <section aria-labelledby="facts"><h2 id="facts">Renter-confirmed facts</h2><table><tbody>${confirmedRows || '<tr><td>No confirmed facts</td></tr>'}</tbody></table></section>
+  <aside class="notice" aria-label="Important limitation"><strong>Not an eligibility decision.</strong> This packet uses clearly labeled demonstration values. It does not replace a property's requirements and has not been sent to anyone.</aside>
+  <section aria-labelledby="facts"><h2 id="facts">Renter-confirmed facts</h2><table><tbody>${confirmedRows || "<tr><td>No confirmed facts</td></tr>"}</tbody></table></section>
   <section aria-labelledby="comparison"><h2 id="comparison">Cited arithmetic</h2>${comparison}</section>
   <section aria-labelledby="checklist"><h2 id="checklist">Checklist states</h2><table><thead><tr><th scope="col">Item</th><th scope="col">State</th><th scope="col">Reason</th></tr></thead><tbody>${checklistRows}</tbody></table></section>
-  <section aria-labelledby="documents"><h2 id="documents">Documents selected for the packet</h2><ul>${documentItems || '<li>No documents selected</li>'}</ul></section>
-  <section aria-labelledby="sources"><h2 id="sources">Rule pack and sources</h2><p>${escapeHtml(workspace.rulePack.label)} · ${escapeHtml(workspace.rulePack.version)} · effective ${escapeHtml(workspace.rulePack.effectiveDate)}</p><ul>${workspace.rulePack.sources.map((source) => `<li><a href="${escapeHtml(source.url)}">${escapeHtml(source.title)}</a>: ${escapeHtml(source.passage)}</li>`).join("")}</ul></section>
+  <section aria-labelledby="documents"><h2 id="documents">Documents selected for the packet</h2><ul>${documentItems || "<li>No documents selected</li>"}</ul></section>
+  <section aria-labelledby="sources"><h2 id="sources">Practice guide and sources</h2><p>${escapeHtml(workspace.rulePack.label)} · ${escapeHtml(workspace.rulePack.version)} · dated ${escapeHtml(workspace.rulePack.effectiveDate)}</p><ul>${workspace.rulePack.sources.map((source) => `<li><a href="${escapeHtml(source.url)}">${escapeHtml(source.title)}</a>: ${escapeHtml(source.passage)}</li>`).join("")}</ul></section>
   <footer><p>Downloaded by the renter. Vidicy does not auto-send documents or packet content.</p></footer>
 </main>
 </body>
 </html>`;
+
+    if (!preview) {
+      await recordPacketDownloaded(sessionId, auth.session.userId);
+    }
 
     return new Response(html, {
       headers: {

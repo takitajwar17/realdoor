@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { getSessionFromCookie, requireAdmin } from "@/utils/auth";
+import { getSessionFromCookie } from "@/utils/auth";
 import { PENDING_VERIFICATION_ROUTE } from "@/constants";
 
 function getSignInHref(redirectTo?: string): "/sign-in" | `/sign-in?redirect=${string}` {
@@ -28,16 +28,6 @@ export const requireVerifiedPageSession = cache(async (redirectTo?: string) => {
 
   if (!session.user.emailVerified) {
     redirect(PENDING_VERIFICATION_ROUTE);
-  }
-
-  return session;
-});
-
-export const requireAdminPageSession = cache(async () => {
-  const session = await requireAdmin({ doNotThrowError: true });
-
-  if (!session) {
-    redirect("/");
   }
 
   return session;

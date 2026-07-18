@@ -26,18 +26,12 @@ import { useServerAction } from "zsa-react";
 import Link from "next/link";
 import SSOButtons from "../_components/sso-buttons";
 import { useState } from "react";
-import {
-  ChevronLeftIcon,
-  EyeIcon,
-  EyeOffIcon,
-} from "lucide-react";
+import { ChevronLeftIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { REDIRECT_AFTER_SIGN_IN } from "@/constants";
 import { useCsrfToken } from "@/components/csrf-provider";
 import { getAuthRouteHref, getPostAuthRedirectPath } from "@/utils/auth-redirect";
-import {
-  type EmailSignupStep,
-} from "./progressive-signup";
+type EmailSignupStep = "choice" | "details";
 
 interface SignUpClientProps {
   email: string;
@@ -116,17 +110,10 @@ const SignUpPage = ({
     signUp({ ...data, firstName, lastName, csrfToken, verifiedRedirectPath: redirectPath });
   };
 
-  const stepCopy: Record<
-    EmailSignupStep,
-    { title: string; description: string }
-  > = {
+  const stepCopy: Record<EmailSignupStep, { title: string; description: string }> = {
     choice: {
       title: "Create your Vidicy account",
       description: "Build a private, renter-controlled application-readiness workspace.",
-    },
-    email: {
-      title: "Create your account",
-      description: "Add the name that should appear in your private workspace.",
     },
     details: {
       title: "Create your account",
@@ -146,8 +133,8 @@ const SignUpPage = ({
     <AuthShell
       testimonial={{
         quote:
-          "Our reviewers turned the morning file backlog into exact client fixes before lunch.",
-        author: "Agency Operations Manager",
+          "Understand what the documents say, confirm what is true, and stay in control of what leaves the workspace.",
+        author: "Renter rehearsal principle",
       }}
     >
       <div className="space-y-2.5">
@@ -186,7 +173,9 @@ const SignUpPage = ({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium tracking-[0.01em] text-foreground/90">Email address</FormLabel>
+                    <FormLabel className="text-[13px] font-medium tracking-[0.01em] text-foreground/90">
+                      Email address
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -207,7 +196,9 @@ const SignUpPage = ({
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium tracking-[0.01em] text-foreground/90">Full Name</FormLabel>
+                    <FormLabel className="text-[13px] font-medium tracking-[0.01em] text-foreground/90">
+                      Full Name
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g. John Doe"
@@ -226,7 +217,9 @@ const SignUpPage = ({
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium tracking-[0.01em] text-foreground/90">Create Password</FormLabel>
+                    <FormLabel className="text-[13px] font-medium tracking-[0.01em] text-foreground/90">
+                      Create Password
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -250,7 +243,9 @@ const SignUpPage = ({
                         </button>
                       </div>
                     </FormControl>
-                    <p className="text-xs font-medium tracking-[0.01em] text-muted-foreground/85">Must be at least 8 characters</p>
+                    <p className="text-xs font-medium tracking-[0.01em] text-muted-foreground/85">
+                      Must be at least 8 characters
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -313,7 +308,12 @@ const SignUpPage = ({
                 />
 
                 <div className="mt-4 flex w-full gap-3">
-                  <Button type="button" variant="outline" className="h-11 flex-1 text-sm font-semibold tracking-[0.01em]" onClick={handleBack}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 flex-1 text-sm font-semibold tracking-[0.01em]"
+                    onClick={handleBack}
+                  >
                     <ChevronLeftIcon className="mr-2 h-4 w-4" />
                     Back
                   </Button>
@@ -348,7 +348,6 @@ const SignUpPage = ({
           Sign in
         </Link>
       </p>
-
     </AuthShell>
   );
 };

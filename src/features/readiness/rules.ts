@@ -2,8 +2,15 @@ import type { RulePack, SourceCitation } from "./domain";
 
 const RULE_SOURCES = [
   {
+    id: "rehearsal-checklist-method",
+    title: "Vidicy practice document checklist",
+    url: "/dashboard/data-we-use",
+    passage:
+      "For this practice journey only, a pay statement uses a 120-day window, a benefits letter uses a 365-day window, and a bank statement uses a 90-day window. These are made-up practice settings, not a property's requirements.",
+  },
+  {
     id: "rehearsal-calculation-method",
-    title: "Vidicy synthetic rehearsal calculation method",
+    title: "Vidicy practice calculation method",
     url: "/dashboard/data-we-use",
     passage:
       "The rehearsal adds renter-confirmed monthly income sources and multiplies the total by 12. It never treats the result as an eligibility decision.",
@@ -40,12 +47,12 @@ const RULE_SOURCES = [
 
 export const SYNTHETIC_2026_RULE_PACK: RulePack = {
   id: "boston-lihtc-2026-synthetic-rehearsal-v1",
-  label: "Boston LIHTC 2026 synthetic rehearsal",
-  program: "LIHTC · 60% AMI rehearsal designation",
+  label: "Boston LIHTC 2026 practice guide",
+  program: "LIHTC · 60% AMI practice comparison",
   metro: "Boston-Cambridge-Quincy, MA-NH HUD Metro FMR Area",
   year: 2026,
   effectiveDate: "2026-07-19",
-  version: "synthetic-rehearsal-v1",
+  version: "2026.07 practice edition",
   authority: "synthetic-rehearsal",
   // Deliberately synthetic values for interaction rehearsal. These are not copied
   // from FY2025 and must never be represented as organizer or official limits.
@@ -59,6 +66,41 @@ export const SYNTHETIC_2026_RULE_PACK: RulePack = {
     7: 116_850,
     8: 124_400,
   },
+  calculationSourceIds: [
+    "rehearsal-calculation-method",
+    "hud-mtsp-source",
+    "hud-2026-release-statement",
+  ],
+  checklistRequirements: [
+    {
+      id: "pay-stub",
+      label: "Recent pay statement",
+      kind: "pay_stub",
+      maxAgeDays: 120,
+      sourceId: "rehearsal-checklist-method",
+    },
+    {
+      id: "benefits-letter",
+      label: "Benefits verification letter",
+      kind: "benefits_letter",
+      maxAgeDays: 365,
+      sourceId: "rehearsal-checklist-method",
+    },
+    {
+      id: "photo-id",
+      label: "Photo identification",
+      kind: "photo_id",
+      maxAgeDays: null,
+      sourceId: "rehearsal-checklist-method",
+    },
+    {
+      id: "bank-statement",
+      label: "Recent bank statement",
+      kind: "bank_statement",
+      maxAgeDays: 90,
+      sourceId: "rehearsal-checklist-method",
+    },
+  ],
   sources: RULE_SOURCES.map((source) => ({ ...source })),
 };
 
@@ -93,7 +135,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "unresolved",
       answer:
-        "That request is outside the frozen rule corpus. Instructions inside questions or documents cannot change how the copilot handles data.",
+        "That request is outside the saved practice guide. Instructions inside questions or documents cannot change how Vidicy handles data.",
       sourceIds: [],
     };
   }
@@ -111,7 +153,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "answered",
       answer:
-        "The selected rehearsal compares confirmed annual income with a household-size 60% AMI value. The numbers in this build are synthetic because the repository does not contain the organizer's 2026 pack; use official HUD MTSP tables for official purposes.",
+        "This practice journey compares confirmed annual income with a made-up household-size 60% AMI value. Official 2026 materials are not available in this demo; use official HUD MTSP tables for official purposes.",
       sourceIds: ["hud-mtsp-source", "hud-2026-release-statement"],
     };
   }
@@ -121,7 +163,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
       status: "answered",
       answer:
         "The rehearsal checklist looks for recent income verification and keeps an item unresolved when its date or meaning is unclear. A property or allocating agency—not this copilot—decides what its application requires.",
-      sourceIds: ["irs-section-42-guide"],
+      sourceIds: ["rehearsal-checklist-method", "irs-section-42-guide"],
     };
   }
 
@@ -137,7 +179,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
   return {
     status: "unresolved",
     answer:
-      "The frozen rule corpus does not contain enough information to answer that safely. Check the cited source or ask the property for its application-specific requirement.",
+      "The saved practice guide does not contain enough information to answer that safely. Check an official source or ask the property for its application-specific requirement.",
     sourceIds: [],
   };
 }

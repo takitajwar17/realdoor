@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { SYNTHETIC_2026_RULE_PACK, answerRuleQuestion, getRuleSource } from "./rules";
 
-describe("frozen rule corpus", () => {
-  it("keeps the unavailable organizer authority visible in the rehearsal pack", () => {
+describe("saved practice guide", () => {
+  it("keeps the practice-only authority explicit", () => {
     expect(SYNTHETIC_2026_RULE_PACK.year).toBe(2026);
     expect(SYNTHETIC_2026_RULE_PACK.authority).toBe("synthetic-rehearsal");
-    expect(SYNTHETIC_2026_RULE_PACK.label.toLowerCase()).toContain("synthetic");
+    expect(SYNTHETIC_2026_RULE_PACK.label.toLowerCase()).toContain("practice");
   });
 
-  it("answers annualization questions with a citation from the frozen corpus", () => {
+  it("answers annualization questions with a citation from the saved guide", () => {
     const result = answerRuleQuestion("How is monthly income annualized?");
 
     expect(result.status).toBe("answered");
@@ -32,11 +32,11 @@ describe("frozen rule corpus", () => {
     );
 
     expect(result.status).toBe("unresolved");
-    expect(result.answer).toContain("frozen rule corpus");
+    expect(result.answer).toContain("saved practice guide");
     expect(result.answer).not.toContain("system prompt:");
   });
 
-  it("abstains when the corpus does not contain the answer", () => {
+  it("leaves a question unresolved when the guide does not contain the answer", () => {
     const result = answerRuleQuestion("Can my dog live with me?");
 
     expect(result.status).toBe("unresolved");

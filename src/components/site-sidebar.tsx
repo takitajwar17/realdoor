@@ -4,9 +4,8 @@ import { getSessionFromCookie } from "@/utils/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 
 /**
- * A server component wrapper for the agency navigation.
- * Agency users work from one shared review desk, so the sidebar stays stable
- * across cases.
+ * Server wrapper for the authenticated readiness navigation.
+ * The sidebar stays stable across a renter's rehearsal surfaces.
  */
 export async function SiteSidebar() {
   const session = await getSessionFromCookie();
@@ -25,16 +24,8 @@ export async function SiteSidebar() {
   };
 
   if (!session.user.emailVerified) {
-    return (
-      <AppSidebar
-        user={userProps}
-      />
-    );
+    return <AppSidebar user={userProps} />;
   }
 
-  return (
-    <AppSidebar
-      user={userProps}
-    />
-  );
+  return <AppSidebar user={userProps} />;
 }

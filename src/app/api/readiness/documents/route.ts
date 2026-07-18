@@ -1,10 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
-import {
-  requireRouteSession,
-  requireSameOriginRequest,
-} from "@/app/api/_utils/request-auth";
+import { requireRouteSession, requireSameOriginRequest } from "@/app/api/_utils/request-auth";
 import { checkActionRateLimit } from "@/infra/action-rate-limit";
 import { logger } from "@/infra/logger";
 import {
@@ -51,6 +48,7 @@ async function processUploadedDocument(input: {
       kind: extraction.kind,
       issuedOn: extraction.issuedOn,
       pageCount: extraction.pageCount,
+      safetySignalDetected: extraction.safetySignalDetected,
       facts: extraction.facts,
     });
   } catch (error) {
@@ -61,7 +59,8 @@ async function processUploadedDocument(input: {
     });
     await markDocumentExtractionFailed({
       ...input,
-      message: "Extraction could not complete. You can remove the document or enter facts manually.",
+      message:
+        "Extraction could not complete. You can remove the document or enter facts manually.",
     });
   }
 }
@@ -73,7 +72,10 @@ export async function POST(request: Request) {
   const routeSession = await requireRouteSession();
   if ("response" in routeSession) return routeSession.response;
   if (!routeSession.session.user.emailVerified) {
-    return NextResponse.json({ error: "Verify your email before uploading documents." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Verify your email before uploading documents." },
+      { status: 403 },
+    );
   }
 
   try {
@@ -81,8 +83,15 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const sessionId = formData.get("sessionId");
-    if (!(file instanceof File) || typeof sessionId !== "string" || !/^rds_[a-z0-9]{3,64}$/u.test(sessionId)) {
-      return NextResponse.json({ error: "A valid session and document are required." }, { status: 400 });
+    if (
+      !(file instanceof File) ||
+      typeof sessionId !== "string" ||
+      !/^rds_[a-z0-9]{3,64}$/u.test(sessionId)
+    ) {
+      return NextResponse.json(
+        { error: "A valid session and document are required." },
+        { status: 400 },
+      );
     }
 
     const metadata = parseDocumentUploadMetadata({
@@ -99,7 +108,9 @@ export async function POST(request: Request) {
     }
 
     const pageCount =
-      metadata.type === "application/pdf" ? await getReadinessPdfPageCount(bytes).catch(() => null) : 1;
+      metadata.type === "application/pdf"
+        ? await getReadinessPdfPageCount(bytes).catch(() => null)
+        : 1;
     if (pageCount !== null && pageCount > MAX_READINESS_PDF_PAGES) {
       return NextResponse.json(
         { error: `PDFs can contain at most ${MAX_READINESS_PDF_PAGES} pages.` },
@@ -165,6 +176,9 @@ export async function POST(request: Request) {
     if (error instanceof DocumentUploadInputError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    return NextResponse.json({ error: "Document upload failed. Please try again." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Document upload failed. Please try again." },
+      { status: 500 },
+    );
   }
 }

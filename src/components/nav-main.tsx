@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { PlusCircleIcon } from "lucide-react"
-import Link from "next/link"
-import type { Route } from "next"
-import { usePathname } from "next/navigation"
+import { PlusCircleIcon } from "lucide-react";
+import Link from "next/link";
+import type { Route } from "next";
+import { usePathname } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function NavMain({
   items,
@@ -20,25 +20,25 @@ export function NavMain({
   action,
 }: {
   items: {
-    title: string
-    url: string
-    icon?: React.ElementType
-    badge?: number | null
-  }[]
-  label?: string
+    title: string;
+    url: string;
+    icon?: React.ElementType;
+    badge?: number | null;
+  }[];
+  label?: string;
   action?: {
-    title: string
-    url: string
-    tooltip?: string
-  }
+    title: string;
+    url: string;
+    tooltip?: string;
+  };
 }) {
-  const { setOpenMobile } = useSidebar()
-  const pathname = usePathname()
+  const { setOpenMobile } = useSidebar();
+  const pathname = usePathname();
   const primaryAction = action ?? {
-    title: "New client file",
-    url: "/dashboard/applications/new",
-    tooltip: "New client file",
-  }
+    title: "New rehearsal",
+    url: "/dashboard?new=1",
+    tooltip: "New rehearsal",
+  };
 
   return (
     <SidebarGroup>
@@ -85,5 +85,5 @@ export function NavMain({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

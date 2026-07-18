@@ -23,7 +23,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     }
 
     setStatus("uploading");
-    setMessage("Encrypting, uploading, and extracting candidate fields…");
+    setMessage("Encrypting and reading the document for suggested fields…");
     const formData = new FormData();
     formData.set("sessionId", sessionId);
     formData.set("file", file);
@@ -38,7 +38,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
       if (!response.ok) throw new Error(payload.error || "Upload failed");
 
       setStatus("success");
-      setMessage("Document uploaded. Extraction is running in the background.");
+      setMessage("Document uploaded. Vidicy is reading it for suggested fields.");
       if (inputRef.current) inputRef.current.value = "";
       router.refresh();
       window.setTimeout(() => router.refresh(), 1800);
@@ -57,11 +57,16 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
             ref={inputRef}
             type="file"
             accept="application/pdf,image/jpeg,image/png"
-            aria-label="Choose a synthetic application document"
+            aria-label="Choose a practice application document"
             disabled={status === "uploading"}
             className="bg-background"
           />
-          <Button type="button" onClick={upload} disabled={status === "uploading"} className="sm:w-auto">
+          <Button
+            type="button"
+            onClick={upload}
+            disabled={status === "uploading"}
+            className="sm:w-auto"
+          >
             {status === "uploading" ? (
               <LoaderCircleIcon className="h-4 w-4 animate-spin" />
             ) : (
@@ -70,7 +75,9 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
             {status === "uploading" ? "Processing…" : "Upload document"}
           </Button>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">PDF, JPEG, or PNG · 10 MB maximum · synthetic documents only</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          PDF, JPEG, or PNG · 10 MB maximum · practice documents only
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -78,13 +85,13 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
         <Button asChild type="button" variant="outline" size="sm">
           <Link href="/api/readiness/demo-documents/pay_stub">
             <DownloadIcon className="h-3.5 w-3.5" />
-            Synthetic pay statement
+            Practice pay statement
           </Link>
         </Button>
         <Button asChild type="button" variant="outline" size="sm">
           <Link href="/api/readiness/demo-documents/benefits_letter">
             <DownloadIcon className="h-3.5 w-3.5" />
-            Synthetic benefits letter
+            Practice benefits letter
           </Link>
         </Button>
       </div>
@@ -94,7 +101,9 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
           role={status === "error" ? "alert" : "status"}
           aria-live="polite"
           className={
-            status === "error" ? "text-xs font-medium text-destructive" : "text-xs font-medium text-primary"
+            status === "error"
+              ? "text-xs font-medium text-destructive"
+              : "text-xs font-medium text-primary"
           }
         >
           {message}

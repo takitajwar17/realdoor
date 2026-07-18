@@ -98,6 +98,7 @@ export const exportUserDataAction = createServerAction()
           sha256: document.sha256,
           kind: document.kind,
           extractionStatus: document.extractionStatus,
+          metadataConfirmed: document.metadataConfirmed,
           included: document.included,
           metadata: document.payload,
           createdAt: document.createdAt,

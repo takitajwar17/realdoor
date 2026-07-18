@@ -4,7 +4,8 @@ import {
   confirmFactSchema,
   createSessionSchema,
   hasValidFileSignature,
-  manualIncomeSchema,
+  manualFactSchema,
+  documentMetadataSchema,
   parseDocumentUploadMetadata,
   ruleQuestionSchema,
 } from "./contracts";
@@ -24,22 +25,44 @@ describe("readiness request contracts", () => {
 
   it("accepts bounded non-negative manual income facts", () => {
     expect(
-      manualIncomeSchema.safeParse({
+      manualFactSchema.safeParse({
         sessionId: "rds_abc123",
-        householdSize: 2,
-        employmentMonthlyIncome: 4200,
-        benefitsMonthlyIncome: 900,
-        otherMonthlyIncome: 0,
+        key: "household_size",
+        value: 2,
       }).success,
     ).toBe(true);
 
     expect(
-      manualIncomeSchema.safeParse({
+      manualFactSchema.safeParse({
         sessionId: "rds_abc123",
-        householdSize: 0,
-        employmentMonthlyIncome: -1,
-        benefitsMonthlyIncome: 0,
-        otherMonthlyIncome: 0,
+        key: "household_size",
+        value: 9,
+      }).success,
+    ).toBe(false);
+    expect(
+      manualFactSchema.safeParse({
+        sessionId: "rds_abc123",
+        key: "employment_monthly_income",
+        value: 4200,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("validates renter-confirmed document type and date corrections", () => {
+    expect(
+      documentMetadataSchema.safeParse({
+        sessionId: "rds_abc123",
+        documentId: "rdd_doc123",
+        kind: "pay_stub",
+        issuedOn: "2026-07-01",
+      }).success,
+    ).toBe(true);
+    expect(
+      documentMetadataSchema.safeParse({
+        sessionId: "rds_abc123",
+        documentId: "rdd_doc123",
+        kind: "passport",
+        issuedOn: "not-a-date",
       }).success,
     ).toBe(false);
   });
@@ -82,12 +105,13 @@ describe("readiness request contracts", () => {
 
   it("bounds rule questions before they reach the frozen-corpus answerer", () => {
     expect(
-      ruleQuestionSchema.safeParse({ sessionId: "rds_abc123", question: "How is income annualized?" })
-        .success,
+      ruleQuestionSchema.safeParse({
+        sessionId: "rds_abc123",
+        question: "How is income annualized?",
+      }).success,
     ).toBe(true);
     expect(
-      ruleQuestionSchema.safeParse({ sessionId: "rds_abc123", question: "x".repeat(1001) })
-        .success,
+      ruleQuestionSchema.safeParse({ sessionId: "rds_abc123", question: "x".repeat(1001) }).success,
     ).toBe(false);
   });
 

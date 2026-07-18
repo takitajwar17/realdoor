@@ -48,24 +48,38 @@ export function ReadinessPageShell({
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-xs">
             <span className="inline-flex items-center gap-1.5 font-bold">
               <FlaskConicalIcon className="h-3.5 w-3.5 text-amber-600" />
-              Synthetic rehearsal
+              Practice journey
             </span>
             <span className="text-muted-foreground">{session.metro}</span>
             <span className="text-muted-foreground">{session.program}</span>
-            <Badge variant="outline" className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300">
-              2026 · non-authoritative
+            <Badge
+              variant="outline"
+              className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300"
+            >
+              2026 · practice only
             </Badge>
             <span className="font-mono text-2xs text-muted-foreground">
-              Session {session.id.slice(-8)} · revision {session.revision}
+              Session {session.id.slice(-8)} · packet version {session.revision}
+            </span>
+            <span className="text-2xs text-muted-foreground">
+              Guide dated {session.ruleEffectiveDate} · checklist checked {session.asOfDate}
             </span>
           </div>
           <DeleteSessionDialog sessionId={session.id} />
         </div>
       </div>
 
-      <main className={cn("mx-auto flex w-full max-w-[1520px] flex-1 flex-col gap-5 px-4 py-5 md:px-6 md:py-6", className)}>
+      <main
+        className={cn(
+          "mx-auto flex w-full max-w-[1520px] flex-1 flex-col gap-5 px-4 py-5 md:px-6 md:py-6",
+          className,
+        )}
+      >
         {activeStep >= 0 ? (
-          <nav aria-label="Application readiness stages" className="rounded-xl border border-border/80 bg-card p-2 shadow-[var(--shadow-dashboard)]">
+          <nav
+            aria-label="Application readiness stages"
+            className="rounded-xl border border-border/80 bg-card p-2 shadow-[var(--shadow-dashboard)]"
+          >
             <ol className="grid gap-1 md:grid-cols-3">
               {steps.map((step, index) => {
                 const selected = index === activeStep;
@@ -88,11 +102,19 @@ export function ReadinessPageShell({
                             : "border-border text-muted-foreground",
                         )}
                       >
-                        {visited ? <CheckIcon className="h-3.5 w-3.5" /> : selected ? index + 1 : <CircleIcon className="h-2.5 w-2.5" />}
+                        {visited ? (
+                          <CheckIcon className="h-3.5 w-3.5" />
+                        ) : selected ? (
+                          index + 1
+                        ) : (
+                          <CircleIcon className="h-2.5 w-2.5" />
+                        )}
                       </span>
                       <span className="min-w-0">
                         <span className="block text-sm font-bold">{step.label}</span>
-                        <span className="block truncate text-xs text-muted-foreground">{step.description}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {step.description}
+                        </span>
                       </span>
                     </Link>
                   </li>
@@ -104,10 +126,14 @@ export function ReadinessPageShell({
 
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0 space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              {title}
+            </h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
           </div>
-          {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+          {actions ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          ) : null}
         </div>
         {children}
       </main>

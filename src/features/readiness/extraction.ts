@@ -5,6 +5,7 @@ import { normalizeExtractedFact, type FactKey } from "./domain";
 export type ExtractionResult = {
   kind: (typeof DOCUMENT_KIND)[keyof typeof DOCUMENT_KIND];
   issuedOn: string | null;
+  safetySignalDetected: boolean;
   facts: Array<{
     key: FactKey;
     value: string;
@@ -14,6 +15,13 @@ export type ExtractionResult = {
     box: { x: number; y: number; width: number; height: number } | null;
   }>;
 };
+
+const embeddedInstructionPattern =
+  /\b(ignore (?:all |the )?(?:previous|prior) instructions|system prompt|follow (?:these|the) instructions|upload (?:all|every)|mark .{0,30}(?:eligible|approved)|act as (?:an? )?(?:assistant|system))\b/iu;
+
+export function containsEmbeddedInstruction(text: string) {
+  return embeddedInstructionPattern.test(text);
+}
 
 function syntheticLineBox(index: number) {
   return {
@@ -92,7 +100,12 @@ export function extractFactsFromSyntheticText(text: string): ExtractionResult {
   const issuedLine = lines.find((line) => /^Document date:/iu.test(line));
   const issuedOn = issuedLine?.match(/^Document date:\s*(\d{4}-\d{2}-\d{2})$/iu)?.[1] ?? null;
 
-  return { kind, issuedOn, facts };
+  return {
+    kind,
+    issuedOn,
+    facts,
+    safetySignalDetected: containsEmbeddedInstruction(normalized),
+  };
 }
 
 export function buildExtractionPrompt(documentText: string) {

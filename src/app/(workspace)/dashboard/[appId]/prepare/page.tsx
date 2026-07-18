@@ -5,7 +5,6 @@ import {
   AlertCircleIcon,
   ArrowLeftIcon,
   CheckCircle2Icon,
-  DownloadIcon,
   EyeIcon,
   FileArchiveIcon,
   FileClockIcon,
@@ -14,11 +13,14 @@ import {
 } from "lucide-react";
 
 import { updateDocumentIncludedAction } from "@/actions/readiness.action";
+import { PacketDownloadButton } from "@/components/readiness/packet-download-button";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
+import { SourceCitationDialog } from "@/components/readiness/source-citation-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getReadinessWorkspace } from "@/features/readiness/server";
+import { getRuleSource } from "@/features/readiness/rules";
 import { cn } from "@/lib/utils";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
@@ -85,17 +87,40 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
             <div className="divide-y divide-border/70">
               {workspace.checklist.map((item) => {
                 const meta = checklistMeta[item.state];
+                const source = getRuleSource(item.sourceId);
                 return (
                   <div key={item.id} className="flex items-start gap-3 p-4">
-                    <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", meta.className)}>
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                        meta.className,
+                      )}
+                    >
                       <meta.icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm font-bold">{item.label}</p>
-                        <Badge variant="outline" className={meta.className}>{meta.label}</Badge>
+                        <Badge variant="outline" className={meta.className}>
+                          {meta.label}
+                        </Badge>
                       </div>
                       <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.reason}</p>
+                      <p className="mt-1 text-2xs text-muted-foreground">
+                        Checked on {item.asOf}
+                        {item.maxAgeDays === null
+                          ? " · no age window in this practice guide"
+                          : ` · ${item.maxAgeDays}-day practice window`}
+                      </p>
+                      {source ? (
+                        <div className="mt-2">
+                          <SourceCitationDialog
+                            source={source}
+                            version={workspace.rulePack.version}
+                            effectiveDate={workspace.rulePack.effectiveDate}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -108,7 +133,8 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
           <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-base">Choose packet documents</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Inclusion is explicit and reversible. Original files are not embedded in the summary packet.
+              Inclusion is explicit and reversible. Original files are not embedded in the summary
+              packet.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -119,14 +145,23 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold">{document.payload.name}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {document.kind.replaceAll("_", " ")} · {document.payload.issuedOn ?? "date unresolved"}
+                        {document.kind.replaceAll("_", " ")} ·{" "}
+                        {document.payload.issuedOn ?? "date unresolved"}
                       </p>
                     </div>
                     <form action={updateDocumentIncludedAction}>
                       <input type="hidden" name="sessionId" value={appId} />
                       <input type="hidden" name="documentId" value={document.id} />
-                      <input type="hidden" name="included" value={document.included ? "false" : "true"} />
-                      <Button type="submit" variant={document.included ? "default" : "outline"} size="sm">
+                      <input
+                        type="hidden"
+                        name="included"
+                        value={document.included ? "false" : "true"}
+                      />
+                      <Button
+                        type="submit"
+                        variant={document.included ? "default" : "outline"}
+                        size="sm"
+                      >
                         {document.included ? "Included" : "Include"}
                       </Button>
                     </form>
@@ -150,27 +185,35 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
         <CardHeader className="flex flex-col gap-4 border-b border-border/70 bg-muted/20 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-base">Packet preview</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">Exact summary to be downloaded · revision {workspace.session.revision}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Exact summary to be downloaded · packet version {workspace.session.revision}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
-              <Link href={`/api/readiness/packet/${appId}?mode=preview`} target="_blank" rel="noreferrer">
+              <Link
+                href={`/api/readiness/packet/${appId}?mode=preview`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 <EyeIcon className="h-4 w-4" /> Open full preview
               </Link>
             </Button>
-            <Button asChild>
-              <Link href={`/api/readiness/packet/${appId}`}>
-                <DownloadIcon className="h-4 w-4" /> Download packet
-              </Link>
-            </Button>
+            <PacketDownloadButton sessionId={appId} />
           </div>
         </CardHeader>
         <CardContent className="p-5 md:p-7">
           <div className="mx-auto max-w-4xl rounded-sm border border-border bg-white p-6 text-slate-950 shadow-sm md:p-9 dark:bg-white dark:text-slate-950">
             <div className="border-b border-slate-200 pb-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Vidicy application-readiness packet</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight">Boston LIHTC synthetic rehearsal</h2>
-              <p className="mt-2 text-sm text-slate-600">Renter-controlled summary · not submitted · not an eligibility decision</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                Vidicy application-readiness packet
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight">
+                Boston LIHTC practice journey
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Renter-controlled summary · not submitted · not an eligibility decision
+              </p>
             </div>
 
             <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -178,23 +221,38 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                 {workspace.confirmedFacts.length > 0 ? (
                   <dl className="space-y-2 text-sm">
                     {workspace.confirmedFacts.map((fact) => (
-                      <div key={fact.key} className="flex justify-between gap-4 border-b border-slate-100 pb-2">
+                      <div
+                        key={fact.key}
+                        className="flex justify-between gap-4 border-b border-slate-100 pb-2"
+                      >
                         <dt className="text-slate-500">{fact.key.replaceAll("_", " ")}</dt>
                         <dd className="text-right font-semibold">{fact.value}</dd>
                       </div>
                     ))}
                   </dl>
-                ) : <p className="text-sm text-slate-500">No renter-confirmed facts.</p>}
+                ) : (
+                  <p className="text-sm text-slate-500">No renter-confirmed facts.</p>
+                )}
               </PacketSection>
 
               <PacketSection title="Income comparison">
                 {workspace.comparison.status === "complete" ? (
                   <div className="space-y-2 text-sm">
-                    <p><span className="text-slate-500">Confirmed annual total:</span> <strong>${workspace.comparison.annualIncome.toLocaleString("en-US")}</strong></p>
-                    <p><span className="text-slate-500">Synthetic benchmark:</span> <strong>${workspace.comparison.incomeLimit.toLocaleString("en-US")}</strong></p>
+                    <p>
+                      <span className="text-slate-500">Confirmed annual total:</span>{" "}
+                      <strong>${workspace.comparison.annualIncome.toLocaleString("en-US")}</strong>
+                    </p>
+                    <p>
+                      <span className="text-slate-500">Synthetic benchmark:</span>{" "}
+                      <strong>${workspace.comparison.incomeLimit.toLocaleString("en-US")}</strong>
+                    </p>
                     <p className="font-mono text-xs">{workspace.comparison.formula}</p>
                   </div>
-                ) : <p className="text-sm text-slate-500">Unresolved: {workspace.comparison.reason}</p>}
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Unresolved: {workspace.comparison.reason}
+                  </p>
+                )}
               </PacketSection>
 
               <PacketSection title="Checklist">
@@ -211,9 +269,13 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
               <PacketSection title="Included documents">
                 {includedDocuments.length > 0 ? (
                   <ul className="list-disc space-y-1 pl-5 text-sm">
-                    {includedDocuments.map((document) => <li key={document.id}>{document.payload.name}</li>)}
+                    {includedDocuments.map((document) => (
+                      <li key={document.id}>{document.payload.name}</li>
+                    ))}
                   </ul>
-                ) : <p className="text-sm text-slate-500">No documents selected.</p>}
+                ) : (
+                  <p className="text-sm text-slate-500">No documents selected.</p>
+                )}
               </PacketSection>
             </div>
           </div>
@@ -223,10 +285,15 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
               <SendIcon className="mt-0.5 h-4 w-4 text-primary" />
               <div>
                 <p className="text-sm font-bold">Nothing has been sent</p>
-                <p className="mt-1 text-xs text-muted-foreground">Downloading creates a local HTML file with selectable text and structured headings. You choose what happens next.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Downloading creates a local HTML file with selectable text and structured
+                  headings. You choose what happens next.
+                </p>
               </div>
             </div>
-            <Badge variant="outline" className="w-fit">Renter controlled</Badge>
+            <Badge variant="outline" className="w-fit">
+              Renter controlled
+            </Badge>
           </div>
         </CardContent>
       </Card>
@@ -237,7 +304,9 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
 function PacketSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="mb-3 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-700">{title}</h3>
+      <h3 className="mb-3 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-700">
+        {title}
+      </h3>
       {children}
     </section>
   );

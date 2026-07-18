@@ -3,10 +3,7 @@
 import { useActionState } from "react";
 import { SendIcon } from "lucide-react";
 
-import {
-  INITIAL_READINESS_ACTION_STATE,
-  saveRuleQuestionAction,
-} from "@/actions/readiness.action";
+import { INITIAL_READINESS_ACTION_STATE, saveRuleQuestionAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,7 +18,7 @@ export function RuleQuestionForm({ sessionId }: { sessionId: string }) {
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="sessionId" value={sessionId} />
-      <Label htmlFor="rule-question">Ask about the frozen rule corpus</Label>
+      <Label htmlFor="rule-question">Ask about the practice rule guide</Label>
       <Textarea
         id="rule-question"
         name="question"
@@ -34,7 +31,8 @@ export function RuleQuestionForm({ sessionId }: { sessionId: string }) {
       <ActionMessage state={state} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          Answers abstain when the corpus lacks context. No live web search is used.
+          If the saved guide does not support an answer, Vidicy will say so. It does not search the
+          live web here.
         </p>
         <Button type="submit" disabled={pending}>
           <SendIcon className="h-4 w-4" />

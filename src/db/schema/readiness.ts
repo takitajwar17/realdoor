@@ -48,13 +48,15 @@ export const readinessSessionTable = sqliteTable(
       .references(() => userTable.id, { onDelete: "cascade" }),
     consentVersion: text().notNull(),
     consentedAt: integer({ mode: "timestamp" }).notNull(),
-    stage: text({ enum: tuple(READINESS_STAGE) }).default(READINESS_STAGE.PROFILE).notNull(),
+    stage: text({ enum: tuple(READINESS_STAGE) })
+      .default(READINESS_STAGE.PROFILE)
+      .notNull(),
     targetYear: integer().default(2026).notNull(),
     metro: text().notNull(),
     program: text().notNull(),
     rulePackId: text().notNull(),
-    ruleAuthority: text({ enum: ["official", "organizer", "synthetic-rehearsal"] })
-      .notNull(),
+    ruleAuthority: text({ enum: ["official", "organizer", "synthetic-rehearsal"] }).notNull(),
+    ruleEffectiveDate: text().notNull(),
     asOfDate: text().notNull(),
     revision: integer().default(1).notNull(),
     lastAccessedAt: integer({ mode: "timestamp" }).notNull(),
@@ -80,10 +82,13 @@ export const readinessDocumentTable = sqliteTable(
     mimeType: text({ enum: ["application/pdf", "image/jpeg", "image/png"] }).notNull(),
     sizeBytes: integer().notNull(),
     sha256: text().notNull(),
-    kind: text({ enum: tuple(DOCUMENT_KIND) }).default(DOCUMENT_KIND.OTHER).notNull(),
+    kind: text({ enum: tuple(DOCUMENT_KIND) })
+      .default(DOCUMENT_KIND.OTHER)
+      .notNull(),
     extractionStatus: text({ enum: tuple(EXTRACTION_STATUS) })
       .default(EXTRACTION_STATUS.UPLOADED)
       .notNull(),
+    metadataConfirmed: integer({ mode: "boolean" }).default(false).notNull(),
     included: integer({ mode: "boolean" }).default(true).notNull(),
     encryptedPayload: text().notNull(),
     processedAt: integer({ mode: "timestamp" }),
@@ -108,7 +113,9 @@ export const readinessFactTable = sqliteTable(
       .references(() => readinessSessionTable.id, { onDelete: "cascade" }),
     documentId: text().references(() => readinessDocumentTable.id, { onDelete: "cascade" }),
     key: text().notNull(),
-    status: text({ enum: tuple(FACT_STATUS) }).default(FACT_STATUS.EXTRACTED).notNull(),
+    status: text({ enum: tuple(FACT_STATUS) })
+      .default(FACT_STATUS.EXTRACTED)
+      .notNull(),
     confidence: integer(),
     encryptedPayload: text().notNull(),
     confirmedAt: integer({ mode: "timestamp" }),
@@ -168,16 +175,13 @@ export const readinessSessionRelations = relations(readinessSessionTable, ({ one
   audit: many(readinessAuditTable),
 }));
 
-export const readinessDocumentRelations = relations(
-  readinessDocumentTable,
-  ({ one, many }) => ({
-    session: one(readinessSessionTable, {
-      fields: [readinessDocumentTable.sessionId],
-      references: [readinessSessionTable.id],
-    }),
-    facts: many(readinessFactTable),
+export const readinessDocumentRelations = relations(readinessDocumentTable, ({ one, many }) => ({
+  session: one(readinessSessionTable, {
+    fields: [readinessDocumentTable.sessionId],
+    references: [readinessSessionTable.id],
   }),
-);
+  facts: many(readinessFactTable),
+}));
 
 export const readinessFactRelations = relations(readinessFactTable, ({ one }) => ({
   session: one(readinessSessionTable, {

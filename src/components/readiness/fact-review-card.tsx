@@ -53,7 +53,8 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
   );
   const isNumeric = item.key.includes("income") || item.key === "household_size";
   const confidence = item.confidence === null ? null : Math.round(item.confidence * 100);
-  const confidenceLabel = confidence === null ? "Manual" : confidence >= 90 ? "High confidence" : confidence >= 70 ? "Review closely" : "Low confidence";
+  const confidenceLabel =
+    confidence === null ? "Entered by you" : confidence >= 90 ? "Clear reading" : "Review closely";
 
   return (
     <article className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-[var(--shadow-dashboard)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.78fr)]">
@@ -63,13 +64,16 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              Renter fact
+              Profile field
             </p>
             <h3 className="mt-1 text-base font-bold">{FACT_LABELS[item.key] ?? item.key}</h3>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {item.conflict ? (
-              <Badge variant="outline" className="border-destructive/25 bg-destructive/8 text-destructive">
+              <Badge
+                variant="outline"
+                className="border-destructive/25 bg-destructive/8 text-destructive"
+              >
                 Conflict · choose one
               </Badge>
             ) : null}
@@ -101,20 +105,35 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
               required
               type={isNumeric ? "number" : "text"}
               min={isNumeric ? 0 : undefined}
-              step={item.key.includes("income") ? "0.01" : item.key === "household_size" ? "1" : undefined}
+              step={
+                item.key.includes("income")
+                  ? "0.01"
+                  : item.key === "household_size"
+                    ? "1"
+                    : undefined
+              }
               className={item.key.includes("income") ? "pl-7" : undefined}
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Edit before confirming if the document was read incorrectly. Unconfirmed candidates never enter calculations.
+            Correct the value if the document was read incorrectly. Vidicy uses it only after you
+            confirm it.
           </p>
         </div>
 
         <ActionMessage state={state} />
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={pending}>
-            {item.status === "confirmed" ? <PencilLineIcon className="h-4 w-4" /> : <CheckIcon className="h-4 w-4" />}
-            {pending ? "Saving…" : item.status === "confirmed" ? "Save correction" : "Confirm field"}
+            {item.status === "confirmed" ? (
+              <PencilLineIcon className="h-4 w-4" />
+            ) : (
+              <CheckIcon className="h-4 w-4" />
+            )}
+            {pending
+              ? "Saving…"
+              : item.status === "confirmed"
+                ? "Save correction"
+                : "Confirm field"}
           </Button>
           <Button
             type="submit"
@@ -123,7 +142,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
             className="text-destructive hover:text-destructive"
           >
             <Trash2Icon className="h-4 w-4" />
-            Remove candidate
+            Remove suggestion
           </Button>
         </div>
       </form>
@@ -134,7 +153,9 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
             <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
               Document evidence
             </p>
-            <p className="mt-1 text-sm font-semibold">{item.documentName ?? "Manual renter entry"}</p>
+            <p className="mt-1 text-sm font-semibold">
+              {item.documentName ?? "Manual renter entry"}
+            </p>
           </div>
           {item.documentId ? (
             <Button asChild variant="ghost" size="sm">
@@ -181,12 +202,13 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
             </blockquote>
             <p className="mt-2 text-2xs font-medium text-muted-foreground">
               {item.page ? `Page ${item.page}` : "Page unavailable"}
-              {confidence !== null ? ` · ${confidence}% extraction confidence` : ""}
+              {confidence !== null ? ` · ${confidence}% reading confidence` : ""}
             </p>
           </>
         ) : (
           <p className="mt-4 rounded-lg border border-dashed border-border p-4 text-xs leading-5 text-muted-foreground">
-            This fact was entered manually. It has no document evidence and is labeled that way everywhere it appears.
+            This fact was entered manually. It has no document evidence and is labeled that way
+            everywhere it appears.
           </p>
         )}
       </div>

@@ -23,14 +23,19 @@ export const metadata: Metadata = { title: "Evidence trail · Application readin
 const auditLabels: Record<string, string> = {
   session_started: "Session started with consent",
   document_uploaded: "Encrypted document added",
-  document_extracted: "Candidate fields extracted",
+  document_extracted: "Suggested fields ready for review",
+  document_extraction_failed: "Document could not be read automatically",
+  document_instruction_ignored: "Instructions inside a document were safely ignored",
+  document_details_confirmed: "Renter confirmed document details",
+  document_removed: "Renter removed a document and its linked fields",
   fact_confirmed: "Renter confirmed a field",
   fact_removed: "Renter removed a field",
-  manual_facts_confirmed: "Manual calculation inputs confirmed",
-  rule_question_answered: "Rule question answered from corpus",
-  rule_question_unresolved: "Rule question safely abstained",
+  manual_fact_confirmed: "Renter added or corrected a profile value",
+  rule_question_answered: "Rule question answered from the saved guide",
+  rule_question_unresolved: "Question left unanswered when the guide was insufficient",
   document_included: "Document included in packet",
   document_excluded: "Document excluded from packet",
+  packet_downloaded: "Packet downloaded to the renter",
 };
 
 export default async function EvidencePage({ params }: { params: Promise<{ appId: string }> }) {
@@ -43,14 +48,16 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
     notFound();
   }
 
-  const confirmedCount = workspace.facts.filter((fact) => fact.status === FACT_STATUS.CONFIRMED).length;
+  const confirmedCount = workspace.facts.filter(
+    (fact) => fact.status === FACT_STATUS.CONFIRMED,
+  ).length;
 
   return (
     <ReadinessPageShell
       session={workspace.session}
       current="evidence"
       title="Evidence trail"
-      description="Follow the trust chain from encrypted document, to extracted candidate, to renter confirmation, to deterministic calculation, checklist, and packet. Audit entries record actions—not renter values."
+      description="See how an encrypted document becomes a suggested fact, then a fact you confirm, a transparent calculation, a checklist item, and finally your packet. The activity history records actions—not your personal values."
       actions={
         <Button asChild variant="outline">
           <Link href={`/dashboard/${appId}/prepare`}>
@@ -60,27 +67,58 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
       }
     >
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <TrailMetric icon={DatabaseIcon} label="Encrypted documents" value={workspace.documents.length} />
+        <TrailMetric
+          icon={DatabaseIcon}
+          label="Encrypted documents"
+          value={workspace.documents.length}
+        />
         <TrailMetric icon={FileSearchIcon} label="Field records" value={workspace.facts.length} />
         <TrailMetric icon={CheckCircle2Icon} label="Confirmed facts" value={confirmedCount} />
-        <TrailMetric icon={GitCommitHorizontalIcon} label="Session revision" value={workspace.session.revision} />
-        <TrailMetric icon={HistoryIcon} label="Content-free events" value={workspace.audit.length} />
+        <TrailMetric
+          icon={GitCommitHorizontalIcon}
+          label="Packet version"
+          value={workspace.session.revision}
+        />
+        <TrailMetric
+          icon={HistoryIcon}
+          label="Private activity entries"
+          value={workspace.audit.length}
+        />
       </section>
 
       <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
         <CardHeader className="border-b border-border/70 bg-muted/20">
           <CardTitle className="text-base">Trust chain</CardTitle>
-          <p className="text-sm text-muted-foreground">Each arrow is an explicit boundary; no candidate skips confirmation.</p>
+          <p className="text-sm text-muted-foreground">
+            Every suggested field waits for your confirmation before Vidicy uses it.
+          </p>
         </CardHeader>
         <CardContent className="p-5">
           <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
-            <TrustNode eyebrow="Source" title="Encrypted document" detail={`${workspace.documents.length} in session`} />
+            <TrustNode
+              eyebrow="Source"
+              title="Encrypted document"
+              detail={`${workspace.documents.length} in session`}
+            />
             <ArrowRightIcon className="mx-auto hidden h-4 w-4 text-muted-foreground lg:block" />
-            <TrustNode eyebrow="Extraction" title="Reviewable candidates" detail={`${workspace.facts.filter((fact) => fact.status === FACT_STATUS.EXTRACTED).length} awaiting confirmation`} />
+            <TrustNode
+              eyebrow="Document reading"
+              title="Suggested fields"
+              detail={`${workspace.facts.filter((fact) => fact.status === FACT_STATUS.EXTRACTED).length} awaiting confirmation`}
+            />
             <ArrowRightIcon className="mx-auto hidden h-4 w-4 text-muted-foreground lg:block" />
-            <TrustNode eyebrow="Renter control" title="Confirmed facts" detail={`${confirmedCount} allowed downstream`} accent />
+            <TrustNode
+              eyebrow="Your control"
+              title="Confirmed facts"
+              detail={`${confirmedCount} used in later steps`}
+              accent
+            />
             <ArrowRightIcon className="mx-auto hidden h-4 w-4 text-muted-foreground lg:block" />
-            <TrustNode eyebrow="Derived" title="Arithmetic + packet" detail={`revision ${workspace.session.revision}`} />
+            <TrustNode
+              eyebrow="Result"
+              title="Arithmetic + packet"
+              detail={`packet version ${workspace.session.revision}`}
+            />
           </div>
         </CardContent>
       </Card>
@@ -89,29 +127,47 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-base">Session event log</CardTitle>
-            <p className="text-sm text-muted-foreground">Values, source text, questions, and answers are deliberately absent from this log.</p>
+            <p className="text-sm text-muted-foreground">
+              Values, source text, questions, and answers are deliberately absent from this log.
+            </p>
           </CardHeader>
           <CardContent className="p-0">
             {workspace.audit.length > 0 ? (
               <ol className="divide-y divide-border/70">
                 {workspace.audit.map((event) => (
-                  <li key={event.id} className="grid gap-2 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <li
+                    key={event.id}
+                    className="grid gap-2 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                  >
                     <div className="flex items-start gap-3">
                       <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                       <div>
-                        <p className="text-sm font-bold">{auditLabels[event.action] ?? event.action.replaceAll("_", " ")}</p>
+                        <p className="text-sm font-bold">
+                          {auditLabels[event.action] ?? event.action.replaceAll("_", " ")}
+                        </p>
                         <p className="mt-1 font-mono text-2xs text-muted-foreground">
-                          {event.subjectType}{event.subjectId ? ` · ${event.subjectId.slice(-8)}` : ""}
+                          {event.subjectType}
+                          {event.subjectId ? ` · ${event.subjectId.slice(-8)}` : ""}
                         </p>
                       </div>
                     </div>
-                    <time className="text-xs text-muted-foreground" dateTime={event.createdAt.toISOString()}>
-                      {event.createdAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                    <time
+                      className="text-xs text-muted-foreground"
+                      dateTime={event.createdAt.toISOString()}
+                    >
+                      {event.createdAt.toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                     </time>
                   </li>
                 ))}
               </ol>
-            ) : <p className="p-6 text-sm text-muted-foreground">No events recorded.</p>}
+            ) : (
+              <p className="p-6 text-sm text-muted-foreground">No events recorded.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -120,9 +176,18 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
             <CardTitle className="text-base">Data boundaries</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 p-5 text-sm leading-6">
-            <Boundary title="Persisted and encrypted" detail="Document bytes, filenames, evidence excerpts, fact values, questions, and answers." />
-            <Boundary title="Persisted without content" detail="Opaque identifiers, workflow state, timestamps, action names, sizes, and cryptographic hashes." />
-            <Boundary title="Never produced" detail="Eligibility decisions, approval predictions, readiness scores, ranks, or auto-submissions." />
+            <Boundary
+              title="Saved privately and encrypted"
+              detail="Documents, filenames, evidence excerpts, fact values, questions, and answers."
+            />
+            <Boundary
+              title="Activity history without personal values"
+              detail="The type of action and when it happened—for example, that a fact was confirmed, but not the fact itself."
+            />
+            <Boundary
+              title="Never produced"
+              detail="Eligibility decisions, approval predictions, readiness scores, ranks, or auto-submissions."
+            />
             <Button asChild variant="outline" className="w-full">
               <Link href="/dashboard/data-we-use">Open Data We Use</Link>
             </Button>
@@ -133,21 +198,48 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
   );
 }
 
-function TrailMetric({ icon: Icon, label, value }: { icon: typeof DatabaseIcon; label: string; value: number }) {
+function TrailMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof DatabaseIcon;
+  label: string;
+  value: number;
+}) {
   return (
     <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
       <CardContent className="flex items-center gap-3 p-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/9 text-primary"><Icon className="h-4 w-4" /></span>
-        <span><span className="block text-xs text-muted-foreground">{label}</span><strong className="text-xl">{value}</strong></span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/9 text-primary">
+          <Icon className="h-4 w-4" />
+        </span>
+        <span>
+          <span className="block text-xs text-muted-foreground">{label}</span>
+          <strong className="text-xl">{value}</strong>
+        </span>
       </CardContent>
     </Card>
   );
 }
 
-function TrustNode({ eyebrow, title, detail, accent = false }: { eyebrow: string; title: string; detail: string; accent?: boolean }) {
+function TrustNode({
+  eyebrow,
+  title,
+  detail,
+  accent = false,
+}: {
+  eyebrow: string;
+  title: string;
+  detail: string;
+  accent?: boolean;
+}) {
   return (
-    <div className={`rounded-xl border p-4 ${accent ? "border-primary/30 bg-primary/7" : "border-border bg-muted/20"}`}>
-      <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">{eyebrow}</p>
+    <div
+      className={`rounded-xl border p-4 ${accent ? "border-primary/30 bg-primary/7" : "border-border bg-muted/20"}`}
+    >
+      <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        {eyebrow}
+      </p>
       <p className="mt-1 text-sm font-bold">{title}</p>
       <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
     </div>

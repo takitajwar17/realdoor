@@ -25,8 +25,8 @@ export function AuthShell({
   children,
   testimonial = {
     quote:
-      "We moved first-pass reviews from hours to minutes and sent clients clear fixes the same day.",
-    author: "Operations Lead, Visa & Travel Agency",
+      "Understand what the documents say, confirm what is true, and stay in control of what leaves the workspace.",
+    author: "Renter rehearsal principle",
   },
 }: AuthShellProps) {
   return (
@@ -43,15 +43,13 @@ export function AuthShell({
           </Link>
         </div>
 
-        {/* Testimonial */}
+        {/* Product principle */}
         <div className="relative z-10 mt-auto">
           <blockquote className="space-y-3">
             <p className="text-lg font-medium leading-relaxed text-sidebar-foreground">
               &ldquo;{testimonial.quote}&rdquo;
             </p>
-            <footer className="text-sm text-sidebar-foreground/60">
-              ~ {testimonial.author}
-            </footer>
+            <footer className="text-sm text-sidebar-foreground/60">~ {testimonial.author}</footer>
           </blockquote>
         </div>
 

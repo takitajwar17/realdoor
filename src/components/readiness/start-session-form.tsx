@@ -26,7 +26,7 @@ export function StartSessionForm() {
             <LockKeyholeIcon className="h-5 w-5" />
           </span>
           <div>
-            <CardTitle className="text-base">Start a private rehearsal session</CardTitle>
+            <CardTitle className="text-base">Start a private practice session</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
               You stay in control of every fact, document, and download.
             </p>
@@ -40,8 +40,8 @@ export function StartSessionForm() {
             <span>
               <span className="block text-sm font-semibold">I choose to create this session</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                Vidicy may process the synthetic documents I upload to extract candidate fields. Nothing is
-                sent to a property or organizer.
+                Vidicy may read the practice documents I upload and suggest profile fields. Nothing
+                is sent to a property or anyone else.
               </span>
             </span>
           </label>
@@ -49,10 +49,10 @@ export function StartSessionForm() {
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
             <Checkbox name="useSyntheticRehearsal" className="mt-0.5" />
             <span>
-              <span className="block text-sm font-semibold">Use the synthetic 2026 rehearsal pack</span>
+              <span className="block text-sm font-semibold">Use the 2026 practice guide</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                The organizer-provided 2026 rule pack is not present in this repository. Rehearsal values are
-                clearly labeled and are not official thresholds.
+                The official 2026 materials needed for an authoritative result are not available in
+                this demo. Practice values are clearly labeled and are not official thresholds.
               </span>
             </span>
           </label>

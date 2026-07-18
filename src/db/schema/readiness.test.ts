@@ -33,17 +33,18 @@ describe("readiness persistence schema", () => {
   });
 
   it("keeps renter content inside encrypted payload columns", () => {
-    const documentColumns = getTableConfig(readinessDocumentTable).columns
-      .map((column) => column.name)
+    const documentColumns = getTableConfig(readinessDocumentTable)
+      .columns.map((column) => column.name)
       .sort();
-    const factColumns = getTableConfig(readinessFactTable).columns
-      .map((column) => column.name)
+    const factColumns = getTableConfig(readinessFactTable)
+      .columns.map((column) => column.name)
       .sort();
-    const questionColumns = getTableConfig(readinessQuestionTable).columns
-      .map((column) => column.name)
+    const questionColumns = getTableConfig(readinessQuestionTable)
+      .columns.map((column) => column.name)
       .sort();
 
     expect(documentColumns).toContain("encryptedPayload");
+    expect(documentColumns).toContain("metadataConfirmed");
     expect(factColumns).toContain("encryptedPayload");
     expect(questionColumns).toContain("encryptedPayload");
 

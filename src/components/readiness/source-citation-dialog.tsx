@@ -35,21 +35,25 @@ export function SourceCitationDialog({
         <DialogHeader>
           <DialogTitle>{source.title}</DialogTitle>
           <DialogDescription>
-            Source ID {source.id} · pack {version} · effective {effectiveDate}
+            Practice guide {version} · dated {effectiveDate}
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-xl border border-border bg-muted/25 p-4">
           <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            Frozen source passage
+            Passage used for this answer
           </p>
           <p className="mt-2 text-sm leading-6">{source.passage}</p>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          This passage is the exact frozen text used by the rehearsal answerer. The linked source remains the
-          authority for its own content.
+          This is the exact saved passage Vidicy used. Open the source to read it in its original
+          context.
         </p>
         <Button asChild>
-          <Link href={source.url as Route} target={source.url.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
+          <Link
+            href={source.url as Route}
+            target={source.url.startsWith("http") ? "_blank" : undefined}
+            rel="noreferrer"
+          >
             Open source
             <ExternalLinkIcon className="h-4 w-4" />
           </Link>

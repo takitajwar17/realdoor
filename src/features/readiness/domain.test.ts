@@ -35,6 +35,16 @@ const rehearsalRules: RulePack = {
     3: 83550,
     4: 92750,
   },
+  calculationSourceIds: ["hud-method"],
+  checklistRequirements: [
+    {
+      id: "pay-stub",
+      label: "Recent pay stub",
+      kind: "pay_stub",
+      maxAgeDays: 120,
+      sourceId: "hud-method",
+    },
+  ],
   sources: [
     {
       id: "hud-method",
@@ -182,6 +192,7 @@ describe("rule pack and checklist safeguards", () => {
         name: "pay-stub.pdf",
         issuedOn: "2026-07-01",
         included: true,
+        metadataConfirmed: true,
       },
       {
         id: "doc_benefit",
@@ -189,6 +200,7 @@ describe("rule pack and checklist safeguards", () => {
         name: "benefits-letter.pdf",
         issuedOn: null,
         included: true,
+        metadataConfirmed: true,
       },
     ];
 
@@ -198,14 +210,34 @@ describe("rule pack and checklist safeguards", () => {
       rules: rehearsalRules,
     });
 
-    expect(result.map((item) => item.state)).toEqual([
-      "present",
-      "unresolved",
-      "missing",
-      "missing",
-    ]);
-    expect(result[0]?.reason).toContain("session");
+    expect(result.map((item) => item.state)).toEqual(["present"]);
+    expect(result[0]?.reason).toContain("120-day window");
+    expect(result[0]?.reason).toContain("2026-07-19");
+    expect(result[0]?.sourceId).toBe("hud-method");
     expect(result).not.toHaveProperty("percentage");
+  });
+
+  it("does not treat an unconfirmed document type or date as present", () => {
+    const result = deriveChecklist({
+      asOf: "2026-07-19",
+      documents: [
+        {
+          id: "doc_pay",
+          kind: "pay_stub",
+          name: "pay-stub.pdf",
+          issuedOn: "2026-07-01",
+          included: true,
+          metadataConfirmed: false,
+        },
+      ],
+      rules: rehearsalRules,
+    });
+
+    expect(result[0]).toMatchObject({
+      state: "unresolved",
+      sourceId: "hud-method",
+    });
+    expect(result[0]?.reason).toContain("Confirm the document type and date");
   });
 });
 

@@ -9,6 +9,7 @@ import { FACT_KEYS, normalizeExtractedFact } from "./domain";
 import { getReadinessPdfPageCount, readReadinessDocumentText } from "./document-reader.server";
 import {
   buildExtractionPrompt,
+  containsEmbeddedInstruction,
   extractFactsFromSyntheticText,
   type ExtractionResult,
 } from "./extraction";
@@ -21,7 +22,10 @@ const aiExtractionSchema = z.object({
     DOCUMENT_KIND.BANK_STATEMENT,
     DOCUMENT_KIND.OTHER,
   ]),
-  issuedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).nullable(),
+  issuedOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/u)
+    .nullable(),
   facts: z
     .array(
       z.object({
@@ -89,6 +93,7 @@ async function extractWithFrozenAllowlist(text: string): Promise<ExtractionResul
     kind: parsed.kind,
     issuedOn: parsed.issuedOn,
     facts,
+    safetySignalDetected: containsEmbeddedInstruction(text),
   };
 }
 

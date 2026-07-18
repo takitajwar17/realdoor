@@ -4,19 +4,36 @@ export const MAX_READINESS_DOCUMENT_BYTES = 10 * 1024 * 1024;
 
 const readinessSessionId = z.string().regex(/^rds_[a-z0-9]{3,64}$/u);
 const readinessFactId = z.string().regex(/^rdf_[a-z0-9]{3,64}$/u);
+const readinessDocumentId = z.string().regex(/^rdd_[a-z0-9]{3,64}$/u);
 
 export const createSessionSchema = z.object({
   consent: z.literal(true),
   useSyntheticRehearsal: z.literal(true),
 });
 
-export const manualIncomeSchema = z.object({
-  sessionId: readinessSessionId,
-  householdSize: z.coerce.number().int().min(1).max(8),
-  employmentMonthlyIncome: z.coerce.number().finite().min(0).max(10_000_000),
-  benefitsMonthlyIncome: z.coerce.number().finite().min(0).max(10_000_000),
-  otherMonthlyIncome: z.coerce.number().finite().min(0).max(10_000_000),
-});
+export const manualFactSchema = z
+  .object({
+    sessionId: readinessSessionId,
+    key: z.enum([
+      "household_size",
+      "employment_monthly_income",
+      "benefits_monthly_income",
+      "other_monthly_income",
+    ]),
+    value: z.coerce.number().finite().min(0).max(10_000_000),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.key === "household_size" &&
+      (!Number.isInteger(value.value) || value.value < 1 || value.value > 8)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["value"],
+        message: "Household size must be a whole number from 1 to 8.",
+      });
+    }
+  });
 
 export const confirmFactSchema = z.object({
   sessionId: readinessSessionId,
@@ -36,8 +53,20 @@ export const deleteSessionSchema = z.object({
 
 export const updateDocumentSchema = z.object({
   sessionId: readinessSessionId,
-  documentId: z.string().regex(/^rdd_[a-z0-9]{3,64}$/u),
+  documentId: readinessDocumentId,
   included: z.boolean(),
+});
+
+export const documentMetadataSchema = z.object({
+  sessionId: readinessSessionId,
+  documentId: readinessDocumentId,
+  kind: z.enum(["pay_stub", "benefits_letter", "photo_id", "bank_statement", "other"]),
+  issuedOn: z.union([z.literal(""), z.string().date()]).transform((value) => value || null),
+});
+
+export const removeDocumentSchema = z.object({
+  sessionId: readinessSessionId,
+  documentId: readinessDocumentId,
 });
 
 export const ruleQuestionSchema = z.object({
@@ -60,11 +89,7 @@ export class DocumentUploadInputError extends Error {
   }
 }
 
-export function parseDocumentUploadMetadata(input: {
-  name: string;
-  type: string;
-  size: number;
-}) {
+export function parseDocumentUploadMetadata(input: { name: string; type: string; size: number }) {
   if (!(input.type in mediaTypes)) {
     throw new DocumentUploadInputError("Upload a PDF, JPEG, or PNG document.");
   }

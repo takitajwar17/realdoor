@@ -41,10 +41,7 @@ const nextConfig: NextConfig = {
       "motion/react",
       "date-fns",
       "remeda",
-      "@react-email/components",
-      "@react-email/render",
       "zod",
-      "@tanstack/react-table",
     ],
   },
   async redirects() {

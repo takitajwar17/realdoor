@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { and, asc, desc, eq, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { getDB } from "@/db";
 import {
@@ -97,35 +97,6 @@ async function assertOwnedSession(sessionId: string, userId: string): Promise<Re
   return session;
 }
 
-async function appendAudit(input: {
-  sessionId: string;
-  action: string;
-  subjectType: string;
-  subjectId?: string | null;
-}) {
-  const db = getDB();
-  await db.insert(readinessAuditTable).values({
-    sessionId: input.sessionId,
-    action: input.action,
-    subjectType: input.subjectType,
-    subjectId: input.subjectId ?? null,
-  });
-}
-
-async function bumpRevision(sessionId: string) {
-  const db = getDB();
-  const session = await db.query.readinessSessionTable.findFirst({
-    where: eq(readinessSessionTable.id, sessionId),
-    columns: { revision: true },
-  });
-  if (!session) throw new Error("Readiness session not found");
-
-  await db
-    .update(readinessSessionTable)
-    .set({ revision: session.revision + 1, lastAccessedAt: new Date() })
-    .where(eq(readinessSessionTable.id, sessionId));
-}
-
 export async function listReadinessSessions(userId: string) {
   return getDB()
     .select()
@@ -136,9 +107,10 @@ export async function listReadinessSessions(userId: string) {
 
 export async function createReadinessSession(userId: string, now = new Date()) {
   const db = getDB();
-  const [session] = await db
-    .insert(readinessSessionTable)
-    .values({
+  const sessionId = `rds_${crypto.randomUUID().replaceAll("-", "")}`;
+  await db.batch([
+    db.insert(readinessSessionTable).values({
+      id: sessionId,
       userId,
       consentVersion: "2026-07-19-v1",
       consentedAt: now,
@@ -148,20 +120,19 @@ export async function createReadinessSession(userId: string, now = new Date()) {
       program: SYNTHETIC_2026_RULE_PACK.program,
       rulePackId: SYNTHETIC_2026_RULE_PACK.id,
       ruleAuthority: SYNTHETIC_2026_RULE_PACK.authority,
+      ruleEffectiveDate: SYNTHETIC_2026_RULE_PACK.effectiveDate,
       asOfDate: now.toISOString().slice(0, 10),
       lastAccessedAt: now,
-    })
-    .returning();
+    }),
+    db.insert(readinessAuditTable).values({
+      sessionId,
+      action: "session_started",
+      subjectType: "session",
+      subjectId: sessionId,
+    }),
+  ]);
 
-  if (!session) throw new Error("Could not create readiness session");
-
-  await appendAudit({
-    sessionId: session.id,
-    action: "session_started",
-    subjectType: "session",
-    subjectId: session.id,
-  });
-  return session;
+  return assertOwnedSession(sessionId, userId);
 }
 
 export async function getReadinessSession(sessionId: string, userId: string) {
@@ -270,6 +241,7 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
     name: document.payload.name,
     issuedOn: document.payload.issuedOn,
     included: document.included,
+    metadataConfirmed: document.metadataConfirmed,
   }));
 
   return {
@@ -293,67 +265,68 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
   };
 }
 
-export async function saveManualIncomeFacts(input: {
+export async function saveManualFact(input: {
   sessionId: string;
   userId: string;
-  householdSize: number;
-  employmentMonthlyIncome: number;
-  benefitsMonthlyIncome: number;
-  otherMonthlyIncome: number;
+  key:
+    | "household_size"
+    | "employment_monthly_income"
+    | "benefits_monthly_income"
+    | "other_monthly_income";
+  value: number;
 }) {
   await assertOwnedSession(input.sessionId, input.userId);
   const db = getDB();
-  const entries: Array<[FactKey, number]> = [
-    ["household_size", input.householdSize],
-    ["employment_monthly_income", input.employmentMonthlyIncome],
-    ["benefits_monthly_income", input.benefitsMonthlyIncome],
-    ["other_monthly_income", input.otherMonthlyIncome],
-  ];
+  const factId = `rdf_${crypto.randomUUID().replaceAll("-", "")}`;
+  const now = new Date();
+  const encryptedPayload = await sealJson(
+    {
+      value: String(input.value),
+      sourceQuote: null,
+      page: null,
+      box: null,
+      origin: "manual",
+    } satisfies FactPayload,
+    {
+      secret: getReadinessEncryptionSecret(),
+      context: factContext(input.sessionId, factId),
+    },
+  );
 
-  for (const [key, numericValue] of entries) {
-    await db
+  await db.batch([
+    db
       .update(readinessFactTable)
-      .set({ status: FACT_STATUS.REJECTED, rejectedAt: new Date() })
+      .set({ status: FACT_STATUS.REJECTED, rejectedAt: now })
       .where(
         and(
           eq(readinessFactTable.sessionId, input.sessionId),
-          eq(readinessFactTable.key, key),
-          eq(readinessFactTable.status, FACT_STATUS.CONFIRMED),
+          eq(readinessFactTable.key, input.key),
+          inArray(readinessFactTable.status, [FACT_STATUS.EXTRACTED, FACT_STATUS.CONFIRMED]),
         ),
-      );
-
-    const factId = `rdf_${crypto.randomUUID().replaceAll("-", "")}`;
-    const encryptedPayload = await sealJson(
-      {
-        value: String(numericValue),
-        sourceQuote: null,
-        page: null,
-        box: null,
-        origin: "manual",
-      } satisfies FactPayload,
-      {
-        secret: getReadinessEncryptionSecret(),
-        context: factContext(input.sessionId, factId),
-      },
-    );
-
-    await db.insert(readinessFactTable).values({
+      ),
+    db.insert(readinessFactTable).values({
       id: factId,
       sessionId: input.sessionId,
-      key,
+      key: input.key,
       status: FACT_STATUS.CONFIRMED,
       confidence: null,
       encryptedPayload,
-      confirmedAt: new Date(),
-    });
-  }
-
-  await bumpRevision(input.sessionId);
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: "manual_facts_confirmed",
-    subjectType: "fact_set",
-  });
+      confirmedAt: now,
+    }),
+    db
+      .update(readinessSessionTable)
+      .set({
+        revision: sql`${readinessSessionTable.revision} + 1`,
+        lastAccessedAt: now,
+      })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "manual_fact_confirmed",
+      subjectType: "fact",
+      subjectId: factId,
+    }),
+  ]);
 }
 
 export async function confirmReadinessFact(input: {
@@ -381,40 +354,43 @@ export async function confirmReadinessFact(input: {
     },
   );
 
-  await db
-    .update(readinessFactTable)
-    .set({ status: FACT_STATUS.REJECTED, rejectedAt: new Date() })
-    .where(
-      and(
-        eq(readinessFactTable.sessionId, input.sessionId),
-        eq(readinessFactTable.key, fact.key),
-        eq(readinessFactTable.status, FACT_STATUS.CONFIRMED),
-        ne(readinessFactTable.id, input.factId),
+  const now = new Date();
+  await db.batch([
+    db
+      .update(readinessFactTable)
+      .set({ status: FACT_STATUS.REJECTED, rejectedAt: now })
+      .where(
+        and(
+          eq(readinessFactTable.sessionId, input.sessionId),
+          eq(readinessFactTable.key, fact.key),
+          inArray(readinessFactTable.status, [FACT_STATUS.EXTRACTED, FACT_STATUS.CONFIRMED]),
+        ),
       ),
-    );
-
-  await db
-    .update(readinessFactTable)
-    .set({
-      status: FACT_STATUS.CONFIRMED,
-      confirmedAt: new Date(),
-      rejectedAt: null,
-      encryptedPayload,
-    })
-    .where(
-      and(
-        eq(readinessFactTable.id, input.factId),
-        eq(readinessFactTable.sessionId, input.sessionId),
+    db
+      .update(readinessFactTable)
+      .set({
+        status: FACT_STATUS.CONFIRMED,
+        confirmedAt: now,
+        rejectedAt: null,
+        encryptedPayload,
+      })
+      .where(
+        and(
+          eq(readinessFactTable.id, input.factId),
+          eq(readinessFactTable.sessionId, input.sessionId),
+        ),
       ),
-    );
-
-  await bumpRevision(input.sessionId);
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: "fact_confirmed",
-    subjectType: "fact",
-    subjectId: input.factId,
-  });
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "fact_confirmed",
+      subjectType: "fact",
+      subjectId: input.factId,
+    }),
+  ]);
 }
 
 export async function rejectReadinessFact(input: {
@@ -424,25 +400,37 @@ export async function rejectReadinessFact(input: {
 }) {
   await assertOwnedSession(input.sessionId, input.userId);
   const db = getDB();
-  const [updated] = await db
-    .update(readinessFactTable)
-    .set({ status: FACT_STATUS.REJECTED, rejectedAt: new Date() })
-    .where(
-      and(
-        eq(readinessFactTable.id, input.factId),
-        eq(readinessFactTable.sessionId, input.sessionId),
-      ),
-    )
-    .returning({ id: readinessFactTable.id });
-
-  if (!updated) throw new Error("Fact not found");
-  await bumpRevision(input.sessionId);
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: "fact_removed",
-    subjectType: "fact",
-    subjectId: input.factId,
+  const fact = await db.query.readinessFactTable.findFirst({
+    where: and(
+      eq(readinessFactTable.id, input.factId),
+      eq(readinessFactTable.sessionId, input.sessionId),
+    ),
+    columns: { id: true },
   });
+  if (!fact) throw new Error("Fact not found");
+
+  const now = new Date();
+  await db.batch([
+    db
+      .update(readinessFactTable)
+      .set({ status: FACT_STATUS.REJECTED, rejectedAt: now })
+      .where(
+        and(
+          eq(readinessFactTable.id, input.factId),
+          eq(readinessFactTable.sessionId, input.sessionId),
+        ),
+      ),
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "fact_removed",
+      subjectType: "fact",
+      subjectId: input.factId,
+    }),
+  ]);
 }
 
 export async function saveRuleQuestion(input: {
@@ -461,18 +449,21 @@ export async function saveRuleQuestion(input: {
     },
   );
 
-  await getDB().insert(readinessQuestionTable).values({
-    id,
-    sessionId: input.sessionId,
-    sourceIds: JSON.stringify(answer.sourceIds),
-    encryptedPayload,
-  });
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: answer.status === "answered" ? "rule_question_answered" : "rule_question_unresolved",
-    subjectType: "question",
-    subjectId: id,
-  });
+  const db = getDB();
+  await db.batch([
+    db.insert(readinessQuestionTable).values({
+      id,
+      sessionId: input.sessionId,
+      sourceIds: JSON.stringify(answer.sourceIds),
+      encryptedPayload,
+    }),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: answer.status === "answered" ? "rule_question_answered" : "rule_question_unresolved",
+      subjectType: "question",
+      subjectId: id,
+    }),
+  ]);
   return answer;
 }
 
@@ -483,24 +474,38 @@ export async function setDocumentIncluded(input: {
   included: boolean;
 }) {
   await assertOwnedSession(input.sessionId, input.userId);
-  const [updated] = await getDB()
-    .update(readinessDocumentTable)
-    .set({ included: input.included })
-    .where(
-      and(
-        eq(readinessDocumentTable.id, input.documentId),
-        eq(readinessDocumentTable.sessionId, input.sessionId),
-      ),
-    )
-    .returning({ id: readinessDocumentTable.id });
-
-  if (!updated) throw new Error("Document not found");
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: input.included ? "document_included" : "document_excluded",
-    subjectType: "document",
-    subjectId: input.documentId,
+  const db = getDB();
+  const document = await db.query.readinessDocumentTable.findFirst({
+    where: and(
+      eq(readinessDocumentTable.id, input.documentId),
+      eq(readinessDocumentTable.sessionId, input.sessionId),
+    ),
+    columns: { id: true },
   });
+  if (!document) throw new Error("Document not found");
+
+  const now = new Date();
+  await db.batch([
+    db
+      .update(readinessDocumentTable)
+      .set({ included: input.included })
+      .where(
+        and(
+          eq(readinessDocumentTable.id, input.documentId),
+          eq(readinessDocumentTable.sessionId, input.sessionId),
+        ),
+      ),
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: input.included ? "document_included" : "document_excluded",
+      subjectType: "document",
+      subjectId: input.documentId,
+    }),
+  ]);
 }
 
 export async function getOwnedDocument(input: {
@@ -544,9 +549,10 @@ export async function insertReadinessDocument(input: {
     },
   );
 
-  const [document] = await getDB()
-    .insert(readinessDocumentTable)
-    .values({
+  const db = getDB();
+  const now = new Date();
+  await db.batch([
+    db.insert(readinessDocumentTable).values({
       id: input.id,
       sessionId: input.sessionId,
       r2Key: input.r2Key,
@@ -556,18 +562,18 @@ export async function insertReadinessDocument(input: {
       kind: DOCUMENT_KIND.OTHER,
       extractionStatus: EXTRACTION_STATUS.UPLOADED,
       encryptedPayload,
-    })
-    .returning();
-
-  if (!document) throw new Error("Could not save document");
-  await bumpRevision(input.sessionId);
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: "document_uploaded",
-    subjectType: "document",
-    subjectId: input.id,
-  });
-  return document;
+    }),
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "document_uploaded",
+      subjectType: "document",
+      subjectId: input.id,
+    }),
+  ]);
 }
 
 export async function updateDocumentExtraction(input: {
@@ -577,6 +583,7 @@ export async function updateDocumentExtraction(input: {
   kind: (typeof DOCUMENT_KIND)[keyof typeof DOCUMENT_KIND];
   issuedOn: string | null;
   pageCount: number | null;
+  safetySignalDetected: boolean;
   facts: Array<{
     key: FactKey;
     value: string;
@@ -601,13 +608,43 @@ export async function updateDocumentExtraction(input: {
     },
   );
 
-  await db
+  const factRows = await Promise.all(
+    input.facts.map(async (fact) => {
+      const id = `rdf_${crypto.randomUUID().replaceAll("-", "")}`;
+      const encryptedPayload = await sealJson(
+        {
+          value: fact.value,
+          sourceQuote: fact.sourceQuote,
+          page: fact.page,
+          box: fact.box,
+          origin: "extracted",
+        } satisfies FactPayload,
+        {
+          secret: getReadinessEncryptionSecret(),
+          context: factContext(input.sessionId, id),
+        },
+      );
+
+      return {
+        id,
+        sessionId: input.sessionId,
+        documentId: input.documentId,
+        key: fact.key,
+        status: FACT_STATUS.EXTRACTED,
+        confidence: Math.round(Math.min(1, Math.max(0, fact.confidence)) * 1000),
+        encryptedPayload,
+      };
+    }),
+  );
+
+  const now = new Date();
+  const updateDocument = db
     .update(readinessDocumentTable)
     .set({
       kind: input.kind,
       extractionStatus: EXTRACTION_STATUS.READY,
       encryptedPayload: encryptedDocumentPayload,
-      processedAt: new Date(),
+      processedAt: now,
     })
     .where(
       and(
@@ -615,41 +652,49 @@ export async function updateDocumentExtraction(input: {
         eq(readinessDocumentTable.sessionId, input.sessionId),
       ),
     );
-
-  for (const fact of input.facts) {
-    const id = `rdf_${crypto.randomUUID().replaceAll("-", "")}`;
-    const encryptedPayload = await sealJson(
-      {
-        value: fact.value,
-        sourceQuote: fact.sourceQuote,
-        page: fact.page,
-        box: fact.box,
-        origin: "extracted",
-      } satisfies FactPayload,
-      {
-        secret: getReadinessEncryptionSecret(),
-        context: factContext(input.sessionId, id),
-      },
+  const clearPriorCandidates = db
+    .delete(readinessFactTable)
+    .where(
+      and(
+        eq(readinessFactTable.sessionId, input.sessionId),
+        eq(readinessFactTable.documentId, input.documentId),
+      ),
     );
-
-    await db.insert(readinessFactTable).values({
-      id,
+  const updateSession = db
+    .update(readinessSessionTable)
+    .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+    .where(eq(readinessSessionTable.id, input.sessionId));
+  const auditRows = [
+    {
       sessionId: input.sessionId,
-      documentId: input.documentId,
-      key: fact.key,
-      status: FACT_STATUS.EXTRACTED,
-      confidence: Math.round(Math.min(1, Math.max(0, fact.confidence)) * 1000),
-      encryptedPayload,
-    });
-  }
+      action: "document_extracted",
+      subjectType: "document",
+      subjectId: input.documentId,
+    },
+    ...(input.safetySignalDetected
+      ? [
+          {
+            sessionId: input.sessionId,
+            action: "document_instruction_ignored",
+            subjectType: "document",
+            subjectId: input.documentId,
+          },
+        ]
+      : []),
+  ];
+  const saveAudit = db.insert(readinessAuditTable).values(auditRows);
 
-  await bumpRevision(input.sessionId);
-  await appendAudit({
-    sessionId: input.sessionId,
-    action: "document_extracted",
-    subjectType: "document",
-    subjectId: input.documentId,
-  });
+  if (factRows.length > 0) {
+    await db.batch([
+      updateDocument,
+      clearPriorCandidates,
+      db.insert(readinessFactTable).values(factRows),
+      updateSession,
+      saveAudit,
+    ]);
+  } else {
+    await db.batch([updateDocument, clearPriorCandidates, updateSession, saveAudit]);
+  }
 }
 
 export async function markDocumentExtractionProcessing(input: {
@@ -684,15 +729,129 @@ export async function markDocumentExtractionFailed(input: {
     },
   );
 
-  await getDB()
-    .update(readinessDocumentTable)
-    .set({ extractionStatus: EXTRACTION_STATUS.FAILED, encryptedPayload, processedAt: new Date() })
-    .where(
-      and(
-        eq(readinessDocumentTable.id, input.documentId),
-        eq(readinessDocumentTable.sessionId, input.sessionId),
+  const db = getDB();
+  const now = new Date();
+  await db.batch([
+    db
+      .update(readinessDocumentTable)
+      .set({ extractionStatus: EXTRACTION_STATUS.FAILED, encryptedPayload, processedAt: now })
+      .where(
+        and(
+          eq(readinessDocumentTable.id, input.documentId),
+          eq(readinessDocumentTable.sessionId, input.sessionId),
+        ),
       ),
-    );
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "document_extraction_failed",
+      subjectType: "document",
+      subjectId: input.documentId,
+    }),
+  ]);
+}
+
+export async function confirmReadinessDocumentMetadata(input: {
+  sessionId: string;
+  documentId: string;
+  userId: string;
+  kind: (typeof DOCUMENT_KIND)[keyof typeof DOCUMENT_KIND];
+  issuedOn: string | null;
+}) {
+  const document = await getOwnedDocument(input);
+  const encryptedPayload = await sealJson(
+    { ...document.payload, issuedOn: input.issuedOn } satisfies DocumentPayload,
+    {
+      secret: getReadinessEncryptionSecret(),
+      context: documentContext(input.sessionId, input.documentId),
+    },
+  );
+  const db = getDB();
+  const now = new Date();
+
+  await db.batch([
+    db
+      .update(readinessDocumentTable)
+      .set({
+        kind: input.kind,
+        metadataConfirmed: true,
+        encryptedPayload,
+      })
+      .where(
+        and(
+          eq(readinessDocumentTable.id, input.documentId),
+          eq(readinessDocumentTable.sessionId, input.sessionId),
+        ),
+      ),
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "document_details_confirmed",
+      subjectType: "document",
+      subjectId: input.documentId,
+    }),
+  ]);
+}
+
+async function getDocumentBucket() {
+  try {
+    return (await getCloudflareContext({ async: true })).env.R2;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function deleteReadinessDocumentRecord(input: {
+  sessionId: string;
+  documentId: string;
+  userId: string;
+}) {
+  const document = await getOwnedDocument(input);
+  const bucket = await getDocumentBucket();
+  if (!bucket) {
+    throw new Error("Document storage unavailable; document was not removed");
+  }
+
+  await bucket.delete(document.r2Key);
+
+  const db = getDB();
+  const now = new Date();
+  await db.batch([
+    db
+      .delete(readinessDocumentTable)
+      .where(
+        and(
+          eq(readinessDocumentTable.id, input.documentId),
+          eq(readinessDocumentTable.sessionId, input.sessionId),
+        ),
+      ),
+    db
+      .update(readinessSessionTable)
+      .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
+      .where(eq(readinessSessionTable.id, input.sessionId)),
+    db.insert(readinessAuditTable).values({
+      sessionId: input.sessionId,
+      action: "document_removed",
+      subjectType: "document",
+      subjectId: input.documentId,
+    }),
+  ]);
+}
+
+export async function recordPacketDownloaded(sessionId: string, userId: string) {
+  await assertOwnedSession(sessionId, userId);
+  await getDB().insert(readinessAuditTable).values({
+    sessionId,
+    action: "packet_downloaded",
+    subjectType: "packet",
+    subjectId: null,
+  });
 }
 
 export async function deleteReadinessSessionRecord(sessionId: string, userId: string) {
@@ -702,12 +861,7 @@ export async function deleteReadinessSessionRecord(sessionId: string, userId: st
     .from(readinessDocumentTable)
     .where(eq(readinessDocumentTable.sessionId, sessionId));
 
-  let bucket: R2Bucket | undefined;
-  try {
-    bucket = (await getCloudflareContext({ async: true })).env.R2;
-  } catch {
-    // A local database-only test may not have R2. Production fails closed below.
-  }
+  const bucket = await getDocumentBucket();
 
   if (documents.length > 0 && !bucket && process.env.NODE_ENV === "production") {
     throw new Error("Document storage unavailable; session was not deleted");
@@ -719,7 +873,5 @@ export async function deleteReadinessSessionRecord(sessionId: string, userId: st
 
   await getDB()
     .delete(readinessSessionTable)
-    .where(
-      and(eq(readinessSessionTable.id, sessionId), eq(readinessSessionTable.userId, userId)),
-    );
+    .where(and(eq(readinessSessionTable.id, sessionId), eq(readinessSessionTable.userId, userId)));
 }
