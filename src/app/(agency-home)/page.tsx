@@ -124,7 +124,7 @@ export default function Home() {
             />
             <AnimatedText
               className="public-landing-muted mt-5 max-w-[21rem] text-base leading-7 sm:max-w-3xl sm:text-lg md:text-xl"
-              text="RealDoor turns synthetic household documents into confirmed facts, cited rules, clear calculations, and a packet you preview and download yourself."
+              text="RealDoor turns synthetic household documents into confirmed facts, cited rules, clear calculations, and a packet you preview and download."
             />
 
             <div className="mt-7 flex w-full max-w-[21rem] justify-center">
