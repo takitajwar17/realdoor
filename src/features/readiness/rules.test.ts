@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { QA_GOLD } from "./corpus";
-import { AUTHORITATIVE_2026_RULE_PACK, answerRuleQuestion, getRuleSource } from "./rules";
+import { AUTHORITATIVE_2026_RULE_PACK, answerRuleQuestion, getRuleSource, getScenarioRulePack } from "./rules";
 
 describe("frozen 2026 rule pack", () => {
   it("uses the exact official Boston-Cambridge-Quincy limits and locators", () => {
@@ -22,6 +22,16 @@ describe("frozen 2026 rule pack", () => {
       },
     });
     expect(getRuleSource("HUD-MTSP-002")).toMatchObject({ locator: "PDF page 130" });
+  });
+
+  it("uses each gold household's exact required document types", () => {
+    expect(getScenarioRulePack("HH-003").checklistRequirements.map((item) => item.kind)).toEqual([
+      "application_summary", "pay_stub", "employment_letter", "benefit_letter",
+    ]);
+    expect(getScenarioRulePack("HH-004").checklistRequirements.at(-1)?.kind).toBe(
+      "gig_income_corroboration",
+    );
+    expect(new Set(getScenarioRulePack("HH-005").checklistRequirements.map((item) => item.maxAgeDays))).toEqual(new Set([60]));
   });
 
   it.each(QA_GOLD)("answers $qa_id exactly from the gold corpus", (gold) => {

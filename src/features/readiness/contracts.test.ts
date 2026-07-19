@@ -11,15 +11,15 @@ import {
 } from "./contracts";
 
 describe("readiness request contracts", () => {
-  it("requires explicit consent and an explicit synthetic-rehearsal choice", () => {
+  it("requires explicit consent and an explicit sample-data acknowledgement", () => {
     expect(
-      createSessionSchema.safeParse({ consent: false, useSyntheticRehearsal: true }).success,
+      createSessionSchema.safeParse({ consent: false, acknowledgeSampleData: true }).success,
     ).toBe(false);
     expect(
-      createSessionSchema.safeParse({ consent: true, useSyntheticRehearsal: false }).success,
+      createSessionSchema.safeParse({ consent: true, acknowledgeSampleData: false }).success,
     ).toBe(false);
     expect(
-      createSessionSchema.safeParse({ consent: true, useSyntheticRehearsal: true }).success,
+      createSessionSchema.safeParse({ consent: true, acknowledgeSampleData: true }).success,
     ).toBe(true);
   });
 
@@ -42,8 +42,8 @@ describe("readiness request contracts", () => {
     expect(
       manualFactSchema.safeParse({
         sessionId: "rds_abc123",
-        key: "employment_monthly_income",
-        value: 4200,
+        key: "hourly_rate",
+        value: 28.5,
       }).success,
     ).toBe(true);
   });

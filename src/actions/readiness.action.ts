@@ -54,7 +54,7 @@ export async function createReadinessSessionAction(
 ): Promise<ReadinessActionState> {
   const parsed = createSessionSchema.safeParse({
     consent: formData.get("consent") === "on",
-    useSyntheticRehearsal: formData.get("useSyntheticRehearsal") === "on",
+    acknowledgeSampleData: formData.get("acknowledgeSampleData") === "on",
   });
   if (!parsed.success) {
     return errorState("Confirm both acknowledgements to start your practice session.");

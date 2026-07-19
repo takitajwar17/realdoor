@@ -8,7 +8,7 @@ const readinessDocumentId = z.string().regex(/^rdd_[a-z0-9]{3,64}$/u);
 
 export const createSessionSchema = z.object({
   consent: z.literal(true),
-  useSyntheticRehearsal: z.literal(true),
+  acknowledgeSampleData: z.literal(true),
 });
 
 export const manualFactSchema = z

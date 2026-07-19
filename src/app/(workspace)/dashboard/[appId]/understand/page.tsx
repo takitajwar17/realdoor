@@ -58,7 +58,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       session={workspace.session}
       current="understand"
       title="Understand the math"
-      description="Every number below comes from a fact you confirmed or the practice guide. This is an explanation only—not an application decision."
+      description="Every number below comes from a fact you confirmed or the frozen 2026 guide. This is an explanation only—not an application decision."
       actions={
         <div className="flex gap-2">
           <Button asChild variant="outline">
@@ -75,8 +75,8 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       }
     >
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/7 px-4 py-3 text-sm leading-6 text-amber-950 dark:text-amber-100">
-        <strong>Practice only.</strong> These numbers help you practice the review process. They
-        are not official limits for a real application.
+        <strong>Frozen reference, not a decision.</strong> The household-size limit is from HUD’s
+        FY 2026 MTSP table for this area. A property still makes every application determination.
       </div>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
@@ -89,7 +89,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
               <div>
                 <CardTitle className="text-base">How your income comparison works</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Your confirmed monthly amounts → annual total → cited practice benchmark →
+                  Confirmed recurring sources → annualized total → cited 2026 threshold →
                   difference.
                 </p>
               </div>
@@ -105,14 +105,14 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                     tone="primary"
                   />
                   <Metric
-                    label="Practice 60% limit"
+                    label="Frozen 60% threshold"
                     value={money.format(comparison.incomeLimit)}
                     tone="amber"
                   />
                   <Metric
                     label="Difference"
                     value={money.format(Math.abs(comparison.difference))}
-                    detail={`${comparison.relationship} the practice limit`}
+                    detail={`${comparison.relationship} the frozen threshold`}
                     tone="neutral"
                   />
                 </div>
@@ -122,6 +122,13 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                     How it was calculated
                   </p>
                   <p className="mt-2 font-mono text-sm font-semibold">{income.formula}</p>
+                  <div className="mt-3 space-y-2">
+                    {income.components.map((component) => (
+                      <p key={component.label} className="font-mono text-xs text-muted-foreground">
+                        {component.formula}
+                      </p>
+                    ))}
+                  </div>
                   <div className="my-4 flex items-center gap-3 text-muted-foreground">
                     <Separator className="flex-1" />
                     <EqualIcon className="h-4 w-4" />
@@ -198,7 +205,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
             </p>
             <div className="rounded-xl border border-border bg-muted/25 p-4">
               <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                Practice guide in use
+                Frozen guide in use
               </p>
               <dl className="mt-3 space-y-3 text-xs">
                 <ContextRow
@@ -222,7 +229,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
               <div>
                 <CardTitle className="text-base">Ask a question</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Answers come only from the practice guide in this session.
+                  Answers come only from the saved frozen passages in this session.
                 </p>
               </div>
             </div>

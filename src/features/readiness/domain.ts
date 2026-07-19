@@ -111,16 +111,13 @@ function clampUnit(value: number) {
 
 function normalizeEvidenceBox(box: EvidenceBox | undefined): EvidenceBox | undefined {
   if (!box) return undefined;
-
-  const x = clampUnit(box.x);
-  const y = clampUnit(box.y);
-
-  return {
-    x,
-    y,
-    width: Math.min(clampUnit(box.width), 1 - x),
-    height: Math.min(clampUnit(box.height), 1 - y),
-  };
+  const values = [box.x, box.y, box.width, box.height];
+  if (
+    values.some((value) => !Number.isFinite(value)) ||
+    box.x < 0 || box.y < 0 || box.width <= 0 || box.height <= 0 ||
+    box.x + box.width > 1 || box.y + box.height > 1
+  ) return undefined;
+  return { ...box };
 }
 
 export function normalizeExtractedFact(input: {
@@ -137,15 +134,24 @@ export function normalizeExtractedFact(input: {
   const sourceQuote = input.sourceQuote.trim();
   if (!value || !sourceQuote) return null;
 
+  const normalizedBox = normalizeEvidenceBox(input.box);
+  if (input.box && !normalizedBox) return null;
+
   return {
     key: input.key as FactKey,
     value,
     confidence: clampUnit(input.confidence),
     sourceQuote,
     ...(typeof input.page === "number" && input.page > 0 ? { page: Math.floor(input.page) } : {}),
-    ...(input.box ? { box: normalizeEvidenceBox(input.box) } : {}),
+    ...(normalizedBox ? { box: normalizedBox } : {}),
     status: "extracted",
   };
+}
+
+export function isTraceableDocumentFact(fact: ExtractedFact) {
+  return Boolean(
+    fact.sourceQuote.trim() && fact.page && fact.box && fact.confidence >= 0 && fact.confidence <= 1,
+  );
 }
 
 export function detectFactConflicts(facts: ExtractedFact[]): FactKey[] {

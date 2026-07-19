@@ -45,12 +45,12 @@ export function StartSessionForm() {
           </label>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
-            <Checkbox name="useSyntheticRehearsal" className="mt-0.5" />
+            <Checkbox name="acknowledgeSampleData" className="mt-0.5" />
             <span>
-              <span className="block text-sm font-semibold">Use practice values only</span>
+              <span className="block text-sm font-semibold">Use authorized sample documents</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                This session uses clearly labeled practice numbers and documents—not official limits
-                for a real application.
+                The supplied household documents are synthetic. The cited FY 2026 HUD thresholds
+                are frozen official source values, but RealDoor does not make an eligibility decision.
               </span>
             </span>
           </label>

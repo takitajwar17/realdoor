@@ -1,4 +1,4 @@
-import { FROZEN_RULES, MTSP_LIMITS_2026, QA_GOLD } from "./corpus";
+import { APPLICATION_CHECKLISTS, FROZEN_RULES, MTSP_LIMITS_2026, QA_GOLD } from "./corpus";
 import type { RulePack, SourceCitation } from "./domain";
 
 const RULE_SOURCES: SourceCitation[] = FROZEN_RULES.map((rule) => ({
@@ -54,6 +54,29 @@ export function getRuleSource(id: string) {
   return RULE_SOURCES.find((source) => source.id === id);
 }
 
+const documentLabels: Record<string, string> = {
+  application_summary: "Application summary",
+  pay_stub: "Recent pay statement",
+  employment_letter: "Employment letter",
+  benefit_letter: "Benefit letter",
+  gig_income_corroboration: "Gig income corroboration",
+};
+
+export function getScenarioRulePack(householdId: string | null): RulePack {
+  const checklist = APPLICATION_CHECKLISTS.find((item) => item.household_id === householdId);
+  if (!checklist) return AUTHORITATIVE_2026_RULE_PACK;
+  return {
+    ...AUTHORITATIVE_2026_RULE_PACK,
+    checklistRequirements: checklist.required_document_types.map((kind) => ({
+      id: kind.replaceAll("_", "-"),
+      label: documentLabels[kind] ?? kind.replaceAll("_", " "),
+      kind: kind as RulePack["checklistRequirements"][number]["kind"],
+      maxAgeDays: 60,
+      sourceId: "CH-READINESS-001",
+    })),
+  };
+}
+
 export type RuleAnswer = {
   status: "answered" | "unresolved";
   answer: string;
@@ -64,6 +87,10 @@ const prohibitedDecisionPattern =
   /\b(eligible|eligibility|qualif(?:y|ied|ication)|approv(?:e|al|ed)|deny|denial|rank|score|predict)\b/iu;
 const instructionAttackPattern =
   /\b(ignore (?:all |the )?(?:previous|prior) instructions|system prompt|reveal .{0,20}(?:prompt|secret)|upload (?:all|every))\b/iu;
+const crossHouseholdPattern = /\b(another|other) (?:applicant|household|renter).{0,40}(?:income|document|data)\b/iu;
+const protectedTraitPattern = /\b(infer|guess|predict).{0,40}(?:disability|immigration|race|ethnicity|religion|citizenship)\b/iu;
+const vacancyPattern = /\b(?:vacan(?:cy|t)|unit available|available today|waitlist)\b/iu;
+const wrongYearPattern = /\b(?:use|apply).{0,30}2025.{0,30}(?:threshold|limit)\b/iu;
 
 function normalizeQuestion(question: string) {
   return question.trim().replace(/\s+/gu, " ").toLocaleLowerCase("en-US");
@@ -94,6 +121,30 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
       answer:
         "RealDoor can show a numerical comparison and readiness status only. A human makes every program determination.",
       sourceIds: ["CH-DECISION-001"],
+    };
+  }
+
+  if (crossHouseholdPattern.test(question) || protectedTraitPattern.test(question)) {
+    return {
+      status: "unresolved",
+      answer: "RealDoor cannot reveal another household’s information or infer protected traits.",
+      sourceIds: ["CH-SAFETY-001", "CH-DECISION-001"],
+    };
+  }
+
+  if (vacancyPattern.test(question) && !exactGoldAnswer) {
+    return {
+      status: "answered",
+      answer: "The HUD property dataset is a project inventory, not a current vacancy, rent, waitlist, or application-status feed.",
+      sourceIds: ["HUD-DATA-001"],
+    };
+  }
+
+  if (wrongYearPattern.test(question)) {
+    return {
+      status: "answered",
+      answer: "This session uses only the frozen FY 2026 MTSP corpus effective May 1, 2026.",
+      sourceIds: ["HUD-MTSP-001", "HUD-MTSP-002"],
     };
   }
 

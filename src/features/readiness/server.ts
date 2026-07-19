@@ -29,7 +29,7 @@ import {
   type FactKey,
   type ReadinessDocument,
 } from "./domain";
-import { AUTHORITATIVE_2026_RULE_PACK, answerRuleQuestion } from "./rules";
+import { AUTHORITATIVE_2026_RULE_PACK, answerRuleQuestion, getScenarioRulePack } from "./rules";
 
 // Keep the established local key bytes so existing development sessions remain readable
 // across the product rename. Production always requires READINESS_ENCRYPTION_KEY.
@@ -246,6 +246,10 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
     included: document.included,
     metadataConfirmed: document.metadataConfirmed,
   }));
+  const householdId = documents
+    .map((document) => document.payload.name.match(/^(hh-\d{3})_/iu)?.[1]?.toUpperCase())
+    .find(Boolean) ?? null;
+  const activeRulePack = getScenarioRulePack(householdId);
 
   return {
     session,
@@ -257,14 +261,15 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
     conflicts: detectFactConflicts(extractedFacts),
     comparison: calculateIncomeComparison({
       facts: confirmedFacts,
-      rulePack: AUTHORITATIVE_2026_RULE_PACK,
+      rulePack: activeRulePack,
     }),
     checklist: deriveChecklist({
       asOf: session.asOfDate,
       documents: readinessDocuments,
-      rules: AUTHORITATIVE_2026_RULE_PACK,
+      rules: activeRulePack,
     }),
-    rulePack: AUTHORITATIVE_2026_RULE_PACK,
+    rulePack: activeRulePack,
+    householdId,
   };
 }
 

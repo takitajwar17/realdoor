@@ -47,6 +47,24 @@ const fields = [
     max: 10_000_000,
     prefix: "$",
   },
+  {
+    key: "gross_pay",
+    label: "Gross pay per period",
+    help: "Use this with the pay frequency confirmed from a pay statement.",
+    step: "0.01",
+    min: 0,
+    max: 10_000_000,
+    prefix: "$",
+  },
+  {
+    key: "gross_receipts",
+    label: "Monthly gross gig receipts",
+    help: "Enter recurring gross receipts only when you have corroborating evidence.",
+    step: "0.01",
+    min: 0,
+    max: 10_000_000,
+    prefix: "$",
+  },
 ] as const;
 
 type FieldKey = (typeof fields)[number]["key"];
