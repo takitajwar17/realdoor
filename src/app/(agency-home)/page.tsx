@@ -136,15 +136,15 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="public-landing-media-frame mt-8 aspect-[2830/1594] w-full max-w-[21rem] overflow-hidden rounded-2xl border sm:max-w-3xl md:max-w-5xl md:rounded-3xl">
+            <div className="public-landing-media-frame mt-8 aspect-[2830/1594] w-full max-w-[21rem] overflow-hidden rounded-2xl sm:max-w-3xl md:max-w-5xl md:rounded-3xl">
               <Image
-                alt="RealDoor application-readiness workspace showing evidence and checklist states"
+                alt="RealDoor workflow from confirmed source facts through cited calculations to a renter-controlled PDF packet"
                 className="h-full w-full object-cover"
-                height={1594}
+                height={941}
                 priority
                 sizes="(min-width: 1024px) 64rem, (min-width: 640px) 48rem, 21rem"
-                src="/dashboard.png"
-                width={2830}
+                src="/dashboard-workflow.png"
+                width={1672}
               />
             </div>
 
