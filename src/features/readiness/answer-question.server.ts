@@ -9,7 +9,11 @@ import type { ConfirmedFact, IncomeComparison, RulePack } from "./domain";
 import { QA_GOLD } from "./corpus";
 import { sanitizeRuleAnswer } from "./answer-safety";
 import { getFactLabel } from "./presentation";
-import { answerRuleQuestion, type RuleAnswer } from "./rules";
+import {
+  answerRuleQuestion,
+  ELIGIBILITY_DECISION_REFUSAL,
+  type RuleAnswer,
+} from "./rules";
 
 const PREFERRED_MODELS = ["gpt-4.1-mini"] as const;
 
@@ -183,8 +187,7 @@ export function answerFromSessionTopics(input: {
   ) {
     return {
       status: "unresolved",
-      answer:
-        "RealDoor can show a numerical comparison and readiness status only. A human makes every program determination.",
+      answer: ELIGIBILITY_DECISION_REFUSAL,
       sourceIds: ["CH-DECISION-001"],
     };
   }

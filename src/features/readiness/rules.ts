@@ -155,6 +155,9 @@ export type RuleAnswer = {
   sourceIds: string[];
 };
 
+export const ELIGIBILITY_DECISION_REFUSAL =
+  "I can’t determine whether you’re eligible. RealDoor can show a numerical comparison and readiness status only. A qualified human reviewer makes every program determination.";
+
 const prohibitedDecisionPattern =
   /\b(eligible|eligibility|qualif(?:y|ied|ication)|approv(?:e|al|ed)|deny|denial|rank|score|predict)\b/iu;
 const instructionAttackPattern =
@@ -192,8 +195,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
   if (prohibitedDecisionPattern.test(question) && !exactGoldAnswer) {
     return {
       status: "unresolved",
-      answer:
-        "RealDoor can show a numerical comparison and readiness status only. A human makes every program determination.",
+      answer: ELIGIBILITY_DECISION_REFUSAL,
       sourceIds: ["CH-DECISION-001"],
     };
   }

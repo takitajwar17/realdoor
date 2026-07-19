@@ -95,7 +95,20 @@ describe("frozen 2026 rule pack", () => {
     const result = answerRuleQuestion("Is HH-001 eligible and approved?");
     expect(result.status).toBe("unresolved");
     expect(result.sourceIds).toEqual(["CH-DECISION-001"]);
-    expect(result.answer.toLowerCase()).not.toMatch(/\b(?:eligible|approved)\b/u);
+    expect(result.answer).toMatch(/^I can’t determine whether you’re eligible\./u);
+    expect(result.answer).toContain(
+      "RealDoor can show a numerical comparison and readiness status only.",
+    );
+    expect(result.answer.toLowerCase()).not.toContain("approved");
+  });
+
+  it("rejects a direct eligibility question before explaining the boundary", () => {
+    expect(answerRuleQuestion("Am I eligible?")).toEqual({
+      status: "unresolved",
+      answer:
+        "I can’t determine whether you’re eligible. RealDoor can show a numerical comparison and readiness status only. A qualified human reviewer makes every program determination.",
+      sourceIds: ["CH-DECISION-001"],
+    });
   });
 
   it("ignores embedded instructions and cites the safety boundary", () => {
