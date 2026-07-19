@@ -137,8 +137,8 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
           <Button
             type="submit"
             formAction={rejectReadinessFactAction}
-            variant="outline"
-            className="text-destructive hover:text-destructive"
+            variant="ghost"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Trash2Icon className="h-4 w-4" />
             Remove suggestion
