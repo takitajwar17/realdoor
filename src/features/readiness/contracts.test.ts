@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   confirmFactSchema,
+  confirmClearFactsSchema,
   createSessionSchema,
   hasValidFileSignature,
   manualFactSchema,
@@ -101,6 +102,13 @@ describe("readiness request contracts", () => {
         value: "4200",
       }).success,
     ).toBe(false);
+  });
+
+  it("requires a valid session namespace for bulk confirmation", () => {
+    expect(confirmClearFactsSchema.safeParse({ sessionId: "rds_abc123" }).success).toBe(true);
+    expect(confirmClearFactsSchema.safeParse({ sessionId: "application_legacy" }).success).toBe(
+      false,
+    );
   });
 
   it("bounds rule questions before they reach the frozen-corpus answerer", () => {

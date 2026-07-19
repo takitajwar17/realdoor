@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { DocumentUploader } from "@/components/readiness/document-uploader";
+import { BulkConfirmFactsButton } from "@/components/readiness/bulk-confirm-facts-button";
 import { DocumentControls } from "@/components/readiness/document-controls";
 import { FactReviewCard, type FactReviewItem } from "@/components/readiness/fact-review-card";
 import { ManualFactForm } from "@/components/readiness/manual-fact-form";
@@ -318,25 +319,36 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
             )}
 
             {routineFacts.length > 0 ? (
-              <details className="group overflow-hidden rounded-xl border border-border/80 bg-card shadow-[var(--shadow-dashboard)]">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-                  <div>
-                    <h3 className="text-sm font-bold">Ready to confirm</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Clear readings with no mismatch found.
-                    </p>
+              <section className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-[var(--shadow-dashboard)]">
+                <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2Icon className="mt-0.5 h-5 w-5 shrink-0 text-status-success" />
+                    <div>
+                      <h3 className="text-sm font-bold">Ready to confirm</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Clear readings with no mismatch found.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary">{routineFacts.length}</Badge>
-                    <ChevronDownIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
-                  </div>
-                </summary>
-                <div className="space-y-3 border-t border-border/70 p-3 sm:p-4">
-                  {routineFacts.map((item) => (
-                    <FactReviewCard key={item.id} item={item} sessionId={appId} />
-                  ))}
+                  <BulkConfirmFactsButton sessionId={appId} />
                 </div>
-              </details>
+                <details className="group border-t border-border/70">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Review individually
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="secondary">{routineFacts.length}</Badge>
+                      <ChevronDownIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                    </div>
+                  </summary>
+                  <div className="space-y-3 border-t border-border/70 p-3 sm:p-4">
+                    {routineFacts.map((item) => (
+                      <FactReviewCard key={item.id} item={item} sessionId={appId} />
+                    ))}
+                  </div>
+                </details>
+              </section>
             ) : null}
 
             {confirmedReviewFacts.length > 0 ? (

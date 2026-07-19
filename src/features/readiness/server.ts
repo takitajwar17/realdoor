@@ -19,6 +19,7 @@ import {
 } from "@/db/schema";
 
 import { openEncryptedJson, sealJson } from "./crypto";
+import { selectClearFactsForConfirmation } from "./bulk-confirmation";
 import {
   DocumentAdditionConflictError,
   getDocumentAdditionConflict,
@@ -425,6 +426,22 @@ export async function confirmReadinessFact(input: {
       subjectId: input.factId,
     }),
   ]);
+}
+
+export async function confirmClearReadinessFacts(input: { sessionId: string; userId: string }) {
+  const workspace = await getReadinessWorkspace(input.sessionId, input.userId);
+  const factsToConfirm = selectClearFactsForConfirmation(workspace.facts, workspace.conflicts);
+
+  for (const fact of factsToConfirm) {
+    await confirmReadinessFact({
+      sessionId: input.sessionId,
+      factId: fact.id,
+      userId: input.userId,
+      value: fact.payload.value,
+    });
+  }
+
+  return factsToConfirm.length;
 }
 
 export async function rejectReadinessFact(input: {

@@ -43,6 +43,10 @@ export const confirmFactSchema = z.object({
   value: z.string().trim().min(1).max(200),
 });
 
+export const confirmClearFactsSchema = z.object({
+  sessionId: readinessSessionId,
+});
+
 export const rejectFactSchema = z.object({
   sessionId: readinessSessionId,
   factId: readinessFactId,

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import {
   confirmFactSchema,
+  confirmClearFactsSchema,
   createSessionSchema,
   deleteSessionSchema,
   documentMetadataSchema,
@@ -16,6 +17,7 @@ import {
 } from "@/features/readiness/contracts";
 import {
   confirmReadinessFact,
+  confirmClearReadinessFacts,
   confirmReadinessDocumentMetadata,
   createReadinessSession,
   deleteReadinessDocumentRecord,
@@ -156,6 +158,36 @@ export async function confirmReadinessFactAction(
       errorName: error instanceof Error ? error.name : "UnknownError",
     });
     return errorState("We could not confirm that field. Refresh and try again.");
+  }
+}
+
+export async function confirmClearReadinessFactsAction(
+  _previousState: ReadinessActionState,
+  formData: FormData,
+): Promise<ReadinessActionState> {
+  const parsed = confirmClearFactsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return errorState("This session could not be identified.");
+
+  try {
+    const auth = await requireReadinessActionAuth();
+    await checkActionRateLimit("confirmClearReadinessFacts", auth.userId, 20);
+    const confirmedCount = await confirmClearReadinessFacts({
+      ...parsed.data,
+      userId: auth.userId,
+    });
+    refreshSessionSurfaces(parsed.data.sessionId);
+    return {
+      status: "success",
+      message:
+        confirmedCount === 0
+          ? "There are no clear readings left to confirm."
+          : `${confirmedCount} field${confirmedCount === 1 ? "" : "s"} confirmed.`,
+    };
+  } catch (error) {
+    logger.warn("Bulk readiness fact confirmation failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
+    return errorState("We could not confirm those readings. Refresh and try again.");
   }
 }
 
