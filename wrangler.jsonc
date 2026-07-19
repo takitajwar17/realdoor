@@ -5,7 +5,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "account_id": "a349120b7ce0e7f6ee15ed0ea720b3bb",
-  "name": "hacknation",
+  "name": "realdoor-hacknation",
   "main": "worker.ts",
   "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -47,8 +47,8 @@
     "EMAIL_FROM_NAME": "RealDoor",
     "EMAIL_REPLY_TO": "support@realdoor.com",
     "GOOGLE_CLIENT_ID": "236637153222-530aijrvhuc4il1o2dmq4j89ogi86get.apps.googleusercontent.com",
-    "NEXT_PUBLIC_APP_URL": "https://hacknation.tajwaruzzaman.workers.dev",
-    "NEXT_PUBLIC_SITE_URL": "https://hacknation.tajwaruzzaman.workers.dev",
+    "NEXT_PUBLIC_APP_URL": "https://realdoor-hacknation.tajwaruzzaman.workers.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://realdoor-hacknation.tajwaruzzaman.workers.dev",
     "NEXT_PUBLIC_APP_VERSION": "1.0.0"
   },
   /**
@@ -62,7 +62,7 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "hacknation"
+      "service": "realdoor-hacknation"
     }
   ],
   "durable_objects": {

@@ -14,5 +14,5 @@ Disallow: /sign-up
 Disallow: /verify-email
 Disallow: /api/
 
-Host: hacknation.tajwaruzzaman.workers.dev
-Sitemap: https://hacknation.tajwaruzzaman.workers.dev/sitemap.xml
+Host: realdoor-hacknation.tajwaruzzaman.workers.dev
+Sitemap: https://realdoor-hacknation.tajwaruzzaman.workers.dev/sitemap.xml

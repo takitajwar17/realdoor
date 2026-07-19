@@ -3,15 +3,16 @@ import type { Route } from "next";
 export const SITE_NAME = "RealDoor";
 export const SITE_DESCRIPTION =
   "Application-readiness copilot for affordable housing: confirm document facts, show cited rules and deterministic math, and export a renter-controlled packet—without deciding eligibility.";
-export const CANONICAL_SITE_URL = "https://hacknation.tajwaruzzaman.workers.dev";
-export const CANONICAL_SITE_DOMAIN = "hacknation.tajwaruzzaman.workers.dev";
+export const CANONICAL_SITE_URL = "https://realdoor-hacknation.tajwaruzzaman.workers.dev";
+export const CANONICAL_SITE_DOMAIN = "realdoor-hacknation.tajwaruzzaman.workers.dev";
 export const OPEN_GRAPH_IMAGE_PATH = "/og_image.png";
 export const OPEN_GRAPH_IMAGE_WIDTH = 1200;
 export const OPEN_GRAPH_IMAGE_HEIGHT = 630;
 export const SITE_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://hacknation.tajwaruzzaman.workers.dev");
+    : (process.env.NEXT_PUBLIC_SITE_URL ??
+      "https://realdoor-hacknation.tajwaruzzaman.workers.dev");
 export const API_CATALOG_PATH = "/.well-known/api-catalog";
 export const AGENT_SKILLS_SCHEMA_URL = "https://schemas.agentskills.io/discovery/0.2.0/schema.json";
 export const MCP_ENDPOINT_PATH = "/mcp";
