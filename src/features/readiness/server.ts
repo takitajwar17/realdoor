@@ -19,6 +19,11 @@ import {
 } from "@/db/schema";
 
 import { openEncryptedJson, sealJson } from "./crypto";
+import {
+  DocumentAdditionConflictError,
+  getDocumentAdditionConflict,
+  type PracticeDocumentMode,
+} from "./document-policy";
 import { CORPUS_AS_OF, getGoldHousehold } from "./corpus";
 import {
   calculateIncomeComparison,
@@ -45,6 +50,8 @@ type DocumentPayload = {
   issuedOn: string | null;
   pageCount: number | null;
   extractionError: string | null;
+  practiceMode?: PracticeDocumentMode;
+  practiceHouseholdId?: string | null;
 };
 
 export type FactPayload = {
@@ -566,6 +573,28 @@ export async function getOwnedDocument(input: {
   return decryptDocument(document);
 }
 
+export async function assertDocumentAdditionAllowed(input: {
+  sessionId: string;
+  userId: string;
+  practiceMode: PracticeDocumentMode;
+  practiceHouseholdId: string | null;
+  documentName: string;
+}) {
+  await assertOwnedSession(input.sessionId, input.userId);
+  const records = await getDB()
+    .select()
+    .from(readinessDocumentTable)
+    .where(eq(readinessDocumentTable.sessionId, input.sessionId));
+  const documents = await Promise.all(records.map(decryptDocument));
+  const conflict = getDocumentAdditionConflict({
+    documents: documents.map((document) => document.payload),
+    practiceMode: input.practiceMode,
+    practiceHouseholdId: input.practiceHouseholdId,
+    documentName: input.documentName,
+  });
+  if (conflict) throw new DocumentAdditionConflictError(conflict);
+}
+
 export async function insertReadinessDocument(input: {
   id: string;
   sessionId: string;
@@ -576,6 +605,8 @@ export async function insertReadinessDocument(input: {
   sha256: string;
   name: string;
   pageCount: number | null;
+  practiceMode: PracticeDocumentMode;
+  practiceHouseholdId: string | null;
 }) {
   await assertOwnedSession(input.sessionId, input.userId);
   const encryptedPayload = await sealJson(
@@ -584,6 +615,8 @@ export async function insertReadinessDocument(input: {
       issuedOn: null,
       pageCount: input.pageCount,
       extractionError: null,
+      practiceMode: input.practiceMode,
+      practiceHouseholdId: input.practiceHouseholdId,
     } satisfies DocumentPayload,
     {
       secret: getReadinessEncryptionSecret(),

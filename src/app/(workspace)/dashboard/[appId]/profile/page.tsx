@@ -56,6 +56,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
     notFound();
   }
 
+  const documentMode = workspace.documents.some(
+    (document) => document.payload.practiceMode === "household",
+  )
+    ? "household"
+    : workspace.documents.some((document) => document.payload.practiceMode === "sample")
+      ? "sample"
+      : workspace.documents.length > 0
+        ? "custom"
+        : "empty";
+
   const documentById = new Map(workspace.documents.map((document) => [document.id, document]));
   const visibleFacts: FactReviewItem[] = workspace.facts
     .filter((fact) => fact.status !== FACT_STATUS.REJECTED)
@@ -109,7 +119,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
             </p>
           </CardHeader>
           <CardContent className="p-5">
-            <DocumentUploader sessionId={appId} />
+            <DocumentUploader sessionId={appId} documentMode={documentMode} />
           </CardContent>
         </Card>
 

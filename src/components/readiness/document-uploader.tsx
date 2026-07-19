@@ -8,38 +8,35 @@ import {
   FilePlus2Icon,
   FileStackIcon,
   FileUpIcon,
+  InfoIcon,
   LoaderCircleIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /** One sample PDF per checklist document kind (from the frozen gold pack). */
 const sampleDocuments = [
   {
     kind: "application_summary",
     label: "Application summary",
-    fileName: "hh-001_d01_application_summary.pdf",
+    fileName: "hh-003_d01_application_summary.pdf",
   },
   {
     kind: "pay_stub",
     label: "Recent pay statement",
-    fileName: "hh-001_d02_pay_stub.pdf",
+    fileName: "hh-003_d02_pay_stub.pdf",
   },
   {
-    kind: "employment_letter",
-    label: "Employment letter",
-    fileName: "hh-001_d04_employment_letter.pdf",
+    kind: "pay_stub",
+    label: "Earlier pay statement",
+    fileName: "hh-003_d03_pay_stub.pdf",
   },
   {
     kind: "benefit_letter",
     label: "Benefit letter",
     fileName: "hh-003_d04_benefit_letter.pdf",
-  },
-  {
-    kind: "gig_statement",
-    label: "Gig income statement",
-    fileName: "hh-004_d04_gig_statement.pdf",
   },
 ] as const;
 
@@ -106,7 +103,15 @@ const sampleHouseholds = [
   },
 ] as const;
 
-export function DocumentUploader({ sessionId }: { sessionId: string }) {
+type SessionDocumentMode = "empty" | "custom" | "sample" | "household";
+
+export function DocumentUploader({
+  sessionId,
+  documentMode,
+}: {
+  sessionId: string;
+  documentMode: SessionDocumentMode;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
@@ -114,10 +119,16 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
   const [sampleId, setSampleId] = useState<(typeof sampleHouseholds)[number]["id"]>("hh-002");
   const [addingFile, setAddingFile] = useState<string | null>(null);
 
-  async function postDocument(file: File) {
+  async function postDocument(
+    file: File,
+    practiceMode: "custom" | "sample" | "household" = "custom",
+    practiceHouseholdId?: string,
+  ) {
     const formData = new FormData();
     formData.set("sessionId", sessionId);
     formData.set("file", file);
+    formData.set("practiceMode", practiceMode);
+    if (practiceHouseholdId) formData.set("practiceHouseholdId", practiceHouseholdId);
     const response = await fetch("/api/readiness/documents", {
       method: "POST",
       body: formData,
@@ -144,7 +155,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     setStatus("uploading");
     setMessage("Uploading and reading the document for suggested fields…");
     try {
-      await postDocument(file);
+      await postDocument(file, "custom");
 
       setStatus("success");
       setMessage("Document uploaded. RealDoor is reading it for suggested fields.");
@@ -164,7 +175,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     setMessage(`Adding sample ${label.toLowerCase()}…`);
     try {
       const file = await fetchDemoFile(fileName);
-      await postDocument(file);
+      await postDocument(file, "sample");
       setStatus("success");
       setMessage(`${label} added. Confirm the type, date, and suggested values.`);
       router.refresh();
@@ -183,11 +194,13 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
   async function loadSampleHousehold() {
     const sample = sampleHouseholds.find((item) => item.id === sampleId)!;
     setStatus("uploading");
-    setMessage(`Adding ${sample.files.length} practice documents for ${sample.label.toLowerCase()}…`);
+    setMessage(
+      `Adding ${sample.files.length} practice documents for ${sample.label.toLowerCase()}…`,
+    );
     try {
       for (const fileName of sample.files) {
         const file = await fetchDemoFile(fileName);
-        await postDocument(file);
+        await postDocument(file, "household", sample.id);
       }
       setStatus("success");
       setMessage(
@@ -205,27 +218,67 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
   }
 
   const busy = status === "uploading";
+  const householdLocked = documentMode === "household";
+  const householdChoiceLocked = documentMode !== "empty";
+  const individualBlockMessage =
+    "A complete practice household is already in this session. Start a new session for individual documents, or remove the household documents first.";
+  const householdBlockMessage =
+    documentMode === "sample"
+      ? "Individual sample documents are already in this session. Start a new session for a complete household, or remove every sample first."
+      : "This session already contains documents. Start a new session for a complete practice household, or remove the existing documents first.";
 
   return (
     <div className="space-y-4">
+      {documentMode !== "empty" ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/6 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2.5">
+            <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div>
+              <p className="text-sm font-semibold">
+                {householdLocked
+                  ? "This session is reserved for one complete practice household."
+                  : "This session is using individual documents."}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                {householdLocked
+                  ? "To try other files, start a new session or remove this household first."
+                  : "To try a complete household, start a new session or remove every current document first."}
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href="/dashboard?new=1">Start new session</Link>
+          </Button>
+        </div>
+      ) : null}
+
       <div className="rounded-xl border border-dashed border-border bg-muted/15 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
-            ref={inputRef}
-            type="file"
-            accept="application/pdf,image/jpeg,image/png"
-            aria-label="Choose a practice application document"
-            disabled={busy}
-            className="bg-background"
-          />
-          <Button type="button" onClick={upload} disabled={busy} className="sm:w-auto">
-            {busy && !addingFile ? (
-              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileUpIcon className="h-4 w-4" />
-            )}
-            {busy && !addingFile ? "Processing…" : "Upload document"}
-          </Button>
+          <BlockedControl blocked={householdLocked} message={individualBlockMessage}>
+            <Input
+              ref={inputRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              aria-label="Choose a practice application document"
+              disabled={busy || householdLocked}
+              className="bg-background"
+            />
+          </BlockedControl>
+          <BlockedControl blocked={householdLocked} message={individualBlockMessage}>
+            <Button
+              type="button"
+              onClick={upload}
+              disabled={busy || householdLocked}
+              className="sm:w-auto"
+            >
+              {busy && !addingFile ? (
+                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileUpIcon className="h-4 w-4" />
+              )}
+              {busy && !addingFile ? "Processing…" : "Upload document"}
+            </Button>
+          </BlockedControl>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           PDF, JPEG, or PNG · 10 MB maximum · practice documents only
@@ -235,8 +288,8 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
       <div className="rounded-xl border border-border bg-muted/15 p-4">
         <p className="text-sm font-bold">Sample documents by type</p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          One synthetic sample for each checklist item. Download it, or add it straight to this
-          session.
+          These documents all belong to the same synthetic renter. Download one, or add individual
+          samples to this session.
         </p>
         <ul className="mt-3 divide-y divide-border/70 rounded-lg border border-border bg-background">
           {sampleDocuments.map((sample) => {
@@ -260,20 +313,22 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
                       Download
                     </Link>
                   </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => void addSampleDocument(sample.fileName, sample.label)}
-                  >
-                    {isAdding ? (
-                      <LoaderCircleIcon className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <FilePlus2Icon className="h-3.5 w-3.5" />
-                    )}
-                    {isAdding ? "Adding…" : "Add to session"}
-                  </Button>
+                  <BlockedControl blocked={householdLocked} message={individualBlockMessage}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy || householdLocked}
+                      onClick={() => void addSampleDocument(sample.fileName, sample.label)}
+                    >
+                      {isAdding ? (
+                        <LoaderCircleIcon className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FilePlus2Icon className="h-3.5 w-3.5" />
+                      )}
+                      {isAdding ? "Adding…" : "Add to session"}
+                    </Button>
+                  </BlockedControl>
                 </div>
               </li>
             );
@@ -294,7 +349,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
             id="sample-household"
             value={sampleId}
             onChange={(event) => setSampleId(event.target.value as typeof sampleId)}
-            disabled={busy}
+            disabled={busy || householdChoiceLocked}
             className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {sampleHouseholds.map((sample) => (
@@ -303,20 +358,22 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
               </option>
             ))}
           </select>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void loadSampleHousehold()}
-            disabled={busy}
-          >
-            {busy && !addingFile ? (
-              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileStackIcon className="h-4 w-4" />
-            )}
-            Add practice set
-          </Button>
+          <BlockedControl blocked={householdChoiceLocked} message={householdBlockMessage}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void loadSampleHousehold()}
+              disabled={busy || householdChoiceLocked}
+            >
+              {busy && !addingFile ? (
+                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileStackIcon className="h-4 w-4" />
+              )}
+              Add practice set
+            </Button>
+          </BlockedControl>
         </div>
       </div>
 
@@ -334,5 +391,33 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function BlockedControl({
+  blocked,
+  message,
+  children,
+}: {
+  blocked: boolean;
+  message: string;
+  children: React.ReactNode;
+}) {
+  if (!blocked) return children;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex min-w-0 cursor-not-allowed" tabIndex={0}>
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs leading-5" side="top">
+        <span className="flex items-start gap-2">
+          <InfoIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>{message}</span>
+        </span>
+      </TooltipContent>
+    </Tooltip>
   );
 }

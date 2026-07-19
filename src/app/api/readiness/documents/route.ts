@@ -14,8 +14,13 @@ import {
   parseDocumentUploadMetadata,
 } from "@/features/readiness/contracts";
 import { sealBytes } from "@/features/readiness/crypto";
+import {
+  DocumentAdditionConflictError,
+  type PracticeDocumentMode,
+} from "@/features/readiness/document-policy";
 import { extractReadinessDocument } from "@/features/readiness/extract-document.server";
 import {
+  assertDocumentAdditionAllowed,
   documentContentContext,
   getReadinessEncryptionSecret,
   insertReadinessDocument,
@@ -84,6 +89,16 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const sessionId = formData.get("sessionId");
+    const requestedMode = formData.get("practiceMode");
+    const practiceMode: PracticeDocumentMode =
+      requestedMode === "sample" || requestedMode === "household" ? requestedMode : "custom";
+    const requestedHouseholdId = formData.get("practiceHouseholdId");
+    const practiceHouseholdId =
+      practiceMode === "household" &&
+      typeof requestedHouseholdId === "string" &&
+      /^hh-\d{3}$/u.test(requestedHouseholdId)
+        ? requestedHouseholdId
+        : null;
     if (
       !(file instanceof File) ||
       typeof sessionId !== "string" ||
@@ -94,6 +109,20 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (practiceMode === "household" && !practiceHouseholdId) {
+      return NextResponse.json(
+        { error: "Choose a valid complete practice household." },
+        { status: 400 },
+      );
+    }
+
+    await assertDocumentAdditionAllowed({
+      sessionId,
+      userId: routeSession.session.userId,
+      practiceMode,
+      practiceHouseholdId,
+      documentName: file.name,
+    });
 
     const metadata = parseDocumentUploadMetadata({
       name: file.name,
@@ -153,6 +182,8 @@ export async function POST(request: Request) {
         sha256: toHex(digest),
         name: metadata.name,
         pageCount,
+        practiceMode,
+        practiceHouseholdId,
       });
     } catch (error) {
       await env.R2.delete(r2Key);
@@ -187,6 +218,9 @@ export async function POST(request: Request) {
     });
     if (error instanceof DocumentUploadInputError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof DocumentAdditionConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
     return NextResponse.json(
       { error: "Document upload failed. Please try again." },
