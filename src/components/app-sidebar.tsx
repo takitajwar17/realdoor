@@ -56,7 +56,6 @@ export function AppSidebar({
           { title: "Evidence trail", url: `${base}/evidence`, icon: HistoryIcon },
         ]
       : []),
-    { title: "Data we use", url: "/dashboard/data-we-use", icon: DatabaseIcon },
   ];
 
   const secondaryItems: {
@@ -64,7 +63,10 @@ export function AppSidebar({
     url: string;
     icon: typeof SettingsIcon;
     badge?: number | string | null;
-  }[] = [{ title: "Settings", url: "/settings", icon: SettingsIcon }];
+  }[] = [
+    { title: "Data we use", url: "/dashboard/data-we-use", icon: DatabaseIcon },
+    { title: "Settings", url: "/settings", icon: SettingsIcon },
+  ];
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
