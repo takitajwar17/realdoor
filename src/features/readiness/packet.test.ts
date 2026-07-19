@@ -7,6 +7,7 @@ import { preparePacketFactEvidence, renderReadinessPacket, type PacketModel } fr
 
 const model: PacketModel = {
   sessionId: "rds_test",
+  sessionName: "Maya's housing documents",
   revision: 7,
   generatedAt: "2026-07-18 14:00 America/New_York",
   metro: "Boston-Cambridge-Quincy, MA-NH HMFA",
@@ -47,9 +48,7 @@ const model: PacketModel = {
 };
 
 describe("renter-controlled packet", () => {
-  const logoBytes = readFile(
-    "public/logo/light/transparent_logo_text_horizontal_nobuffer.png",
-  );
+  const logoBytes = readFile("public/logo/light/transparent_logo_text_horizontal_nobuffer.png");
 
   it("does not carry a superseded document value into the packet", () => {
     expect(
@@ -73,6 +72,7 @@ describe("renter-controlled packet", () => {
     expect(header).toBe("%PDF-");
     expect(pdf.numPages).toBeGreaterThan(1);
     expect(extracted.text).toContain("Not an eligibility decision");
+    expect(extracted.text).toContain("Maya's housing documents");
     expect(extracted.text).toContain("$2,166 x 26 = $56,316");
     expect(extracted.text).toContain("PDF page 130");
     expect(extracted.text).toContain("Downloaded to you; not sent");

@@ -1,5 +1,7 @@
 import type { FactKey, ReadinessDocument } from "./domain";
 
+export const DEFAULT_READINESS_SESSION_NAME = "LIHTC · 60% income limit";
+
 const FACT_LABELS: Record<FactKey, string> = {
   person_name: "Name",
   address: "Address",

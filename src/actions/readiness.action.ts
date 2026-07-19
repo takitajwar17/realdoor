@@ -55,16 +55,22 @@ export async function createReadinessSessionAction(
   formData: FormData,
 ): Promise<ReadinessActionState> {
   const parsed = createSessionSchema.safeParse({
+    name: formData.get("name"),
     consent: formData.get("consent") === "on",
     acknowledgeSampleData: formData.get("acknowledgeSampleData") === "on",
   });
   if (!parsed.success) {
-    return errorState("Confirm both acknowledgements to start your practice session.");
+    const nameError = parsed.error.issues.some((issue) => issue.path[0] === "name");
+    return errorState(
+      nameError
+        ? "Enter a session name using 80 characters or fewer."
+        : "Confirm both acknowledgements to start your practice session.",
+    );
   }
 
   const auth = await requireReadinessActionAuth();
   await checkActionRateLimit("createReadinessSession", auth.userId, 10);
-  const readinessSession = await createReadinessSession(auth.userId);
+  const readinessSession = await createReadinessSession(auth.userId, parsed.data.name);
   redirect(`/dashboard/${readinessSession.id}/profile`);
 }
 

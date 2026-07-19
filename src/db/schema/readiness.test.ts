@@ -50,7 +50,10 @@ describe("readiness persistence schema", () => {
     expect(documentColumns).toContain("metadataConfirmed");
     expect(factColumns).toContain("encryptedPayload");
     expect(questionColumns).toContain("encryptedPayload");
+    expect(sessionColumns).toContain("encryptedName");
     expect(sessionColumns).not.toContain("stage");
+
+    expect(sessionColumns).not.toContain("name");
 
     expect(documentColumns).not.toContain("fileName");
     expect(factColumns).not.toContain("value");

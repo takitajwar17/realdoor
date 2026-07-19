@@ -7,6 +7,8 @@ import { createReadinessSessionAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
+import { DEFAULT_READINESS_SESSION_NAME } from "@/features/readiness/presentation";
 
 export function StartSessionDialog({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -47,6 +50,22 @@ export function StartSessionDialog({ defaultOpen = false }: { defaultOpen?: bool
           </div>
         </DialogHeader>
         <form action={action} className="space-y-5 p-6">
+          <div className="space-y-2">
+            <Label htmlFor="session-name">Session name</Label>
+            <Input
+              id="session-name"
+              name="name"
+              defaultValue={DEFAULT_READINESS_SESSION_NAME}
+              maxLength={80}
+              required
+              autoComplete="off"
+              aria-describedby="session-name-description"
+            />
+            <p id="session-name-description" className="text-xs leading-5 text-muted-foreground">
+              Choose a name that will help you recognize this session later.
+            </p>
+          </div>
+
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/75 p-4 transition-colors hover:bg-muted/25">
             <Checkbox name="consent" className="mt-0.5" />
             <span>

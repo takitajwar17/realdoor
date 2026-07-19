@@ -6,10 +6,10 @@ import { DeleteSessionDialog } from "@/components/readiness/delete-session-dialo
 import { ReadinessChatWidget } from "@/components/readiness/readiness-chat-widget";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import type { ReadinessSession } from "@/db/schema";
 import type { ReadinessChatMessage } from "@/features/readiness/chat-messages";
 import type { SourceCitation } from "@/features/readiness/domain";
 import { formatMetroLabel, formatProgramLabel } from "@/features/readiness/presentation";
+import type { ReadinessSessionView } from "@/features/readiness/server";
 import { cn } from "@/lib/utils";
 
 type ReadinessStage = "profile" | "understand" | "prepare" | "evidence";
@@ -48,7 +48,7 @@ export function ReadinessPageShell({
   ruleVersion,
   ruleEffectiveDate,
 }: {
-  session: ReadinessSession;
+  session: ReadinessSessionView;
   current: ReadinessStage;
   title: string;
   description: string;
@@ -80,12 +80,11 @@ export function ReadinessPageShell({
               >
                 Practice only
               </Badge>
-              <p className="text-sm font-semibold text-foreground">
-                {formatProgramLabel(session.program)}
-              </p>
-              <span className="text-sm text-muted-foreground">{session.targetYear}</span>
+              <p className="text-sm font-semibold text-foreground">{session.name}</p>
             </div>
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5 text-muted-foreground">
+              <span>{formatProgramLabel(session.program)}</span>
+              <MetaSeparator />
               <span className="min-w-0">{formatMetroLabel(session.metro)}</span>
               <MetaSeparator />
               <span>Guide {session.ruleEffectiveDate}</span>

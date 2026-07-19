@@ -583,6 +583,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "encryptedName": {
+          "name": "encryptedName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "consentVersion": {
           "name": "consentVersion",
           "type": "text",

@@ -31,6 +31,7 @@ export async function GET(
     const comparison = workspace.comparison;
     const model: PacketModel = {
       sessionId: workspace.session.id,
+      sessionName: workspace.session.name,
       revision: workspace.session.revision,
       generatedAt: `${workspace.session.updatedAt.toLocaleString("en-US", {
         dateStyle: "medium",

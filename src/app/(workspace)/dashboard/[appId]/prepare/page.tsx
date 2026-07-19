@@ -259,9 +259,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
               <p className="text-2xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 RealDoor practice packet
               </p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight">
-                Boston LIHTC practice summary
-              </h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight">{workspace.session.name}</h2>
               <p className="mt-2 text-sm text-slate-600">
                 Controlled by you · not submitted · not an eligibility decision
               </p>

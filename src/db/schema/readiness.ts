@@ -42,6 +42,7 @@ export const readinessSessionTable = sqliteTable(
     userId: text()
       .notNull()
       .references(() => userTable.id, { onDelete: "cascade" }),
+    encryptedName: text(),
     consentVersion: text().notNull(),
     consentedAt: integer({ mode: "timestamp" }).notNull(),
     targetYear: integer().default(2026).notNull(),

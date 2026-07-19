@@ -39,6 +39,7 @@ import {
 } from "./domain";
 import { answerRuleQuestionWithContext } from "./answer-question.server";
 import { AUTHORITATIVE_2026_RULE_PACK, getScenarioRulePack } from "./rules";
+import { DEFAULT_READINESS_SESSION_NAME } from "./presentation";
 
 // Keep the established local key bytes so existing development sessions remain readable
 // across the product rename. Production always requires READINESS_ENCRYPTION_KEY.
@@ -100,6 +101,7 @@ const documentContext = (sessionId: string, documentId: string) =>
 const factContext = (sessionId: string, factId: string) => `${sessionId}:${factId}:fact`;
 const questionContext = (sessionId: string, questionId: string) =>
   `${sessionId}:${questionId}:question`;
+const sessionNameContext = (sessionId: string) => `${sessionId}:session:name`;
 
 export const documentContentContext = (sessionId: string, documentId: string) =>
   `${sessionId}:${documentId}:document`;
@@ -118,20 +120,40 @@ async function assertOwnedSession(sessionId: string, userId: string): Promise<Re
 }
 
 export async function listReadinessSessions(userId: string) {
-  return getDB()
+  const sessions = await getDB()
     .select()
     .from(readinessSessionTable)
     .where(eq(readinessSessionTable.userId, userId))
     .orderBy(desc(readinessSessionTable.lastAccessedAt));
+
+  return Promise.all(sessions.map(decryptSessionName));
 }
 
-export async function createReadinessSession(userId: string, now = new Date()) {
+export type ReadinessSessionView = Omit<ReadinessSession, "encryptedName"> & { name: string };
+
+async function decryptSessionName(session: ReadinessSession): Promise<ReadinessSessionView> {
+  const { encryptedName, ...metadata } = session;
+  if (!encryptedName) return { ...metadata, name: DEFAULT_READINESS_SESSION_NAME };
+
+  const name = await openEncryptedJson<string>(encryptedName, {
+    secret: getReadinessEncryptionSecret(),
+    context: sessionNameContext(session.id),
+  });
+  return { ...metadata, name };
+}
+
+export async function createReadinessSession(userId: string, name: string, now = new Date()) {
   const db = getDB();
   const sessionId = `rds_${crypto.randomUUID().replaceAll("-", "")}`;
+  const encryptedName = await sealJson(name, {
+    secret: getReadinessEncryptionSecret(),
+    context: sessionNameContext(sessionId),
+  });
   await db.batch([
     db.insert(readinessSessionTable).values({
       id: sessionId,
       userId,
+      encryptedName,
       consentVersion: `${CORPUS_AS_OF.date}-v1`,
       consentedAt: now,
       targetYear: 2026,
@@ -151,7 +173,7 @@ export async function createReadinessSession(userId: string, now = new Date()) {
     }),
   ]);
 
-  return assertOwnedSession(sessionId, userId);
+  return decryptSessionName(await assertOwnedSession(sessionId, userId));
 }
 
 export async function getReadinessSession(sessionId: string, userId: string) {
@@ -160,7 +182,7 @@ export async function getReadinessSession(sessionId: string, userId: string) {
     .update(readinessSessionTable)
     .set({ lastAccessedAt: new Date() })
     .where(eq(readinessSessionTable.id, sessionId));
-  return session;
+  return decryptSessionName(session);
 }
 
 async function decryptDocument(record: ReadinessDocumentRecord) {
@@ -182,7 +204,8 @@ async function decryptFact(record: ReadinessFactRecord) {
 }
 
 export async function getReadinessWorkspace(sessionId: string, userId: string) {
-  const session = await assertOwnedSession(sessionId, userId);
+  const sessionRecord = await assertOwnedSession(sessionId, userId);
+  const session = await decryptSessionName(sessionRecord);
   const db = getDB();
   const [documentRows, factRows, questionRows, audit] = await Promise.all([
     db

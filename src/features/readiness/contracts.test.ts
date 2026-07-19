@@ -14,14 +14,51 @@ import {
 describe("readiness request contracts", () => {
   it("requires explicit consent and an explicit sample-data acknowledgement", () => {
     expect(
-      createSessionSchema.safeParse({ consent: false, acknowledgeSampleData: true }).success,
+      createSessionSchema.safeParse({
+        name: "My session",
+        consent: false,
+        acknowledgeSampleData: true,
+      }).success,
     ).toBe(false);
     expect(
-      createSessionSchema.safeParse({ consent: true, acknowledgeSampleData: false }).success,
+      createSessionSchema.safeParse({
+        name: "My session",
+        consent: true,
+        acknowledgeSampleData: false,
+      }).success,
     ).toBe(false);
     expect(
-      createSessionSchema.safeParse({ consent: true, acknowledgeSampleData: true }).success,
+      createSessionSchema.safeParse({
+        name: "My session",
+        consent: true,
+        acknowledgeSampleData: true,
+      }).success,
     ).toBe(true);
+  });
+
+  it("requires a renter-facing session name and trims it to an 80-character maximum", () => {
+    const parsed = createSessionSchema.safeParse({
+      name: "  Maya's housing documents  ",
+      consent: true,
+      acknowledgeSampleData: true,
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.name).toBe("Maya's housing documents");
+    expect(
+      createSessionSchema.safeParse({
+        name: " ",
+        consent: true,
+        acknowledgeSampleData: true,
+      }).success,
+    ).toBe(false);
+    expect(
+      createSessionSchema.safeParse({
+        name: "x".repeat(81),
+        consent: true,
+        acknowledgeSampleData: true,
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts bounded non-negative manual income facts", () => {

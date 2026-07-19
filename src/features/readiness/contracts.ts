@@ -7,6 +7,7 @@ const readinessFactId = z.string().regex(/^rdf_[a-z0-9]{3,64}$/u);
 const readinessDocumentId = z.string().regex(/^rdd_[a-z0-9]{3,64}$/u);
 
 export const createSessionSchema = z.object({
+  name: z.string().trim().min(1).max(80),
   consent: z.literal(true),
   acknowledgeSampleData: z.literal(true),
 });

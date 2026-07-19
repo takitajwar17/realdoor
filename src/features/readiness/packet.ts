@@ -9,6 +9,7 @@ import {
 
 export type PacketModel = {
   sessionId: string;
+  sessionName: string;
   revision: number;
   generatedAt: string;
   metro: string;
@@ -294,9 +295,7 @@ class PacketRenderer {
   private row(input: { label: string; value: string; detail?: string; status?: string }) {
     const labelLines = wrapText(input.label, this.fonts.bold, 8.5, 126);
     const valueLines = wrapText(input.value, this.fonts.bold, 9, 105);
-    const detailLines = input.detail
-      ? wrapText(input.detail, this.fonts.regular, 8, 244)
-      : [];
+    const detailLines = input.detail ? wrapText(input.detail, this.fonts.regular, 8, 244) : [];
     const contentLines = Math.max(labelLines.length, valueLines.length, detailLines.length, 1);
     const height = Math.max(44, contentLines * 11 + 20);
     this.ensureSpace(height + 7);
@@ -416,6 +415,13 @@ class PacketRenderer {
       color: color.ink,
     });
     this.y -= 30;
+    this.paragraph(this.model.sessionName, {
+      size: 13,
+      lineHeight: 17,
+      font: this.fonts.bold,
+      textColor: color.ink,
+      gap: 5,
+    });
     this.paragraph(this.model.metro, {
       size: 11,
       lineHeight: 15,
@@ -551,11 +557,14 @@ class PacketRenderer {
       { size: 8.5, font: this.fonts.bold, textColor: color.brand, gap: 10 },
     );
     this.model.sources.forEach((source) => {
-      this.paragraph(`${source.id} | ${source.title}${source.locator ? ` | ${source.locator}` : ""}`, {
-        size: 8.5,
-        font: this.fonts.bold,
-        gap: 2,
-      });
+      this.paragraph(
+        `${source.id} | ${source.title}${source.locator ? ` | ${source.locator}` : ""}`,
+        {
+          size: 8.5,
+          font: this.fonts.bold,
+          gap: 2,
+        },
+      );
       this.paragraph(source.passage, { size: 8, lineHeight: 11, gap: 2 });
       if (source.url.trim()) {
         this.paragraph(source.url, { size: 7, lineHeight: 10, textColor: color.muted, gap: 12 });
@@ -571,7 +580,7 @@ class PacketRenderer {
         thickness: 0.75,
         color: color.line,
       });
-      page.drawText(`Session ${normalizePdfText(this.model.sessionId)} | Downloaded to you; not sent`, {
+      page.drawText(`${normalizePdfText(this.model.sessionName)} | Downloaded to you; not sent`, {
         x: CONTENT_LEFT,
         y: 34,
         size: 6.8,

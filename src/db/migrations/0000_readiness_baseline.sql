@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS `readiness_session` (
 	`updateCounter` integer DEFAULT 0,
 	`id` text PRIMARY KEY NOT NULL,
 	`userId` text NOT NULL,
+	`encryptedName` text,
 	`consentVersion` text NOT NULL,
 	`consentedAt` integer NOT NULL,
 	`targetYear` integer DEFAULT 2026 NOT NULL,

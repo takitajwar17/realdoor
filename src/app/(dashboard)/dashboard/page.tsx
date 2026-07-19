@@ -105,9 +105,7 @@ export default async function DashboardPage({
                     >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-bold">
-                            {formatProgramLabel(session.program)}
-                          </p>
+                          <p className="truncate text-sm font-bold">{session.name}</p>
                           <Badge
                             variant="outline"
                             className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300"
@@ -116,7 +114,7 @@ export default async function DashboardPage({
                           </Badge>
                         </div>
                         <p className="mt-1 truncate text-xs text-muted-foreground">
-                          {formatMetroLabel(session.metro)}
+                          {formatProgramLabel(session.program)} · {formatMetroLabel(session.metro)}
                         </p>
                       </div>
                       <div className="text-xs">
