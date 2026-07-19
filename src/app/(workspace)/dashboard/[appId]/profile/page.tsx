@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FACT_STATUS } from "@/db/schema";
-import { getDocumentKindLabel } from "@/features/readiness/presentation";
+import { getDocumentKindLabel, getFactLabel } from "@/features/readiness/presentation";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
@@ -89,6 +89,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
 
   const confirmedValues = Object.fromEntries(
     workspace.confirmedFacts.map((fact) => [fact.key, fact.value]),
+  );
+  const factsToReview = visibleFacts.filter((fact) => fact.status === FACT_STATUS.EXTRACTED);
+  const confirmedReviewFacts = visibleFacts.filter((fact) => fact.status === FACT_STATUS.CONFIRMED);
+  const attentionFacts = factsToReview.filter(
+    (fact) => fact.conflict || (fact.confidence !== null && fact.confidence < 0.9),
+  );
+  const routineFacts = factsToReview.filter((fact) => !attentionFacts.includes(fact));
+  const attentionGroups = Array.from(
+    attentionFacts.reduce((groups, fact) => {
+      const group = groups.get(fact.key) ?? [];
+      group.push(fact);
+      groups.set(fact.key, group);
+      return groups;
+    }, new Map<string, FactReviewItem[]>()),
   );
 
   return (
@@ -237,7 +251,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
               3. Review suggested values
             </h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              {visibleFacts.length} to review · {workspace.confirmedFacts.length} confirmed
+              {factsToReview.length} to review · {confirmedReviewFacts.length} confirmed
             </p>
           </div>
           {workspace.conflicts.length > 0 ? (
@@ -251,11 +265,101 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
           ) : null}
         </div>
 
-        {visibleFacts.length > 0 ? (
-          <div className="space-y-3">
-            {visibleFacts.map((item) => (
-              <FactReviewCard key={item.id} item={item} sessionId={appId} />
-            ))}
+        {factsToReview.length > 0 || confirmedReviewFacts.length > 0 ? (
+          <div className="space-y-4">
+            {attentionFacts.length > 0 ? (
+              <section className="overflow-hidden rounded-xl border border-destructive/20 bg-card shadow-[var(--shadow-dashboard)]">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-destructive/15 bg-destructive/[0.035] px-5 py-4">
+                  <div>
+                    <h3 className="text-sm font-bold">Needs attention</h3>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Review mismatched or less certain readings first.
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="border-destructive/25 bg-destructive/8 text-destructive"
+                  >
+                    {attentionFacts.length} to check
+                  </Badge>
+                </div>
+                <div className="space-y-6 p-3 sm:p-4">
+                  {attentionGroups.map(([key, items]) => (
+                    <div key={key} className="space-y-3">
+                      <div className="flex items-center justify-between gap-3 px-1">
+                        <h4 className="text-sm font-bold">{getFactLabel(key)}</h4>
+                        {items.some((item) => item.conflict) ? (
+                          <span className="text-xs font-medium text-destructive">
+                            {items.length} source{items.length === 1 ? "" : "s"} to compare
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Review closely
+                          </span>
+                        )}
+                      </div>
+                      {items.map((item) => (
+                        <FactReviewCard key={item.id} item={item} sessionId={appId} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <div className="flex items-center gap-3 rounded-xl border border-status-success/20 bg-status-success/[0.04] px-4 py-3">
+                <CheckCircle2Icon className="h-5 w-5 shrink-0 text-status-success" />
+                <div>
+                  <p className="text-sm font-bold">Nothing needs extra attention</p>
+                  <p className="text-xs text-muted-foreground">
+                    The remaining readings are clear and ready for confirmation.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {routineFacts.length > 0 ? (
+              <details className="group overflow-hidden rounded-xl border border-border/80 bg-card shadow-[var(--shadow-dashboard)]">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                  <div>
+                    <h3 className="text-sm font-bold">Ready to confirm</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Clear readings with no mismatch found.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{routineFacts.length}</Badge>
+                    <ChevronDownIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                  </div>
+                </summary>
+                <div className="space-y-3 border-t border-border/70 p-3 sm:p-4">
+                  {routineFacts.map((item) => (
+                    <FactReviewCard key={item.id} item={item} sessionId={appId} />
+                  ))}
+                </div>
+              </details>
+            ) : null}
+
+            {confirmedReviewFacts.length > 0 ? (
+              <details className="group overflow-hidden rounded-xl border border-border/70 bg-card">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                  <div>
+                    <h3 className="text-sm font-bold">Confirmed</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Values you have already reviewed.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{confirmedReviewFacts.length}</Badge>
+                    <ChevronDownIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                  </div>
+                </summary>
+                <div className="space-y-3 border-t border-border/70 p-3 sm:p-4">
+                  {confirmedReviewFacts.map((item) => (
+                    <FactReviewCard key={item.id} item={item} sessionId={appId} />
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </div>
         ) : (
           <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-10 text-center">
