@@ -55,7 +55,7 @@ describe("frozen 2026 rule pack", () => {
       "pay_stub",
       "employment_letter",
       "benefit_letter",
-      "gig_income_corroboration",
+      "gig_statement",
     ]);
     expect(getScenarioRulePack("HH-001").checklistRequirements.map((item) => item.kind)).toEqual(
       kinds,

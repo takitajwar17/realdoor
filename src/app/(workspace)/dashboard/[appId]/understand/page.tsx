@@ -9,8 +9,8 @@ import {
   ShieldAlertIcon,
 } from "lucide-react";
 
-import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
+import { toChatMessages } from "@/features/readiness/chat-messages";
 import { SourceCitationDialog } from "@/components/readiness/source-citation-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

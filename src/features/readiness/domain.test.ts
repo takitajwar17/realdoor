@@ -160,7 +160,7 @@ describe("frozen checklist arithmetic", () => {
       "Recent pay statement",
       "Employment letter",
       "Benefit letter",
-      "Gig income corroboration",
+      "Gig income statement",
     ]);
     expect(result[2]?.reason).toContain("95 days old");
     expect(result[2]?.reason).toContain("60-day window");

@@ -1,11 +1,47 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileStackIcon, FileUpIcon, LoaderCircleIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  FilePlus2Icon,
+  FileStackIcon,
+  FileUpIcon,
+  LoaderCircleIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+/** One sample PDF per checklist document kind (from the frozen gold pack). */
+const sampleDocuments = [
+  {
+    kind: "application_summary",
+    label: "Application summary",
+    fileName: "hh-001_d01_application_summary.pdf",
+  },
+  {
+    kind: "pay_stub",
+    label: "Recent pay statement",
+    fileName: "hh-001_d02_pay_stub.pdf",
+  },
+  {
+    kind: "employment_letter",
+    label: "Employment letter",
+    fileName: "hh-001_d04_employment_letter.pdf",
+  },
+  {
+    kind: "benefit_letter",
+    label: "Benefit letter",
+    fileName: "hh-003_d04_benefit_letter.pdf",
+  },
+  {
+    kind: "gig_statement",
+    label: "Gig income statement",
+    fileName: "hh-004_d04_gig_statement.pdf",
+  },
+] as const;
 
 const sampleHouseholds = [
   {
@@ -76,6 +112,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [sampleId, setSampleId] = useState<(typeof sampleHouseholds)[number]["id"]>("hh-002");
+  const [addingFile, setAddingFile] = useState<string | null>(null);
 
   async function postDocument(file: File) {
     const formData = new FormData();
@@ -88,6 +125,12 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     });
     const payload = (await response.json()) as { error?: string };
     if (!response.ok) throw new Error(payload.error || "Upload failed");
+  }
+
+  async function fetchDemoFile(fileName: string) {
+    const response = await fetch(`/api/readiness/demo-documents/${encodeURIComponent(fileName)}`);
+    if (!response.ok) throw new Error("A practice document could not be loaded.");
+    return new File([await response.blob()], fileName, { type: "application/pdf" });
   }
 
   async function upload() {
@@ -115,20 +158,40 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     }
   }
 
+  async function addSampleDocument(fileName: string, label: string) {
+    setAddingFile(fileName);
+    setStatus("uploading");
+    setMessage(`Adding sample ${label.toLowerCase()}…`);
+    try {
+      const file = await fetchDemoFile(fileName);
+      await postDocument(file);
+      setStatus("success");
+      setMessage(`${label} added. Confirm the type, date, and suggested values.`);
+      router.refresh();
+      window.setTimeout(() => router.refresh(), 1800);
+      window.setTimeout(() => router.refresh(), 4200);
+    } catch (error) {
+      setStatus("error");
+      setMessage(
+        error instanceof Error ? error.message : "The sample document could not be added.",
+      );
+    } finally {
+      setAddingFile(null);
+    }
+  }
+
   async function loadSampleHousehold() {
     const sample = sampleHouseholds.find((item) => item.id === sampleId)!;
     setStatus("uploading");
-    setMessage(`Adding four practice documents for ${sample.label.toLowerCase()}…`);
+    setMessage(`Adding ${sample.files.length} practice documents for ${sample.label.toLowerCase()}…`);
     try {
       for (const fileName of sample.files) {
-        const response = await fetch(`/api/readiness/demo-documents/${fileName}`);
-        if (!response.ok) throw new Error("A practice document could not be loaded.");
-        const file = new File([await response.blob()], fileName, { type: "application/pdf" });
+        const file = await fetchDemoFile(fileName);
         await postDocument(file);
       }
       setStatus("success");
       setMessage(
-        "Four practice documents added. Confirm their details and the values you want to use.",
+        `${sample.files.length} practice documents added. Confirm their details and the values you want to use.`,
       );
       router.refresh();
       window.setTimeout(() => router.refresh(), 2200);
@@ -141,6 +204,8 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     }
   }
 
+  const busy = status === "uploading";
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-dashed border-border bg-muted/15 p-4">
@@ -150,21 +215,16 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
             type="file"
             accept="application/pdf,image/jpeg,image/png"
             aria-label="Choose a practice application document"
-            disabled={status === "uploading"}
+            disabled={busy}
             className="bg-background"
           />
-          <Button
-            type="button"
-            onClick={upload}
-            disabled={status === "uploading"}
-            className="sm:w-auto"
-          >
-            {status === "uploading" ? (
+          <Button type="button" onClick={upload} disabled={busy} className="sm:w-auto">
+            {busy && !addingFile ? (
               <LoaderCircleIcon className="h-4 w-4 animate-spin" />
             ) : (
               <FileUpIcon className="h-4 w-4" />
             )}
-            {status === "uploading" ? "Processing…" : "Upload document"}
+            {busy && !addingFile ? "Processing…" : "Upload document"}
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
@@ -173,9 +233,58 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
       </div>
 
       <div className="rounded-xl border border-border bg-muted/15 p-4">
+        <p className="text-sm font-bold">Sample documents by type</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          One synthetic sample for each checklist item. Download it, or add it straight to this
+          session.
+        </p>
+        <ul className="mt-3 divide-y divide-border/70 rounded-lg border border-border bg-background">
+          {sampleDocuments.map((sample) => {
+            const isAdding = addingFile === sample.fileName;
+            return (
+              <li
+                key={sample.fileName}
+                className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{sample.label}</p>
+                  <p className="truncate text-xs text-muted-foreground">{sample.fileName}</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button asChild type="button" variant="outline" size="sm" disabled={busy}>
+                    <Link
+                      href={`/api/readiness/demo-documents/${encodeURIComponent(sample.fileName)}`}
+                      prefetch={false}
+                    >
+                      <DownloadIcon className="h-3.5 w-3.5" />
+                      Download
+                    </Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void addSampleDocument(sample.fileName, sample.label)}
+                  >
+                    {isAdding ? (
+                      <LoaderCircleIcon className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <FilePlus2Icon className="h-3.5 w-3.5" />
+                    )}
+                    {isAdding ? "Adding…" : "Add to session"}
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="rounded-xl border border-border bg-muted/15 p-4">
         <p className="text-sm font-bold">Try a complete practice household</p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          Add four synthetic documents together, then review and confirm what RealDoor found.
+          Add a full synthetic household set, then review and confirm what RealDoor found.
         </p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <label htmlFor="sample-household" className="sr-only">
@@ -185,7 +294,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
             id="sample-household"
             value={sampleId}
             onChange={(event) => setSampleId(event.target.value as typeof sampleId)}
-            disabled={status === "uploading"}
+            disabled={busy}
             className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {sampleHouseholds.map((sample) => (
@@ -198,10 +307,10 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={loadSampleHousehold}
-            disabled={status === "uploading"}
+            onClick={() => void loadSampleHousehold()}
+            disabled={busy}
           >
-            {status === "uploading" ? (
+            {busy && !addingFile ? (
               <LoaderCircleIcon className="h-4 w-4 animate-spin" />
             ) : (
               <FileStackIcon className="h-4 w-4" />

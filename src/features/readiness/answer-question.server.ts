@@ -7,6 +7,7 @@ import { getOpenAIClient } from "@/lib/openai";
 
 import type { ConfirmedFact, IncomeComparison, RulePack } from "./domain";
 import { QA_GOLD } from "./corpus";
+import { sanitizeRuleAnswer } from "./answer-safety";
 import { getFactLabel } from "./presentation";
 import { answerRuleQuestion, type RuleAnswer } from "./rules";
 
@@ -120,26 +121,6 @@ function extractResponseText(response: {
     }
   }
   return parts.join("\n").trim();
-}
-
-function sanitizeAnswer(result: z.infer<typeof aiAnswerSchema>, rulePack: RulePack): RuleAnswer {
-  const allowed = new Set(rulePack.sources.map((source) => source.id));
-  const sourceIds = [...new Set(result.sourceIds.filter((id) => allowed.has(id)))];
-
-  if (result.status === "answered" && sourceIds.length === 0) {
-    // Keep the answer text if it is useful, but force unresolved when citation is missing.
-    return {
-      status: "unresolved",
-      answer: result.answer,
-      sourceIds: [],
-    };
-  }
-
-  return {
-    status: result.status,
-    answer: result.answer,
-    sourceIds: result.status === "answered" ? sourceIds : sourceIds.slice(0, 4),
-  };
 }
 
 function hasSource(rulePack: RulePack, id: string) {
@@ -299,7 +280,7 @@ export async function answerRuleQuestionWithContext(input: {
   try {
     const aiRaw = await callOpenAI(buildPrompt(input));
     if (aiRaw) {
-      const sanitized = sanitizeAnswer(aiRaw, input.rulePack);
+      const sanitized = sanitizeRuleAnswer(aiRaw, input.rulePack);
       if (sanitized.status === "answered" || sanitized.answer.trim().length > 0) {
         // Prefer model answer when it produced usable content.
         if (sanitized.status === "answered" || sanitized.sourceIds.length > 0) {

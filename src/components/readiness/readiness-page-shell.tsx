@@ -3,13 +3,11 @@ import Link from "next/link";
 import { CheckIcon, CircleIcon } from "lucide-react";
 
 import { DeleteSessionDialog } from "@/components/readiness/delete-session-dialog";
-import {
-  ReadinessChatWidget,
-  type ReadinessChatMessage,
-} from "@/components/readiness/readiness-chat-widget";
+import { ReadinessChatWidget } from "@/components/readiness/readiness-chat-widget";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import type { ReadinessSession } from "@/db/schema";
+import type { ReadinessChatMessage } from "@/features/readiness/chat-messages";
 import type { SourceCitation } from "@/features/readiness/domain";
 import { formatMetroLabel, formatProgramLabel } from "@/features/readiness/presentation";
 import { cn } from "@/lib/utils";

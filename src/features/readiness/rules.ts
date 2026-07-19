@@ -110,9 +110,9 @@ export const AUTHORITATIVE_2026_RULE_PACK: RulePack = {
       sourceId: "CH-READINESS-001",
     },
     {
-      id: "gig-income-corroboration",
-      label: "Gig income corroboration",
-      kind: "gig_income_corroboration",
+      id: "gig-statement",
+      label: "Gig income statement",
+      kind: "gig_statement",
       maxAgeDays: 60,
       sourceId: "CH-READINESS-001",
     },

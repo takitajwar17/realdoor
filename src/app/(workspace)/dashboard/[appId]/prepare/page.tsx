@@ -14,8 +14,8 @@ import {
 
 import { updateDocumentIncludedAction } from "@/actions/readiness.action";
 import { PacketDownloadButton } from "@/components/readiness/packet-download-button";
-import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
+import { toChatMessages } from "@/features/readiness/chat-messages";
 import { SourceCitationDialog } from "@/components/readiness/source-citation-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

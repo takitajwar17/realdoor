@@ -14,8 +14,8 @@ import { DocumentUploader } from "@/components/readiness/document-uploader";
 import { DocumentControls } from "@/components/readiness/document-controls";
 import { FactReviewCard, type FactReviewItem } from "@/components/readiness/fact-review-card";
 import { ManualFactForm } from "@/components/readiness/manual-fact-form";
-import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
+import { toChatMessages } from "@/features/readiness/chat-messages";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,7 +103,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
           <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-base">1. Add documents</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Download the samples or upload your own practice PDF, JPEG, or PNG.
+              Add a sample for each checklist type, load a full practice household, or upload your
+              own PDF, JPEG, or PNG.
             </p>
           </CardHeader>
           <CardContent className="p-5">
@@ -180,7 +181,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                 <FileTextIcon className="h-6 w-6 text-muted-foreground" />
                 <p className="mt-3 text-sm font-bold">No documents yet</p>
                 <p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
-                  Start with the two practice PDFs to try the complete journey.
+                  Start with a sample document for each checklist type, or add a full practice
+                  household.
                 </p>
               </div>
             )}
