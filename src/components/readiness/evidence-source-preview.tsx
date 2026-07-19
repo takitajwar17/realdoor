@@ -20,35 +20,21 @@ type EvidenceSourcePreviewProps = {
 };
 
 const PREVIEW_WIDTH = 560;
+const PREVIEW_ASPECT_RATIO = 16 / 9;
 const PAD_X = 0.14;
-const PAD_Y = 0.1;
+const PAD_Y = 0.035;
 
-function clamp01(value: number) {
-  return Math.min(1, Math.max(0, value));
-}
-
-function cropAroundBox(box: EvidenceBox) {
-  const padX = Math.max(PAD_X, box.width * 2.5);
-  const padY = Math.max(PAD_Y, box.height * 3);
-  let x = clamp01(box.x - padX);
-  let y = clamp01(box.y - padY);
-  let width = clamp01(box.width + padX * 2);
-  let height = clamp01(box.height + padY * 2);
-
-  width = Math.min(width, 1 - x);
-  height = Math.min(height, 1 - y);
-
-  // Keep a usable crop even for very small source boxes.
-  if (width < 0.22) {
-    const extra = 0.22 - width;
-    x = clamp01(x - extra / 2);
-    width = Math.min(0.22, 1 - x);
-  }
-  if (height < 0.14) {
-    const extra = 0.14 - height;
-    y = clamp01(y - extra / 2);
-    height = Math.min(0.14, 1 - y);
-  }
+function cropAroundBox(box: EvidenceBox, sourceWidth: number, sourceHeight: number) {
+  const paddedBoxHeight = box.height + Math.max(PAD_Y, box.height) * 2;
+  const widthNeededForHeight =
+    paddedBoxHeight * (sourceHeight / sourceWidth) * PREVIEW_ASPECT_RATIO;
+  const width = Math.min(
+    1,
+    Math.max(0.35, box.width + Math.max(PAD_X, box.width * 2.5) * 2, widthNeededForHeight),
+  );
+  const height = Math.min(1, width * (sourceWidth / sourceHeight) * (1 / PREVIEW_ASPECT_RATIO));
+  const x = Math.min(Math.max(0, box.x + box.width / 2 - width / 2), 1 - width);
+  const y = Math.min(Math.max(0, box.y + box.height / 2 - height / 2), 1 - height);
 
   return { x, y, width, height };
 }
@@ -109,12 +95,16 @@ function drawCroppedPreview(
   if (!sourceWidth || !sourceHeight) return;
 
   const crop = box
-    ? cropAroundBox(box)
-    : { x: 0, y: 0, width: 1, height: Math.min(1, 0.42 * (sourceWidth / sourceHeight)) };
+    ? cropAroundBox(box, sourceWidth, sourceHeight)
+    : {
+        x: 0,
+        y: 0,
+        width: 1,
+        height: Math.min(1, (sourceWidth / sourceHeight) * (1 / PREVIEW_ASPECT_RATIO)),
+      };
 
-  const aspect = (crop.height * sourceHeight) / (crop.width * sourceWidth);
   const previewWidth = PREVIEW_WIDTH;
-  const previewHeight = Math.max(160, Math.round(previewWidth * aspect));
+  const previewHeight = Math.round(previewWidth / PREVIEW_ASPECT_RATIO);
   target.width = previewWidth;
   target.height = previewHeight;
 
