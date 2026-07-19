@@ -16,7 +16,6 @@ type EvidenceSourcePreviewProps = {
   mimeType: string | null;
   page: number | null;
   box: EvidenceBox | null;
-  sourceQuote: string;
   alt: string;
 };
 
@@ -160,7 +159,6 @@ export function EvidenceSourcePreview({
   mimeType,
   page,
   box,
-  sourceQuote,
   alt,
 }: EvidenceSourcePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -259,14 +257,6 @@ export function EvidenceSourcePreview({
           </div>
         ) : null}
       </div>
-
-      <blockquote className="border-l-2 border-primary pl-3 text-xs leading-5 text-foreground">
-        “{sourceQuote}”
-      </blockquote>
-      <p className="text-xs text-muted-foreground">
-        {page ? `Page ${page}` : "From the document"}
-        {box ? " · highlighted region" : ""}
-      </p>
     </div>
   );
 }

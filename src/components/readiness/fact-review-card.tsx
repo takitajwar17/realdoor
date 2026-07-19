@@ -2,12 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import {
-  CheckIcon,
-  ExternalLinkIcon,
-  PencilLineIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { CheckIcon, ExternalLinkIcon, PencilLineIcon, Trash2Icon } from "lucide-react";
 
 import { confirmReadinessFactAction, rejectReadinessFactAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
@@ -114,11 +109,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
               type={isNumeric ? "number" : "text"}
               min={isNumeric ? 0 : undefined}
               step={
-                moneyKeys.has(item.key)
-                  ? "0.01"
-                  : item.key === "household_size"
-                    ? "1"
-                    : undefined
+                moneyKeys.has(item.key) ? "0.01" : item.key === "household_size" ? "1" : undefined
               }
               className={moneyKeys.has(item.key) ? "pl-7" : undefined}
             />
@@ -161,9 +152,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
             <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
               Source
             </p>
-            <p className="mt-1 text-sm font-semibold">
-              {item.documentName ?? "Entered by you"}
-            </p>
+            <p className="mt-1 text-sm font-semibold">{item.documentName ?? "Entered by you"}</p>
           </div>
           {item.documentId ? (
             <Button asChild variant="ghost" size="sm">
@@ -180,28 +169,20 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
           ) : null}
         </div>
 
-        {item.sourceQuote && item.documentId ? (
+        {item.documentId ? (
           <EvidenceSourcePreview
             sessionId={sessionId}
             documentId={item.documentId}
             mimeType={item.mimeType}
             page={item.page}
             box={item.box}
-            sourceQuote={item.sourceQuote}
             alt={`Source location for ${getFactLabel(item.key)} in ${item.documentName ?? "document"}`}
           />
-        ) : item.sourceQuote ? (
-          <>
-            <blockquote className="mt-4 border-l-2 border-primary pl-3 text-xs leading-5 text-foreground">
-              “{item.sourceQuote}”
-            </blockquote>
-            <p className="mt-2 text-xs text-muted-foreground">From the document</p>
-          </>
-        ) : (
+        ) : !item.sourceQuote ? (
           <p className="mt-4 rounded-lg border border-dashed border-border p-4 text-xs leading-5 text-muted-foreground">
             You entered this value yourself. It is labeled that way wherever it appears.
           </p>
-        )}
+        ) : null}
 
         {item.status === "confirmed" && item.documentId ? (
           <p className="mt-2 text-xs text-muted-foreground">Confirmed by you</p>
