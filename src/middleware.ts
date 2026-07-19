@@ -94,25 +94,7 @@ function getAuthGateResponse(request: NextRequest): NextResponse | null {
   }
 
   if (bypassToken && request.cookies.get(LEGACY_AUTH_GATE_BYPASS_COOKIE)?.value === bypassToken) {
-    const response = NextResponse.next();
-    if (!request.cookies.get("csrf-token")) {
-      response.cookies.set("csrf-token", generateCsrfTokenValue(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-        maxAge: 60 * 60 * 24,
-      });
-    }
-    response.cookies.set(AUTH_GATE_BYPASS_COOKIE, bypassToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: AUTH_GATE_COOKIE_MAX_AGE_SECONDS,
-    });
-    response.cookies.delete(LEGACY_AUTH_GATE_BYPASS_COOKIE);
-    return response;
+    return null;
   }
 
   return NextResponse.redirect(new URL(AUTH_GATE_REDIRECT_PATH, request.url));
@@ -141,6 +123,22 @@ export async function middleware(request: NextRequest) {
   const response = shouldServeMarkdown
     ? NextResponse.rewrite(new URL(`${MARKDOWN_AGENT_ROUTE}?path=${encodeURIComponent(markdownPath)}`, request.url))
     : NextResponse.next();
+
+  const bypassToken = getAuthGateBypassToken();
+  if (
+    bypassToken &&
+    request.cookies.get(LEGACY_AUTH_GATE_BYPASS_COOKIE)?.value === bypassToken &&
+    request.cookies.get(AUTH_GATE_BYPASS_COOKIE)?.value !== bypassToken
+  ) {
+    response.cookies.set(AUTH_GATE_BYPASS_COOKIE, bypassToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: AUTH_GATE_COOKIE_MAX_AGE_SECONDS,
+    });
+    response.cookies.delete(LEGACY_AUTH_GATE_BYPASS_COOKIE);
+  }
 
   // Check if CSRF token exists
   const csrfToken = request.cookies.get("csrf-token");

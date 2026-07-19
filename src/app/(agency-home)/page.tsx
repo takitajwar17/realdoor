@@ -10,29 +10,29 @@ const heroVideoUrl =
 
 const workflowHighlights = [
   {
-    title: "Move cases faster",
-    description: "One queue for every client file.",
+    title: "Confirm the facts",
+    description: "Review every source value.",
   },
   {
-    title: "Catch issues earlier",
-    description: "Flag gaps before submission.",
+    title: "Understand the rule",
+    description: "See citations and clear math.",
   },
   {
-    title: "Send clearer fixes",
-    description: "Share client-ready action lists.",
+    title: "Control the packet",
+    description: "Preview, download, and delete.",
   },
 ] as const;
 
 const metrics = [
-  { value: "10x", label: "review capacity target" },
-  { value: "30 sec", label: "to spot missing documents" },
-  { value: "1 click", label: "to create client follow-ups" },
+  { value: "3 stages", label: "profile to packet" },
+  { value: "1 trail", label: "evidence at every step" },
+  { value: "0 scores", label: "no eligibility decisions" },
 ] as const;
 
 export const metadata = constructMetadata({
-  title: "Visa Review Software for High-Volume Agency Teams",
+  title: "Affordable Housing Application-Readiness Copilot",
   description:
-    "Review client visa files faster with document checks, missing requirement detection, case tracking, and client-ready follow-ups for agency teams.",
+    "Turn synthetic household documents into confirmed facts, cited rule explanations, clear calculations, and a renter-controlled application packet.",
   alternates: {
     canonical: "/",
   },
@@ -120,11 +120,11 @@ export default function Home() {
             <AnimatedText
               as="h1"
               className="public-display-tight max-w-[20rem] text-[2.75rem] font-normal leading-[0.92] sm:max-w-3xl sm:text-5xl md:max-w-5xl md:text-6xl lg:text-7xl"
-              text="10x your agency's visa application review capacity."
+              text="Build an application packet you understand and control."
             />
             <AnimatedText
               className="public-landing-muted mt-5 max-w-[21rem] text-base leading-7 sm:max-w-3xl sm:text-lg md:text-xl"
-              text="RealDoor helps visa and travel agencies check client files in bulk, flag missing documents and inconsistencies, and produce clear issue lists."
+              text="RealDoor turns synthetic household documents into confirmed facts, cited rules, clear calculations, and a packet you preview and download yourself."
             />
 
             <div className="mt-7 flex w-full max-w-[21rem] justify-center">
@@ -132,13 +132,13 @@ export default function Home() {
                 className="public-button-primary-strong inline-flex h-12 items-center justify-center rounded-2xl px-7 text-sm font-bold ring-1 ring-primary/10 transition-colors sm:h-14 sm:px-10 sm:text-base"
                 href="/sign-up"
               >
-                Start a pilot
+                Start your session
               </Link>
             </div>
 
             <div className="public-landing-media-frame mt-8 aspect-[2830/1594] w-full max-w-[21rem] overflow-hidden rounded-2xl border sm:max-w-3xl md:max-w-5xl md:rounded-3xl">
               <Image
-                alt="RealDoor agency dashboard showing application review results"
+                alt="RealDoor application-readiness workspace showing evidence and checklist states"
                 className="h-full w-full object-cover"
                 height={1594}
                 priority
@@ -184,11 +184,11 @@ export default function Home() {
             <AnimatedText
               as="h2"
               className="public-display-tight public-on-dark max-w-3xl text-4xl font-normal leading-[0.95] sm:text-5xl md:text-6xl"
-              text="Turn manual review into a repeatable workflow"
+              text="From document evidence to a packet you control"
             />
             <AnimatedText
               className="public-on-dark-muted max-w-xl text-lg leading-8 md:justify-self-end md:text-right md:text-2xl md:leading-10"
-              text="Review more applications each day, catch issues before they slow your team down, and give clients clear fixes in minutes."
+              text="Confirm each fact, inspect the published rule and math, resolve missing items, then preview and download—nothing is decided or sent for you."
             />
           </div>
         </section>
