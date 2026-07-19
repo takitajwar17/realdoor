@@ -29,7 +29,7 @@ import {
   type FactKey,
   type ReadinessDocument,
 } from "./domain";
-import { SYNTHETIC_2026_RULE_PACK, answerRuleQuestion } from "./rules";
+import { AUTHORITATIVE_2026_RULE_PACK, answerRuleQuestion } from "./rules";
 
 // Keep the established local key bytes so existing development sessions remain readable
 // across the product rename. Production always requires READINESS_ENCRYPTION_KEY.
@@ -124,11 +124,11 @@ export async function createReadinessSession(userId: string, now = new Date()) {
       consentVersion: "2026-07-19-v1",
       consentedAt: now,
       targetYear: 2026,
-      metro: SYNTHETIC_2026_RULE_PACK.metro,
-      program: SYNTHETIC_2026_RULE_PACK.program,
-      rulePackId: SYNTHETIC_2026_RULE_PACK.id,
-      ruleAuthority: SYNTHETIC_2026_RULE_PACK.authority,
-      ruleEffectiveDate: SYNTHETIC_2026_RULE_PACK.effectiveDate,
+      metro: AUTHORITATIVE_2026_RULE_PACK.metro,
+      program: AUTHORITATIVE_2026_RULE_PACK.program,
+      rulePackId: AUTHORITATIVE_2026_RULE_PACK.id,
+      ruleAuthority: AUTHORITATIVE_2026_RULE_PACK.authority,
+      ruleEffectiveDate: AUTHORITATIVE_2026_RULE_PACK.effectiveDate,
       asOfDate: now.toISOString().slice(0, 10),
       lastAccessedAt: now,
     }),
@@ -250,14 +250,14 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
     conflicts: detectFactConflicts(extractedFacts),
     comparison: calculateIncomeComparison({
       facts: confirmedFacts,
-      rulePack: SYNTHETIC_2026_RULE_PACK,
+      rulePack: AUTHORITATIVE_2026_RULE_PACK,
     }),
     checklist: deriveChecklist({
       asOf: session.asOfDate,
       documents: readinessDocuments,
-      rules: SYNTHETIC_2026_RULE_PACK,
+      rules: AUTHORITATIVE_2026_RULE_PACK,
     }),
-    rulePack: SYNTHETIC_2026_RULE_PACK,
+    rulePack: AUTHORITATIVE_2026_RULE_PACK,
   };
 }
 

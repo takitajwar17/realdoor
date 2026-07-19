@@ -41,6 +41,9 @@ export type SourceCitation = {
   title: string;
   url: string;
   passage: string;
+  locator?: string;
+  effectiveDate?: string | null;
+  authority?: string;
 };
 
 export type RulePack = {
@@ -51,7 +54,7 @@ export type RulePack = {
   year: number;
   effectiveDate: string;
   version: string;
-  authority: "official" | "organizer" | "synthetic-rehearsal";
+  authority: "official" | "organizer";
   incomeLimits60Percent: Partial<Record<number, number>>;
   calculationSourceIds: string[];
   checklistRequirements: ChecklistRequirement[];
@@ -68,7 +71,14 @@ export type ChecklistRequirement = {
 
 export type ReadinessDocument = {
   id: string;
-  kind: "pay_stub" | "benefits_letter" | "photo_id" | "bank_statement" | "other";
+  kind:
+    | "application_summary"
+    | "pay_stub"
+    | "employment_letter"
+    | "benefit_letter"
+    | "gig_statement"
+    | "gig_income_corroboration"
+    | "other";
   name: string;
   issuedOn: string | null;
   included: boolean;
@@ -393,7 +403,7 @@ export function deriveChecklist(input: {
         id: requirement.id,
         label: requirement.label,
         state: "expired",
-        reason: `Dated ${document.issuedOn}; ${ageDays} days old on ${input.asOf}. This practice guide uses a ${requirement.maxAgeDays}-day window.`,
+        reason: `Dated ${document.issuedOn}; ${ageDays} days old on ${input.asOf} in America/New_York. The frozen guide uses a ${requirement.maxAgeDays}-day window (${ageDays} > ${requirement.maxAgeDays}).`,
         sourceId: requirement.sourceId,
         asOf: input.asOf,
         maxAgeDays: requirement.maxAgeDays,
@@ -405,7 +415,7 @@ export function deriveChecklist(input: {
       id: requirement.id,
       label: requirement.label,
       state: "present",
-      reason: `Dated ${document.issuedOn}; within this practice guide's ${requirement.maxAgeDays}-day window as of ${input.asOf}.`,
+      reason: `Dated ${document.issuedOn}; ${ageDays} days old on ${input.asOf} in America/New_York (${ageDays} ≤ ${requirement.maxAgeDays}).`,
       sourceId: requirement.sourceId,
       asOf: input.asOf,
       maxAgeDays: requirement.maxAgeDays,

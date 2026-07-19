@@ -6,10 +6,12 @@ import { commonColumns } from "./_common";
 import { userTable } from "./user";
 
 export const DOCUMENT_KIND = {
+  APPLICATION_SUMMARY: "application_summary",
   PAY_STUB: "pay_stub",
-  BENEFITS_LETTER: "benefits_letter",
-  PHOTO_ID: "photo_id",
-  BANK_STATEMENT: "bank_statement",
+  EMPLOYMENT_LETTER: "employment_letter",
+  BENEFIT_LETTER: "benefit_letter",
+  GIG_STATEMENT: "gig_statement",
+  GIG_INCOME_CORROBORATION: "gig_income_corroboration",
   OTHER: "other",
 } as const;
 
@@ -46,7 +48,7 @@ export const readinessSessionTable = sqliteTable(
     metro: text().notNull(),
     program: text().notNull(),
     rulePackId: text().notNull(),
-    ruleAuthority: text({ enum: ["official", "organizer", "synthetic-rehearsal"] }).notNull(),
+    ruleAuthority: text({ enum: ["official", "organizer"] }).notNull(),
     ruleEffectiveDate: text().notNull(),
     asOfDate: text().notNull(),
     revision: integer().default(1).notNull(),
