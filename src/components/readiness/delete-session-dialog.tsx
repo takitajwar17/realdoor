@@ -44,7 +44,11 @@ export function DeleteSessionDialog({ sessionId }: { sessionId: string }) {
             history. A packet you already downloaded stays on your device. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <form action={action} className="space-y-4">
+        <form
+          action={action}
+          className="space-y-4"
+          onSubmit={() => window.dispatchEvent(new Event("realdoor:session-deleting"))}
+        >
           <input type="hidden" name="sessionId" value={sessionId} />
           <div className="space-y-2">
             <Label htmlFor="delete-session-confirmation">

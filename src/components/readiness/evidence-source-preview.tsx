@@ -170,6 +170,13 @@ export function EvidenceSourcePreview({
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
+    const controller = new AbortController();
+
+    function abortForSessionDeletion() {
+      controller.abort();
+    }
+
+    window.addEventListener("realdoor:session-deleting", abortForSessionDeletion);
 
     async function loadPreview() {
       setStatus("loading");
@@ -178,7 +185,11 @@ export function EvidenceSourcePreview({
       try {
         const response = await fetch(
           `/api/readiness/documents/${documentId}?sessionId=${encodeURIComponent(sessionId)}`,
-          { credentials: "same-origin", headers: { "X-Requested-With": "RealDoorReadiness" } },
+          {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "RealDoorReadiness" },
+            signal: controller.signal,
+          },
         );
         if (!response.ok) throw new Error("Could not open the source document.");
 
@@ -205,7 +216,7 @@ export function EvidenceSourcePreview({
 
         if (!cancelled) setStatus("ready");
       } catch (error) {
-        if (cancelled) return;
+        if (cancelled || controller.signal.aborted) return;
         setStatus("error");
         setErrorMessage(error instanceof Error ? error.message : "Preview unavailable.");
       }
@@ -215,6 +226,8 @@ export function EvidenceSourcePreview({
 
     return () => {
       cancelled = true;
+      window.removeEventListener("realdoor:session-deleting", abortForSessionDeletion);
+      controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [box, documentId, mimeType, page, sessionId]);
