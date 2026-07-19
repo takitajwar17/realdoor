@@ -94,17 +94,23 @@ export async function GET(
         locator: source.locator,
       })),
     };
-    const html = renderReadinessPacket(model);
+    const logoResponse = await fetch(
+      new URL("/logo/light/transparent_logo_text_horizontal_nobuffer.png", request.url),
+    );
+    if (!logoResponse.ok) {
+      return NextResponse.json({ error: "Brand asset unavailable" }, { status: 503 });
+    }
+    const logoBytes = new Uint8Array(await logoResponse.arrayBuffer());
+    const pdf = await renderReadinessPacket(model, logoBytes);
+    const body = pdf.slice().buffer as ArrayBuffer;
 
     if (!preview) await recordPacketDownloaded(sessionId, auth.session.userId);
 
-    return new Response(html, {
+    return new Response(body, {
       headers: {
         "Cache-Control": "private, no-store",
-        "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="realdoor-readiness-packet-${workspace.session.id.slice(-8)}.html"`,
-        "Content-Security-Policy":
-          "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
-        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="realdoor-readiness-packet-${workspace.session.id.slice(-8)}.pdf"`,
+        "Content-Type": "application/pdf",
         "X-Content-Type-Options": "nosniff",
       },
     });

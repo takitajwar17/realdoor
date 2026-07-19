@@ -1,3 +1,12 @@
+import {
+  PDFDocument,
+  type PDFImage,
+  type PDFFont,
+  type PDFPage,
+  StandardFonts,
+  rgb,
+} from "pdf-lib";
+
 export type PacketModel = {
   sessionId: string;
   revision: number;
@@ -40,13 +49,69 @@ export type PacketModel = {
   }>;
 };
 
-function escapeHtml(value: string | number) {
+const PAGE_WIDTH = 612;
+const PAGE_HEIGHT = 792;
+const CONTENT_LEFT = 42;
+const CONTENT_RIGHT = 570;
+const CONTENT_WIDTH = CONTENT_RIGHT - CONTENT_LEFT;
+const CONTENT_TOP = 670;
+const CONTENT_BOTTOM = 68;
+
+const color = {
+  ink: rgb(18 / 255, 27 / 255, 39 / 255),
+  muted: rgb(99 / 255, 111 / 255, 108 / 255),
+  line: rgb(218 / 255, 224 / 255, 220 / 255),
+  paper: rgb(248 / 255, 249 / 255, 247 / 255),
+  panel: rgb(1, 1, 1),
+  brand: rgb(32 / 255, 48 / 255, 44 / 255),
+  brandSoft: rgb(235 / 255, 240 / 255, 236 / 255),
+  accent: rgb(207 / 255, 134 / 255, 34 / 255),
+  accentSoft: rgb(253 / 255, 246 / 255, 231 / 255),
+  white: rgb(1, 1, 1),
+};
+
+type Fonts = { regular: PDFFont; bold: PDFFont };
+
+function normalizePdfText(value: string | number) {
   return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/gu, "-")
+    .replace(/[\u2018\u2019]/gu, "'")
+    .replace(/[\u201c\u201d]/gu, '"')
+    .replaceAll("→", "to")
+    .replaceAll("×", "x")
+    .replaceAll("≤", "<=")
+    .replaceAll("≥", ">=")
+    .replaceAll("·", "|")
+    .replace(/[^\x20-\x7E\n]/gu, "");
+}
+
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
+  const lines: string[] = [];
+  for (const paragraph of normalizePdfText(text).split("\n")) {
+    const words = paragraph.trim().split(/\s+/u).filter(Boolean);
+    if (words.length === 0) {
+      lines.push("");
+      continue;
+    }
+
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+        line = candidate;
+        continue;
+      }
+      if (line) lines.push(line);
+      line = word;
+    }
+    if (line) lines.push(line);
+  }
+  return lines;
+}
+
+function money(value: number) {
+  const absolute = Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 0 });
+  return `${value < 0 ? "-" : ""}$${absolute}`;
 }
 
 function valuesMatch(value: string, quote: string) {
@@ -77,46 +142,482 @@ export function preparePacketFactEvidence(input: {
   };
 }
 
-export function renderReadinessPacket(model: PacketModel) {
-  const facts = model.facts
-    .map(
-      (fact) =>
-        `<tr><th scope="row">${escapeHtml(fact.label)}</th><td>${escapeHtml(fact.value)}</td><td>${escapeHtml(fact.source)}${fact.page ? `, page ${fact.page}` : ""}${fact.sourceQuote ? `<br><q>${escapeHtml(fact.sourceQuote)}</q>` : ""}</td></tr>`,
-    )
-    .join("");
-  const worksheet =
-    model.worksheet.status === "complete"
-      ? `<dl><dt>Annualized gross income</dt><dd>$${escapeHtml(model.worksheet.annualIncome!.toLocaleString("en-US"))}</dd><dt>Frozen 60% threshold</dt><dd>$${escapeHtml(model.worksheet.incomeLimit!.toLocaleString("en-US"))}</dd><dt>Difference</dt><dd>$${escapeHtml(model.worksheet.difference!.toLocaleString("en-US"))}</dd></dl><p><strong>Arithmetic:</strong> <code>${escapeHtml(model.worksheet.formula!)}</code></p>`
-      : `<p><strong>Unresolved:</strong> ${escapeHtml(model.worksheet.reason ?? "Confirmed inputs are incomplete.")}</p>`;
-  const checklist = model.checklist
-    .map(
-      (item) =>
-        `<tr><th scope="row">${escapeHtml(item.label)}</th><td>${escapeHtml(item.state)}</td><td>${escapeHtml(item.reason)}</td><td>${escapeHtml(item.sourceId)}</td></tr>`,
-    )
-    .join("");
-  const documents = model.documents
-    .map(
-      (document) =>
-        `<li>${escapeHtml(document.name)} — ${escapeHtml(document.kind)} — ${escapeHtml(document.issuedOn ?? "date unresolved")}</li>`,
-    )
-    .join("");
-  const questions = model.questions
-    .map(
-      (question) =>
-        `<li><strong>${escapeHtml(question.question)}</strong><br>${escapeHtml(question.answer)}<br><small>${escapeHtml(question.sourceIds.join(", ") || "No supporting passage — unresolved")}</small></li>`,
-    )
-    .join("");
-  const sources = model.sources
-    .map((source) => {
-      const href = source.url.trim();
-      const external = /^https?:\/\//iu.test(href);
-      const label = `${escapeHtml(source.id)} — ${escapeHtml(source.title)}`;
-      const title = external
-        ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
-        : label;
-      return `<li id="source-${escapeHtml(source.id)}">${title}${source.locator ? ` · ${escapeHtml(source.locator)}` : ""}<br>${escapeHtml(source.passage)}</li>`;
-    })
-    .join("");
+class PacketRenderer {
+  private page!: PDFPage;
+  private y = CONTENT_TOP;
+  private readonly pages: PDFPage[] = [];
+  private readonly pdf: PDFDocument;
+  private readonly fonts: Fonts;
+  private readonly logo: PDFImage;
+  private readonly model: PacketModel;
 
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RealDoor application-readiness packet</title><style>:root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#172033;background:#f4f6f8}body{margin:0;padding:32px 16px}main{max-width:850px;margin:auto;padding:44px;background:#fff;border:1px solid #dbe0e6}h1{margin:.25rem 0 .5rem;font-size:2rem}h2{margin-top:2rem;padding-bottom:.5rem;border-bottom:1px solid #dbe0e6;font-size:1.05rem}p,li,td,th,dt,dd{font-size:.92rem;line-height:1.55}.eyebrow{color:#596579;font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.notice{margin:1.5rem 0;padding:1rem;border:1px solid #edc86c;background:#fff9e8}table{width:100%;border-collapse:collapse}th,td{padding:.65rem;border-bottom:1px solid #e8ebef;text-align:left;vertical-align:top}th{width:24%}dt{font-weight:700}dd{margin:0 0 .5rem}footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid #dbe0e6;color:#596579}@media print{body{padding:0;background:#fff}main{border:0}}</style></head><body><main><header><p class="eyebrow">RealDoor application-readiness packet</p><h1>${escapeHtml(model.metro)}</h1><p>${escapeHtml(model.program)} · Packet v${model.revision} · Generated ${escapeHtml(model.generatedAt)}</p></header><aside class="notice" aria-label="Important limitation"><strong>Not an eligibility decision.</strong> This packet organizes renter-confirmed facts and a frozen numerical comparison. A human makes every program determination. Nothing has been sent.</aside><section aria-labelledby="facts"><h2 id="facts">Selected confirmed facts and evidence</h2><table><thead><tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col">Source</th></tr></thead><tbody>${facts || '<tr><td colspan="3">No confirmed facts</td></tr>'}</tbody></table></section><section aria-labelledby="worksheet"><h2 id="worksheet">Deterministic worksheet</h2>${worksheet}</section><section aria-labelledby="checklist"><h2 id="checklist">Application checklist</h2><p>Frozen as of ${escapeHtml(model.asOfDate)} in ${escapeHtml(model.timezone)}.</p><table><thead><tr><th scope="col">Item</th><th scope="col">State</th><th scope="col">Rule and arithmetic</th><th scope="col">Source</th></tr></thead><tbody>${checklist}</tbody></table></section><section aria-labelledby="documents"><h2 id="documents">Selected evidence index</h2><ul>${documents || "<li>No source documents selected</li>"}</ul></section><section aria-labelledby="questions"><h2 id="questions">Questions and unresolved reviewer items</h2><ul>${questions || "<li>No saved questions</li>"}</ul></section><section aria-labelledby="sources"><h2 id="sources">Frozen rules and pinpoint citations</h2><p>Version ${escapeHtml(model.ruleVersion)} · effective ${escapeHtml(model.ruleEffectiveDate)}</p><ol>${sources}</ol></section><footer><p>Downloaded to you; not sent. You decide whether and how to share this packet.</p><p>Session ${escapeHtml(model.sessionId)}</p></footer></main></body></html>`;
+  constructor(pdf: PDFDocument, fonts: Fonts, logo: PDFImage, model: PacketModel) {
+    this.pdf = pdf;
+    this.fonts = fonts;
+    this.logo = logo;
+    this.model = model;
+  }
+
+  private addPage() {
+    this.page = this.pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    this.pages.push(this.page);
+    this.y = CONTENT_TOP;
+
+    this.page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: PAGE_WIDTH,
+      height: PAGE_HEIGHT,
+      color: color.paper,
+    });
+    this.page.drawRectangle({
+      x: 0,
+      y: PAGE_HEIGHT - 90,
+      width: PAGE_WIDTH,
+      height: 90,
+      color: color.brand,
+    });
+    this.page.drawRectangle({ x: 0, y: 0, width: 12, height: PAGE_HEIGHT, color: color.brand });
+
+    const logoSize = this.logo.scaleToFit(126, 34);
+    this.page.drawImage(this.logo, {
+      x: CONTENT_LEFT,
+      y: 733,
+      width: logoSize.width,
+      height: logoSize.height,
+    });
+    this.page.drawText("APPLICATION READINESS", {
+      x: CONTENT_LEFT,
+      y: 718,
+      size: 7,
+      font: this.fonts.regular,
+      color: rgb(205 / 255, 216 / 255, 211 / 255),
+    });
+    this.page.drawText("RENTER-CONTROLLED PACKET", {
+      x: 426,
+      y: 744,
+      size: 7,
+      font: this.fonts.bold,
+      color: color.white,
+    });
+    this.page.drawText(`REVISION ${this.model.revision}`, {
+      x: 501,
+      y: 722,
+      size: 7,
+      font: this.fonts.regular,
+      color: rgb(205 / 255, 216 / 255, 211 / 255),
+    });
+  }
+
+  private ensureSpace(height: number) {
+    if (this.y - height < CONTENT_BOTTOM) this.addPage();
+  }
+
+  private drawLines(input: {
+    lines: string[];
+    x: number;
+    y: number;
+    size: number;
+    lineHeight: number;
+    font?: PDFFont;
+    textColor?: ReturnType<typeof rgb>;
+  }) {
+    input.lines.forEach((line, index) => {
+      this.page.drawText(line, {
+        x: input.x,
+        y: input.y - index * input.lineHeight,
+        size: input.size,
+        font: input.font ?? this.fonts.regular,
+        color: input.textColor ?? color.ink,
+      });
+    });
+  }
+
+  private paragraph(
+    text: string,
+    options: {
+      size?: number;
+      width?: number;
+      lineHeight?: number;
+      font?: PDFFont;
+      textColor?: ReturnType<typeof rgb>;
+      gap?: number;
+    } = {},
+  ) {
+    const size = options.size ?? 9;
+    const lineHeight = options.lineHeight ?? size * 1.45;
+    const font = options.font ?? this.fonts.regular;
+    const lines = wrapText(text, font, size, options.width ?? CONTENT_WIDTH);
+    const height = Math.max(lineHeight, lines.length * lineHeight);
+    this.ensureSpace(height + (options.gap ?? 6));
+    this.drawLines({
+      lines,
+      x: CONTENT_LEFT,
+      y: this.y,
+      size,
+      lineHeight,
+      font,
+      textColor: options.textColor,
+    });
+    this.y -= height + (options.gap ?? 6);
+  }
+
+  private sectionTitle(title: string, kicker?: string) {
+    // Keep every heading with at least the first row or paragraph that follows it.
+    this.ensureSpace(100);
+    if (kicker) {
+      this.page.drawText(normalizePdfText(kicker).toUpperCase(), {
+        x: CONTENT_LEFT,
+        y: this.y,
+        size: 6.7,
+        font: this.fonts.bold,
+        color: color.muted,
+      });
+      this.y -= 16;
+    }
+    this.page.drawText(normalizePdfText(title), {
+      x: CONTENT_LEFT,
+      y: this.y,
+      size: 16,
+      font: this.fonts.bold,
+      color: color.ink,
+    });
+    this.page.drawLine({
+      start: { x: CONTENT_LEFT, y: this.y - 10 },
+      end: { x: CONTENT_RIGHT, y: this.y - 10 },
+      thickness: 0.8,
+      color: color.line,
+    });
+    this.y -= 31;
+  }
+
+  private row(input: { label: string; value: string; detail?: string; status?: string }) {
+    const labelLines = wrapText(input.label, this.fonts.bold, 8.5, 126);
+    const valueLines = wrapText(input.value, this.fonts.bold, 9, 105);
+    const detailLines = input.detail
+      ? wrapText(input.detail, this.fonts.regular, 8, 244)
+      : [];
+    const contentLines = Math.max(labelLines.length, valueLines.length, detailLines.length, 1);
+    const height = Math.max(44, contentLines * 11 + 20);
+    this.ensureSpace(height + 7);
+
+    this.page.drawRectangle({
+      x: CONTENT_LEFT,
+      y: this.y - height + 8,
+      width: CONTENT_WIDTH,
+      height,
+      color: color.panel,
+      borderColor: color.line,
+      borderWidth: 0.7,
+    });
+    this.page.drawRectangle({
+      x: CONTENT_LEFT,
+      y: this.y - height + 8,
+      width: 4,
+      height,
+      color: input.status?.toLocaleLowerCase("en-US").includes("expired")
+        ? color.accent
+        : color.brand,
+    });
+    this.drawLines({
+      lines: labelLines,
+      x: CONTENT_LEFT + 16,
+      y: this.y - 10,
+      size: 8.5,
+      lineHeight: 11,
+      font: this.fonts.bold,
+    });
+    this.drawLines({
+      lines: valueLines,
+      x: 188,
+      y: this.y - 10,
+      size: 9,
+      lineHeight: 11,
+      font: this.fonts.bold,
+      textColor: color.brand,
+    });
+    if (detailLines.length > 0) {
+      this.drawLines({
+        lines: detailLines,
+        x: 310,
+        y: this.y - 10,
+        size: 8,
+        lineHeight: 11,
+        textColor: color.muted,
+      });
+    }
+    this.y -= height + 7;
+  }
+
+  private notice() {
+    const height = 62;
+    this.ensureSpace(height + 8);
+    this.page.drawRectangle({
+      x: CONTENT_LEFT,
+      y: this.y - height,
+      width: CONTENT_WIDTH,
+      height,
+      color: color.accentSoft,
+      borderColor: rgb(238 / 255, 210 / 255, 157 / 255),
+      borderWidth: 0.8,
+    });
+    this.page.drawRectangle({
+      x: CONTENT_LEFT,
+      y: this.y - height,
+      width: 5,
+      height,
+      color: color.accent,
+    });
+    this.page.drawText("IMPORTANT LIMITATION", {
+      x: CONTENT_LEFT + 18,
+      y: this.y - 20,
+      size: 7,
+      font: this.fonts.bold,
+      color: rgb(138 / 255, 87 / 255, 20 / 255),
+    });
+    const lines = wrapText(
+      "Not an eligibility decision. This packet organizes renter-confirmed facts and a frozen numerical comparison. A qualified human reviewer makes every program determination. Nothing has been sent.",
+      this.fonts.regular,
+      8.5,
+      CONTENT_WIDTH - 36,
+    );
+    this.drawLines({
+      lines,
+      x: CONTENT_LEFT + 18,
+      y: this.y - 37,
+      size: 8.5,
+      lineHeight: 11,
+    });
+    this.y -= height + 14;
+  }
+
+  private cover() {
+    this.page.drawText("REALDOOR APPLICATION-READINESS PACKET", {
+      x: CONTENT_LEFT,
+      y: this.y,
+      size: 7,
+      font: this.fonts.bold,
+      color: color.muted,
+    });
+    this.y -= 41;
+    this.page.drawText("Your application", {
+      x: CONTENT_LEFT,
+      y: this.y,
+      size: 28,
+      font: this.fonts.bold,
+      color: color.ink,
+    });
+    this.y -= 34;
+    this.page.drawText("readiness packet", {
+      x: CONTENT_LEFT,
+      y: this.y,
+      size: 28,
+      font: this.fonts.bold,
+      color: color.ink,
+    });
+    this.y -= 30;
+    this.paragraph(this.model.metro, {
+      size: 11,
+      lineHeight: 15,
+      font: this.fonts.bold,
+      textColor: color.brand,
+      gap: 2,
+    });
+    this.paragraph(this.model.program, { size: 9, textColor: color.muted, gap: 14 });
+    this.notice();
+
+    this.row({
+      label: "Packet version",
+      value: `Revision ${this.model.revision}`,
+      detail: `Generated ${this.model.generatedAt}`,
+    });
+    this.row({
+      label: "Frozen guide",
+      value: this.model.ruleEffectiveDate,
+      detail: this.model.ruleVersion,
+    });
+    this.row({
+      label: "Checklist date",
+      value: this.model.asOfDate,
+      detail: this.model.timezone,
+    });
+  }
+
+  private facts() {
+    this.sectionTitle("Confirmed facts and evidence", "01 | Renter-confirmed profile");
+    if (this.model.facts.length === 0) {
+      this.paragraph("No confirmed facts were selected for this packet.", {
+        textColor: color.muted,
+      });
+      return;
+    }
+    this.model.facts.forEach((fact) => {
+      const evidence = [fact.source, fact.page ? `page ${fact.page}` : "", fact.sourceQuote ?? ""]
+        .filter(Boolean)
+        .join(" | ");
+      this.row({ label: fact.label, value: fact.value, detail: evidence });
+    });
+  }
+
+  private worksheet() {
+    this.sectionTitle("Income worksheet", "02 | Deterministic calculation");
+    if (this.model.worksheet.status === "unresolved") {
+      this.row({
+        label: "Worksheet state",
+        value: "Unresolved",
+        detail: this.model.worksheet.reason ?? "Confirmed inputs are incomplete.",
+      });
+      return;
+    }
+    this.row({
+      label: "Annualized gross income",
+      value: money(this.model.worksheet.annualIncome ?? 0),
+      detail: "Calculated from renter-confirmed recurring income",
+    });
+    this.row({
+      label: "Frozen 60% threshold",
+      value: money(this.model.worksheet.incomeLimit ?? 0),
+      detail: `Effective ${this.model.ruleEffectiveDate}`,
+    });
+    this.row({
+      label: "Numerical difference",
+      value: money(this.model.worksheet.difference ?? 0),
+      detail: "A comparison only - not an eligibility result",
+    });
+    this.paragraph(`Arithmetic: ${this.model.worksheet.formula ?? "Unavailable"}`, {
+      size: 8.5,
+      lineHeight: 12,
+      font: this.fonts.bold,
+      textColor: color.brand,
+      gap: 12,
+    });
+  }
+
+  private checklist() {
+    this.sectionTitle("Application checklist", "03 | Document review");
+    this.paragraph(
+      `Frozen as of ${this.model.asOfDate} in ${this.model.timezone}. Status describes this session only and does not predict reviewer acceptance.`,
+      { size: 8.5, textColor: color.muted, gap: 8 },
+    );
+    this.model.checklist.forEach((item) => {
+      this.row({
+        label: item.label,
+        value: item.state,
+        detail: `${item.reason} | ${item.sourceId}`,
+        status: item.state,
+      });
+    });
+  }
+
+  private documents() {
+    this.sectionTitle("Selected evidence index", "04 | Included by renter");
+    if (this.model.documents.length === 0) {
+      this.paragraph("No source documents were selected.", { textColor: color.muted });
+      return;
+    }
+    this.model.documents.forEach((document) => {
+      this.row({
+        label: document.name,
+        value: document.kind,
+        detail: document.issuedOn ?? "Date unresolved",
+      });
+    });
+  }
+
+  private questions() {
+    this.sectionTitle("Questions and reviewer items", "05 | Saved explanations");
+    if (this.model.questions.length === 0) {
+      this.paragraph("No saved questions.", { textColor: color.muted });
+      return;
+    }
+    this.model.questions.forEach((question) => {
+      this.paragraph(`Question: ${question.question}`, {
+        font: this.fonts.bold,
+        textColor: color.brand,
+        gap: 2,
+      });
+      this.paragraph(question.answer, { size: 8.5, gap: 2 });
+      this.paragraph(
+        `Sources: ${question.sourceIds.join(", ") || "No supporting passage - unresolved"}`,
+        { size: 7.5, textColor: color.muted, gap: 12 },
+      );
+    });
+  }
+
+  private sources() {
+    this.sectionTitle("Frozen rules and citations", "06 | Source register");
+    this.paragraph(
+      `Version ${this.model.ruleVersion} | Effective ${this.model.ruleEffectiveDate}`,
+      { size: 8.5, font: this.fonts.bold, textColor: color.brand, gap: 10 },
+    );
+    this.model.sources.forEach((source) => {
+      this.paragraph(`${source.id} | ${source.title}${source.locator ? ` | ${source.locator}` : ""}`, {
+        size: 8.5,
+        font: this.fonts.bold,
+        gap: 2,
+      });
+      this.paragraph(source.passage, { size: 8, lineHeight: 11, gap: 2 });
+      if (source.url.trim()) {
+        this.paragraph(source.url, { size: 7, lineHeight: 10, textColor: color.muted, gap: 12 });
+      }
+    });
+  }
+
+  private finishPages() {
+    this.pages.forEach((page, index) => {
+      page.drawLine({
+        start: { x: CONTENT_LEFT, y: 52 },
+        end: { x: CONTENT_RIGHT, y: 52 },
+        thickness: 0.75,
+        color: color.line,
+      });
+      page.drawText(`Session ${normalizePdfText(this.model.sessionId)} | Downloaded to you; not sent`, {
+        x: CONTENT_LEFT,
+        y: 34,
+        size: 6.8,
+        font: this.fonts.regular,
+        color: color.muted,
+      });
+      page.drawText(`${index + 1} / ${this.pages.length}`, {
+        x: 548,
+        y: 34,
+        size: 6.8,
+        font: this.fonts.bold,
+        color: color.muted,
+      });
+    });
+  }
+
+  render() {
+    this.addPage();
+    this.cover();
+    this.facts();
+    this.worksheet();
+    this.checklist();
+    this.documents();
+    this.questions();
+    this.sources();
+    this.finishPages();
+  }
+}
+
+export async function renderReadinessPacket(model: PacketModel, brandLogoBytes: Uint8Array) {
+  const pdf = await PDFDocument.create();
+  const fonts = {
+    regular: await pdf.embedFont(StandardFonts.Helvetica),
+    bold: await pdf.embedFont(StandardFonts.HelveticaBold),
+  };
+  const logo = await pdf.embedPng(brandLogoBytes);
+  const stableDate = new Date(`${model.asOfDate}T12:00:00.000Z`);
+
+  pdf.setTitle("RealDoor application-readiness packet");
+  pdf.setAuthor("RealDoor");
+  pdf.setSubject("Renter-controlled application-readiness packet");
+  pdf.setCreator("RealDoor Application Readiness");
+  pdf.setProducer("RealDoor Document System");
+  pdf.setCreationDate(stableDate);
+  pdf.setModificationDate(stableDate);
+
+  new PacketRenderer(pdf, fonts, logo, model).render();
+  return pdf.save({ useObjectStreams: false });
 }
