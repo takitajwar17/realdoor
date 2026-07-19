@@ -23,7 +23,7 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     }
 
     setStatus("uploading");
-    setMessage("Encrypting and reading the document for suggested fields…");
+    setMessage("Uploading and reading the document for suggested fields…");
     const formData = new FormData();
     formData.set("sessionId", sessionId);
     formData.set("file", file);
@@ -85,15 +85,18 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
           Want to try practice files?
         </span>
         <Button asChild type="button" variant="outline" size="sm">
-          <Link href="/api/readiness/demo-documents/pay_stub" prefetch={false}>
+          <Link href="/api/readiness/demo-documents/hh-002_d03_pay_stub.pdf" prefetch={false}>
             <DownloadIcon className="h-3.5 w-3.5" />
-            Practice pay statement
+            Sample pay statement
           </Link>
         </Button>
         <Button asChild type="button" variant="outline" size="sm">
-          <Link href="/api/readiness/demo-documents/benefits_letter" prefetch={false}>
+          <Link
+            href="/api/readiness/demo-documents/hh-003_d04_benefit_letter.pdf"
+            prefetch={false}
+          >
             <DownloadIcon className="h-3.5 w-3.5" />
-            Practice benefits letter
+            Sample benefit letter
           </Link>
         </Button>
       </div>

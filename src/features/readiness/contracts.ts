@@ -16,9 +16,11 @@ export const manualFactSchema = z
     sessionId: readinessSessionId,
     key: z.enum([
       "household_size",
-      "employment_monthly_income",
-      "benefits_monthly_income",
-      "other_monthly_income",
+      "weekly_hours",
+      "hourly_rate",
+      "gross_pay",
+      "monthly_benefit",
+      "gross_receipts",
     ]),
     value: z.coerce.number().finite().min(0).max(10_000_000),
   })
@@ -60,7 +62,15 @@ export const updateDocumentSchema = z.object({
 export const documentMetadataSchema = z.object({
   sessionId: readinessSessionId,
   documentId: readinessDocumentId,
-  kind: z.enum(["pay_stub", "benefits_letter", "photo_id", "bank_statement", "other"]),
+  kind: z.enum([
+    "application_summary",
+    "pay_stub",
+    "employment_letter",
+    "benefit_letter",
+    "gig_statement",
+    "gig_income_corroboration",
+    "other",
+  ]),
   issuedOn: z.union([z.literal(""), z.string().date()]).transform((value) => value || null),
 });
 

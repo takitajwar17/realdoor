@@ -266,9 +266,11 @@ export async function saveManualFact(input: {
   userId: string;
   key:
     | "household_size"
-    | "employment_monthly_income"
-    | "benefits_monthly_income"
-    | "other_monthly_income";
+    | "weekly_hours"
+    | "hourly_rate"
+    | "gross_pay"
+    | "monthly_benefit"
+    | "gross_receipts";
   value: number;
 }) {
   await assertOwnedSession(input.sessionId, input.userId);

@@ -21,27 +21,27 @@ const fields = [
     prefix: null,
   },
   {
-    key: "employment_monthly_income",
-    label: "Employment income each month",
-    help: "Use the monthly amount you want to practice with.",
+    key: "weekly_hours",
+    label: "Weekly hours",
+    help: "Enter the weekly hours shown by your source.",
+    step: "0.01",
+    min: 0,
+    max: 10_000_000,
+    prefix: null,
+  },
+  {
+    key: "hourly_rate",
+    label: "Hourly rate",
+    help: "Enter the gross hourly rate shown by your source.",
     step: "0.01",
     min: 0,
     max: 10_000_000,
     prefix: "$",
   },
   {
-    key: "benefits_monthly_income",
-    label: "Benefits income each month",
-    help: "Enter 0 if this source does not apply.",
-    step: "0.01",
-    min: 0,
-    max: 10_000_000,
-    prefix: "$",
-  },
-  {
-    key: "other_monthly_income",
-    label: "Other income each month",
-    help: "Enter 0 if this source does not apply.",
+    key: "monthly_benefit",
+    label: "Monthly benefit",
+    help: "Enter a recurring monthly benefit only when you have a source for it.",
     step: "0.01",
     min: 0,
     max: 10_000_000,
@@ -103,7 +103,7 @@ export function ManualFactForm({
               max={field.max}
               step={field.step}
               required
-              defaultValue={values[selectedKey] ?? (selectedKey === "household_size" ? "" : "0")}
+              defaultValue={values[selectedKey] ?? ""}
               className={field.prefix ? "pl-7" : undefined}
             />
           </div>

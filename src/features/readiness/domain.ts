@@ -1,11 +1,23 @@
 export const FACT_KEYS = [
+  "person_name",
+  "address",
   "household_size",
-  "employment_monthly_income",
-  "benefits_monthly_income",
-  "other_monthly_income",
-  "full_name",
-  "current_address",
-  "document_issued_on",
+  "application_date",
+  "pay_date",
+  "pay_period_start",
+  "pay_period_end",
+  "pay_frequency",
+  "regular_hours",
+  "hourly_rate",
+  "gross_pay",
+  "net_pay",
+  "document_date",
+  "weekly_hours",
+  "monthly_benefit",
+  "benefit_frequency",
+  "statement_month",
+  "gross_receipts",
+  "platform_fees",
 ] as const;
 
 export type FactKey = (typeof FACT_KEYS)[number];
@@ -141,12 +153,6 @@ export function detectFactConflicts(facts: ExtractedFact[]): FactKey[] {
   return FACT_KEYS.filter((key) => (valuesByKey.get(key)?.size ?? 0) > 1);
 }
 
-const INCOME_FACT_KEYS = [
-  "employment_monthly_income",
-  "benefits_monthly_income",
-  "other_monthly_income",
-] as const satisfies readonly FactKey[];
-
 function parseNonNegativeNumber(value: string): number | null {
   const normalized = value.replaceAll(",", "").replaceAll("$", "").trim();
   if (!normalized) return null;
@@ -170,37 +176,78 @@ function confirmedFactMap(facts: ConfirmedFact[]) {
 export function summarizeConfirmedIncome(facts: ConfirmedFact[]): {
   status: "complete" | "unresolved";
   missing: FactKey[];
-  monthlyIncome: number | null;
+  components: Array<{ label: string; annualAmount: number; formula: string }>;
   annualIncome: number | null;
   formula: string | null;
 } {
   const byKey = confirmedFactMap(facts);
-  const values = INCOME_FACT_KEYS.map((key) => ({
-    key,
-    value: parseNonNegativeNumber(byKey.get(key)?.value ?? ""),
-  }));
-  const missing = values.filter(({ value }) => value === null).map(({ key }) => key);
+  const weeklyHours = parseNonNegativeNumber(byKey.get("weekly_hours")?.value ?? "");
+  const hourlyRate = parseNonNegativeNumber(byKey.get("hourly_rate")?.value ?? "");
+  const grossPay = parseNonNegativeNumber(byKey.get("gross_pay")?.value ?? "");
+  const payFrequency = byKey.get("pay_frequency")?.value.trim().toLocaleLowerCase("en-US");
+  const frequencyMultiplier: Record<string, number> = {
+    weekly: 52,
+    biweekly: 26,
+    semimonthly: 24,
+    monthly: 12,
+    annual: 1,
+  };
+  const components: Array<{ label: string; annualAmount: number; formula: string }> = [];
 
-  if (missing.length > 0) {
+  if (weeklyHours !== null && hourlyRate !== null) {
+    const annualAmount = weeklyHours * hourlyRate * 52;
+    components.push({
+      label: "Employment income",
+      annualAmount,
+      formula: `${weeklyHours} hours × ${formatCurrency(hourlyRate)} × 52 weeks = ${formatCurrency(annualAmount)}`,
+    });
+  } else if (grossPay !== null && payFrequency && frequencyMultiplier[payFrequency]) {
+    const multiplier = frequencyMultiplier[payFrequency];
+    const annualAmount = grossPay * multiplier;
+    components.push({
+      label: "Employment income",
+      annualAmount,
+      formula: `${formatCurrency(grossPay)} × ${multiplier} ${payFrequency} periods = ${formatCurrency(annualAmount)}`,
+    });
+  }
+
+  const monthlyBenefit = parseNonNegativeNumber(byKey.get("monthly_benefit")?.value ?? "");
+  if (monthlyBenefit !== null) {
+    const annualAmount = monthlyBenefit * 12;
+    components.push({
+      label: "Benefit income",
+      annualAmount,
+      formula: `${formatCurrency(monthlyBenefit)} × 12 months = ${formatCurrency(annualAmount)}`,
+    });
+  }
+
+  const grossReceipts = parseNonNegativeNumber(byKey.get("gross_receipts")?.value ?? "");
+  if (grossReceipts !== null) {
+    const annualAmount = grossReceipts * 12;
+    components.push({
+      label: "Gig receipts",
+      annualAmount,
+      formula: `${formatCurrency(grossReceipts)} × 12 months = ${formatCurrency(annualAmount)}`,
+    });
+  }
+
+  if (components.length === 0) {
     return {
       status: "unresolved",
-      missing,
-      monthlyIncome: null,
+      missing: ["gross_pay", "pay_frequency"],
+      components: [],
       annualIncome: null,
       formula: null,
     };
   }
-
-  const monthlyValues = values.map(({ value }) => value as number);
-  const monthlyIncome = monthlyValues.reduce((total, value) => total + value, 0);
-  const annualIncome = monthlyIncome * 12;
+  const annualIncome = components.reduce((total, component) => total + component.annualAmount, 0);
 
   return {
     status: "complete",
     missing: [],
-    monthlyIncome,
+    components,
     annualIncome,
-    formula: `(${monthlyValues.map(formatCurrency).join(" + ")}) × 12 = ${formatCurrency(annualIncome)}`,
+    formula: `${components.map((component) => formatCurrency(component.annualAmount)).join(" + ")} = ${formatCurrency(annualIncome)} annualized gross income`,
   };
 }
 
