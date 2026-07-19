@@ -5,13 +5,13 @@ import Link from "next/link";
 import {
   CheckIcon,
   ExternalLinkIcon,
-  FileSearchIcon,
   PencilLineIcon,
   Trash2Icon,
 } from "lucide-react";
 
 import { confirmReadinessFactAction, rejectReadinessFactAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
+import { EvidenceSourcePreview } from "@/components/readiness/evidence-source-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ export type FactReviewItem = {
   confidence: number | null;
   documentId: string | null;
   documentName: string | null;
+  mimeType: string | null;
   value: string;
   sourceQuote: string | null;
   page: number | null;
@@ -40,11 +41,23 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
     INITIAL_READINESS_ACTION_STATE,
   );
   const numericKeys = new Set([
-    "household_size", "regular_hours", "weekly_hours", "hourly_rate", "gross_pay",
-    "net_pay", "monthly_benefit", "gross_receipts", "platform_fees",
+    "household_size",
+    "regular_hours",
+    "weekly_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "monthly_benefit",
+    "gross_receipts",
+    "platform_fees",
   ]);
   const moneyKeys = new Set([
-    "hourly_rate", "gross_pay", "net_pay", "monthly_benefit", "gross_receipts", "platform_fees",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "monthly_benefit",
+    "gross_receipts",
+    "platform_fees",
   ]);
   const isNumeric = numericKeys.has(item.key);
   const confidence = item.confidence === null ? null : Math.round(item.confidence * 100);
@@ -52,7 +65,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
     confidence === null ? "Entered by you" : confidence >= 90 ? "Clear reading" : "Review closely";
 
   return (
-    <article className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-[var(--shadow-dashboard)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.78fr)]">
+    <article className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-[var(--shadow-dashboard)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.9fr)]">
       <form action={action} className="space-y-4 p-5">
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="factId" value={item.id} />
@@ -167,29 +180,32 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
           ) : null}
         </div>
 
-        {item.sourceQuote ? (
+        {item.sourceQuote && item.documentId ? (
+          <EvidenceSourcePreview
+            sessionId={sessionId}
+            documentId={item.documentId}
+            mimeType={item.mimeType}
+            page={item.page}
+            box={item.box}
+            sourceQuote={item.sourceQuote}
+            alt={`Source location for ${getFactLabel(item.key)} in ${item.documentName ?? "document"}`}
+          />
+        ) : item.sourceQuote ? (
           <>
-            <div className="mt-4 rounded-lg border border-border bg-background p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold"><FileSearchIcon className="h-4 w-4 text-primary" />Exact source location</div>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                {item.box
-                  ? `Page ${item.page ?? 1}; box ${Math.round(item.box.x * 100)}% from the left, ${Math.round(item.box.y * 100)}% from the top, ${Math.round(item.box.width * 100)}% wide, and ${Math.round(item.box.height * 100)}% high.`
-                  : "No document box is available. This value cannot be presented as document-located evidence."}
-              </p>
-            </div>
-            <blockquote className="mt-3 border-l-2 border-primary pl-3 text-xs leading-5 text-foreground">
+            <blockquote className="mt-4 border-l-2 border-primary pl-3 text-xs leading-5 text-foreground">
               “{item.sourceQuote}”
             </blockquote>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {item.page ? `Page ${item.page}` : "From the document"}
-              {item.status === "confirmed" ? " · Confirmed by you" : ""}
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground">From the document</p>
           </>
         ) : (
           <p className="mt-4 rounded-lg border border-dashed border-border p-4 text-xs leading-5 text-muted-foreground">
             You entered this value yourself. It is labeled that way wherever it appears.
           </p>
         )}
+
+        {item.status === "confirmed" && item.documentId ? (
+          <p className="mt-2 text-xs text-muted-foreground">Confirmed by you</p>
+        ) : null}
       </div>
     </article>
   );

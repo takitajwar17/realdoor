@@ -66,6 +66,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
         confidence: fact.confidence === null ? null : fact.confidence / 1000,
         documentId: fact.documentId,
         documentName: document?.payload.name ?? null,
+        mimeType: document?.mimeType ?? null,
         value: fact.payload.value,
         sourceQuote: fact.payload.sourceQuote,
         page: fact.payload.page,
