@@ -9,14 +9,14 @@ describe("built-in synthetic demo documents", () => {
     const text = new TextDecoder().decode(bytes);
 
     expect(text.startsWith("%PDF-")).toBe(true);
-    expect(text).toContain("VIDICY PRACTICE PAY STATEMENT");
+    expect(text).toContain("REALDOOR PRACTICE PAY STATEMENT");
     expect(text).toContain("Gross monthly pay: $4,200.00");
   });
 
   it("generates a benefits-letter PDF without embedding an eligibility claim", () => {
     const text = new TextDecoder().decode(buildSyntheticDemoPdf("benefits_letter"));
 
-    expect(text).toContain("VIDICY PRACTICE BENEFITS LETTER");
+    expect(text).toContain("REALDOOR PRACTICE BENEFITS LETTER");
     expect(text).toContain("Monthly benefits: $900.00");
     expect(text.toLowerCase()).not.toContain("eligible");
     expect(text.toLowerCase()).not.toContain("approved");

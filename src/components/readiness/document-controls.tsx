@@ -87,7 +87,7 @@ export function DocumentControls({
           </div>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          Vidicy suggests these details. Confirm or correct them before the document can satisfy
+          RealDoor suggests these details. Confirm or correct them before the document can satisfy
           your checklist.
         </p>
         <ActionMessage state={detailsState} />

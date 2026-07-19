@@ -40,7 +40,7 @@ export function DeleteSessionDialog({ sessionId }: { sessionId: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this practice session?</AlertDialogTitle>
           <AlertDialogDescription>
-            Vidicy will remove its linked facts, questions, activity history, and encrypted
+            RealDoor will remove its linked facts, questions, activity history, and encrypted
             documents. A packet you already downloaded stays on your device. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -36,16 +36,16 @@ function createSkillContent(input: {
 
 const publishedAgentSkills: PublishedAgentSkill[] = [
   {
-    slug: "vidicy-public-markdown",
+    slug: "realdoor-public-markdown",
     description:
-      "Fetch Vidicy's public marketing pages as markdown with content negotiation for agent-friendly reading.",
+      "Fetch RealDoor's public marketing pages as markdown with content negotiation for agent-friendly reading.",
     content: createSkillContent({
-      name: "vidicy-public-markdown",
+      name: "realdoor-public-markdown",
       description:
-        "Fetch Vidicy's public marketing pages as markdown with content negotiation for agent-friendly reading.",
+        "Fetch RealDoor's public marketing pages as markdown with content negotiation for agent-friendly reading.",
       body: [
         "# When to use this skill",
-        "- You need the markdown version of Vidicy's public pages instead of HTML.",
+        "- You need the markdown version of RealDoor's public pages instead of HTML.",
         "- You want a token-efficient summary source for the homepage.",
         "# Request pattern",
         "- Send Accept: text/markdown",
@@ -58,23 +58,23 @@ const publishedAgentSkills: PublishedAgentSkill[] = [
     }),
   },
   {
-    slug: "vidicy-application-readiness",
+    slug: "realdoor-application-readiness",
     description:
-      "Understand Vidicy's authenticated document-readiness workflow: checklist generation, evaluation, and Atlas guidance.",
+      "Understand RealDoor's authenticated document-readiness workflow: checklist generation, evaluation, and Atlas guidance.",
     content: createSkillContent({
-      name: "vidicy-application-readiness",
+      name: "realdoor-application-readiness",
       description:
-        "Understand Vidicy's authenticated document-readiness workflow: checklist generation, evaluation, and Atlas guidance.",
+        "Understand RealDoor's authenticated document-readiness workflow: checklist generation, evaluation, and Atlas guidance.",
       body: [
         "# When to use this skill",
-        "- You need a high-level map of Vidicy's authenticated workflow.",
+        "- You need a high-level map of RealDoor's authenticated workflow.",
         "- You want to explain how users move from checklist creation to evaluation and Atlas guidance.",
         "# Workflow",
         "- Checklist: generate an embassy-aware document list for the specific application route.",
         "- Evaluation: upload documents and detect missing, weak, or inconsistent evidence.",
         "- Atlas: chat over the application context and uploaded document set.",
         "# Access requirements",
-        "- These routes require a Vidicy account and an application workspace.",
+        "- These routes require a RealDoor account and an application workspace.",
         `- Sign up: ${CANONICAL_SITE_URL}/sign-up`,
         `- Sign in: ${CANONICAL_SITE_URL}/sign-in`,
       ],

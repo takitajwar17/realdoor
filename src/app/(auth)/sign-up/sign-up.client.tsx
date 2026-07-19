@@ -112,7 +112,7 @@ const SignUpPage = ({
 
   const stepCopy: Record<EmailSignupStep, { title: string; description: string }> = {
     choice: {
-      title: "Create your Vidicy account",
+      title: "Create your RealDoor account",
       description: "Build a private, renter-controlled application-readiness session.",
     },
     details: {

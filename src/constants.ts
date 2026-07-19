@@ -1,6 +1,6 @@
 import type { Route } from "next";
 
-export const SITE_NAME = "Vidicy";
+export const SITE_NAME = "RealDoor";
 export const SITE_DESCRIPTION =
   "AI visa review software for agencies: check client documents, spot missing requirements, manage cases, and send clear follow-ups before submission.";
 export const CANONICAL_SITE_URL = "https://hacknation.tajwaruzzaman.workers.dev";
@@ -35,7 +35,7 @@ export const GOOGLE_OAUTH_STATE_COOKIE_NAME = "google-oauth-state";
 export const GOOGLE_OAUTH_CODE_VERIFIER_COOKIE_NAME = "google-oauth-code-verifier";
 export const GOOGLE_OAUTH_REDIRECT_COOKIE_NAME = "google-oauth-redirect";
 
-export const ADMIN_EMAIL = "support@vidicy.com";
+export const ADMIN_EMAIL = "support@realdoor.com";
 
 export const REDIRECT_AFTER_SIGN_IN = "/dashboard" as Route;
 export const PENDING_VERIFICATION_ROUTE = "/pending-verification" as Route;

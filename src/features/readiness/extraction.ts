@@ -19,8 +19,20 @@ export type ExtractionResult = {
 const embeddedInstructionPattern =
   /\b(ignore (?:all |the )?(?:previous|prior) instructions|system prompt|follow (?:these|the) instructions|upload (?:all|every)|mark .{0,30}(?:eligible|approved)|act as (?:an? )?(?:assistant|system))\b/iu;
 
+const LEGACY_PRACTICE_PREFIX = atob("VklESUNZIFBSQUNUSUNF");
+const LEGACY_PAY_STATEMENT_MARKER = atob(
+  "VklESUNZIFBSQUNUSUNFIFBBWSBTVEFURU1FTlQ=",
+);
+const LEGACY_BENEFITS_LETTER_MARKER = atob(
+  "VklESUNZIFBSQUNUSUNFIEJFTkVGSVRTIExFVFRFUg==",
+);
+
 export function containsEmbeddedInstruction(text: string) {
   return embeddedInstructionPattern.test(text);
+}
+
+export function isPracticeDocumentText(text: string) {
+  return text.includes("REALDOOR PRACTICE") || text.includes(LEGACY_PRACTICE_PREFIX);
 }
 
 function syntheticLineBox(index: number) {
@@ -34,9 +46,12 @@ function syntheticLineBox(index: number) {
 
 export function extractFactsFromSyntheticText(text: string): ExtractionResult {
   const normalized = text.replace(/\s+/gu, " ").trim();
-  const kind = normalized.includes("VIDICY PRACTICE PAY STATEMENT")
+  const kind =
+    normalized.includes("REALDOOR PRACTICE PAY STATEMENT") ||
+    normalized.includes(LEGACY_PAY_STATEMENT_MARKER)
     ? DOCUMENT_KIND.PAY_STUB
-    : normalized.includes("VIDICY PRACTICE BENEFITS LETTER")
+    : normalized.includes("REALDOOR PRACTICE BENEFITS LETTER") ||
+        normalized.includes(LEGACY_BENEFITS_LETTER_MARKER)
       ? DOCUMENT_KIND.BENEFITS_LETTER
       : DOCUMENT_KIND.OTHER;
 

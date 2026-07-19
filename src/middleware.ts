@@ -11,7 +11,8 @@ import { generateCsrfTokenValue } from "@/infra/csrf-token";
 const SEO_METADATA_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/manifest.webmanifest"]);
 const AUTH_GATE_ENTRY_PATHS = new Set(["/sign-in", "/sign-up"]);
 const AUTH_GATE_ACCESS_PARAM = "access";
-const AUTH_GATE_BYPASS_COOKIE = "vidicy-auth-gate";
+const AUTH_GATE_BYPASS_COOKIE = "realdoor-auth-gate";
+const LEGACY_AUTH_GATE_BYPASS_COOKIE = atob("dmlkaWN5LWF1dGgtZ2F0ZQ==");
 const AUTH_GATE_REDIRECT_PATH = "/pilot-access";
 const AUTH_GATE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
@@ -90,6 +91,28 @@ function getAuthGateResponse(request: NextRequest): NextResponse | null {
 
   if (bypassToken && request.cookies.get(AUTH_GATE_BYPASS_COOKIE)?.value === bypassToken) {
     return null;
+  }
+
+  if (bypassToken && request.cookies.get(LEGACY_AUTH_GATE_BYPASS_COOKIE)?.value === bypassToken) {
+    const response = NextResponse.next();
+    if (!request.cookies.get("csrf-token")) {
+      response.cookies.set("csrf-token", generateCsrfTokenValue(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+        maxAge: 60 * 60 * 24,
+      });
+    }
+    response.cookies.set(AUTH_GATE_BYPASS_COOKIE, bypassToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: AUTH_GATE_COOKIE_MAX_AGE_SECONDS,
+    });
+    response.cookies.delete(LEGACY_AUTH_GATE_BYPASS_COOKIE);
+    return response;
   }
 
   return NextResponse.redirect(new URL(AUTH_GATE_REDIRECT_PATH, request.url));

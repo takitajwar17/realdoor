@@ -9,9 +9,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { constructMetadata } from "@/lib/utils";
 
 export const metadata = constructMetadata({
-  title: "Vidicy agency pilots are invite-only",
+  title: "RealDoor agency pilots are invite-only",
   description:
-    "Vidicy is currently onboarding selected visa and travel agency teams through private pilots.",
+    "RealDoor is currently onboarding selected visa and travel agency teams through private pilots.",
   alternates: {
     canonical: "/pilot-access",
   },
@@ -22,7 +22,7 @@ export default function PilotAccessPage() {
     <PublicPage>
       <PublicPageHero
         eyebrow="Private pilot"
-        title="Vidicy agency access is currently invite-only."
+        title="RealDoor agency access is currently invite-only."
       />
       <PublicPageContent className="space-y-10">
         <section className="max-w-3xl space-y-6 text-base leading-8 text-muted-foreground sm:text-lg">

@@ -26,12 +26,12 @@ function getServerCard() {
     version: "1.0",
     protocolVersion: MCP_PROTOCOL_VERSION,
     serverInfo: {
-      name: "vidicy-public-pages",
-      title: "Vidicy Public Pages",
+      name: "realdoor-public-pages",
+      title: "RealDoor Public Pages",
       version: packageJson.version,
     },
     description:
-      "Public structured interface for Vidicy's markdown pages.",
+      "Public structured interface for RealDoor's markdown pages.",
     documentationUrl: CANONICAL_SITE_URL,
     transport: {
       type: "streamable-http",

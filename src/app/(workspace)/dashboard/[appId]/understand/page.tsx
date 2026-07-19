@@ -73,7 +73,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
     >
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/7 px-4 py-3 text-sm leading-6 text-amber-950 dark:text-amber-100">
         <strong>For practice only:</strong> the official 2026 materials needed for a real
-        application are not included here. Vidicy does not substitute an older year. The values
+        application are not included here. RealDoor does not substitute an older year. The values
         below only let you practice the review process.
       </div>
 

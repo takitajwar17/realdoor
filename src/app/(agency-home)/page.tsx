@@ -88,12 +88,12 @@ export default function Home() {
 
           <nav className="relative z-20 flex items-center justify-between px-4 py-4 sm:px-6 md:px-12 lg:px-20">
             <Link
-              aria-label="Vidicy Agency home"
+              aria-label="RealDoor Agency home"
               className="public-landing-ink flex items-center"
               href="/"
             >
               <Logo
-                alt="Vidicy"
+                alt="RealDoor"
                 className="h-5 w-auto sm:h-7"
                 surface="light"
                 variant="horizontal"
@@ -124,7 +124,7 @@ export default function Home() {
             />
             <AnimatedText
               className="public-landing-muted mt-5 max-w-[21rem] text-base leading-7 sm:max-w-3xl sm:text-lg md:text-xl"
-              text="Vidicy helps visa and travel agencies check client files in bulk, flag missing documents and inconsistencies, and produce clear issue lists."
+              text="RealDoor helps visa and travel agencies check client files in bulk, flag missing documents and inconsistencies, and produce clear issue lists."
             />
 
             <div className="mt-7 flex w-full max-w-[21rem] justify-center">
@@ -138,7 +138,7 @@ export default function Home() {
 
             <div className="public-landing-media-frame mt-8 aspect-[2830/1594] w-full max-w-[21rem] overflow-hidden rounded-2xl border sm:max-w-3xl md:max-w-5xl md:rounded-3xl">
               <Image
-                alt="Vidicy agency dashboard showing application review results"
+                alt="RealDoor agency dashboard showing application review results"
                 className="h-full w-full object-cover"
                 height={1594}
                 priority

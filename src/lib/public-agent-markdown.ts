@@ -52,11 +52,11 @@ function createFrontmatter(input: {
 function buildHomepageMarkdown(): MarkdownPayload {
   const body = [
     createFrontmatter({
-      title: "Vidicy Agency",
+      title: "RealDoor Agency",
       description: "Visa file review for agency desks handling passports, forms, statements, and client fixes.",
       canonicalPath: "/",
     }),
-    "# Vidicy Agency",
+    "# RealDoor Agency",
     ...homepageHowItWorksSteps.map((step, index) => `${index + 1}. ${step}`),
     "## Key links",
     `- Login: ${toAbsoluteUrl("/sign-in")}`,

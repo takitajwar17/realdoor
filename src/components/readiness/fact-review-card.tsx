@@ -104,7 +104,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Correct the value if the document was read incorrectly. Vidicy uses it only after you
+            Correct the value if the document was read incorrectly. RealDoor uses it only after you
             confirm it.
           </p>
         </div>

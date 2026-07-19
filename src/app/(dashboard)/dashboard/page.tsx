@@ -46,7 +46,7 @@ export default async function DashboardPage({
             role="status"
             className="rounded-xl border border-status-success/25 bg-status-success/8 px-4 py-3 text-sm font-medium text-status-success"
           >
-            The session and all content linked to it were deleted from Vidicy.
+            The session and all content linked to it were deleted from RealDoor.
           </p>
         ) : null}
 

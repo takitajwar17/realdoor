@@ -22,7 +22,7 @@ export function PacketDownloadButton({ sessionId }: { sessionId: string }) {
       const blob = await response.blob();
       const disposition = response.headers.get("Content-Disposition") ?? "";
       const filename =
-        disposition.match(/filename="([^"]+)"/u)?.[1] ?? "vidicy-readiness-packet.html";
+        disposition.match(/filename="([^"]+)"/u)?.[1] ?? "realdoor-readiness-packet.html";
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

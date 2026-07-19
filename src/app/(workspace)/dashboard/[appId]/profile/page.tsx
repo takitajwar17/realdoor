@@ -90,7 +90,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
       session={workspace.session}
       current="profile"
       title="Build a renter-confirmed profile"
-      description="Vidicy suggests fields from each document, but does not treat them as true until you review them. Open the source, correct anything that is wrong, and confirm only what you recognize."
+      description="RealDoor suggests fields from each document, but does not treat them as true until you review them. Open the source, correct anything that is wrong, and confirm only what you recognize."
       actions={
         <Button asChild>
           <Link href={`/dashboard/${appId}/understand`}>

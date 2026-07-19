@@ -45,7 +45,7 @@ export function SourceCitationDialog({
           <p className="mt-2 text-sm leading-6">{source.passage}</p>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          This is the exact saved passage Vidicy used. Open the source to read it in its original
+          This is the exact saved passage RealDoor used. Open the source to read it in its original
           context.
         </p>
         <Button asChild>

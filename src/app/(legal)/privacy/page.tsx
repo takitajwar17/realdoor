@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 const privacyDescription =
-  "Learn how Vidicy collects, uses, and protects agency account data and client visa documents processed through the review workflow.";
+  "Learn how RealDoor collects, uses, and protects agency account data and client visa documents processed through the review workflow.";
 
 export const metadata: Metadata = constructMetadata({
   title: "Privacy Policy for Agency Visa Data",
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
         eyebrow="Legal"
         title="Privacy Policy"
         meta="Last updated: April 28, 2026"
-        description="How Vidicy handles agency accounts, client visa documents, uploaded files, subprocessors, cookies, and data rights."
+        description="How RealDoor handles agency accounts, client visa documents, uploaded files, subprocessors, cookies, and data rights."
       />
 
       <PublicPageContent className="space-y-16">

@@ -1,6 +1,6 @@
 [project]
 domains = []
-name = "vidicy-mvp"
+name = "realdoor-mvp"
 
 [crawler]
 max_pages = 100

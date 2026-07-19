@@ -32,7 +32,7 @@ interface LogoProps extends Omit<ComponentPropsWithoutRef<"span">, "children"> {
 }
 
 export default function Logo({
-  alt = "Vidicy",
+  alt = "RealDoor",
   className,
   surface = "auto",
   variant = "horizontal",

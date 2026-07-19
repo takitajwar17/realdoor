@@ -31,8 +31,11 @@ import {
 } from "./domain";
 import { SYNTHETIC_2026_RULE_PACK, answerRuleQuestion } from "./rules";
 
-const LOCAL_DEVELOPMENT_ENCRYPTION_KEY =
-  "vidicy-readiness-local-development-key-do-not-use-in-production";
+// Keep the established local key bytes so existing development sessions remain readable
+// across the product rename. Production always requires READINESS_ENCRYPTION_KEY.
+const LOCAL_DEVELOPMENT_ENCRYPTION_KEY = atob(
+  "dmlkaWN5LXJlYWRpbmVzcy1sb2NhbC1kZXZlbG9wbWVudC1rZXktZG8tbm90LXVzZS1pbi1wcm9kdWN0aW9u",
+);
 
 type DocumentPayload = {
   name: string;
@@ -63,8 +66,15 @@ function resolveWorkerSecret() {
   }
 }
 
+function decodeConfiguredSecret(value: string | undefined) {
+  if (!value) return undefined;
+  return value.startsWith("base64:") ? atob(value.slice("base64:".length)) : value;
+}
+
 export function getReadinessEncryptionSecret() {
-  const configured = resolveWorkerSecret() ?? process.env.READINESS_ENCRYPTION_KEY;
+  const configured = decodeConfiguredSecret(
+    resolveWorkerSecret() ?? process.env.READINESS_ENCRYPTION_KEY,
+  );
   if (configured) return configured;
 
   if (process.env.NODE_ENV !== "production") {

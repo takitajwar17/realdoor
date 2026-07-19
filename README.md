@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Vidicy</h1>
+  <h1>RealDoor</h1>
   <p><strong>A production-ready SaaS built on the Edge with Next.js 16 and Cloudflare Workers</strong></p>
   
   <p>
@@ -14,7 +14,7 @@
 
 ## Overview
 
-Vidicy is an intelligent platform designed to help users prepare, evaluate, and perfect their visa applications. Built as a high-performance Edge application, it runs entirely on Cloudflare Workers using OpenNext.
+RealDoor is an intelligent platform designed to help users prepare, evaluate, and perfect their visa applications. Built as a high-performance Edge application, it runs entirely on Cloudflare Workers using OpenNext.
 
 The platform provides users with **smart document checklists**, **AI-powered readiness evaluations**, and an **expert chatbot (Atlas)** to analyze their documents, highlight risks, and suggest improvements before they apply for their visas.
 

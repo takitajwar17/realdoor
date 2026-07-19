@@ -50,9 +50,9 @@ export function constructMetadata({
 
   return {
     // Return title as a plain string so Next.js applies the root layout's
-    // "%s - Vidicy" template correctly. Previously this returned
+    // "%s - RealDoor" template correctly. Previously this returned
     // an object with `default: siteConfig.name`, which caused every page using
-    // constructMetadata to render as "Vidicy - Vidicy".
+    // constructMetadata to render as "RealDoor - RealDoor".
     title,
     description: description || siteConfig.description,
     openGraph: {

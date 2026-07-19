@@ -71,7 +71,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
     >
       <div className="space-y-2.5">
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-foreground sm:text-3xl">
-          Sign in to Vidicy
+          Sign in to RealDoor
         </h1>
         <p className="text-sm leading-6 text-muted-foreground/90">
           Open your private application-readiness session.
@@ -88,7 +88,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <p className="text-sm leading-6 text-muted-foreground/90">
-            Enter the email connected to your Vidicy account.
+            Enter the email connected to your RealDoor account.
           </p>
 
           <FormField

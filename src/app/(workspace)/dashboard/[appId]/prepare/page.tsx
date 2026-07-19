@@ -71,7 +71,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
       session={workspace.session}
       current="prepare"
       title="Prepare a renter-controlled packet"
-      description="Checklist states describe only what is present in this session. Choose what to include, preview the exact packet, and download it yourself. Vidicy never sends it."
+      description="Checklist states describe only what is present in this session. Choose what to include, preview the exact packet, and download it yourself. RealDoor never sends it."
       actions={
         <Button asChild variant="outline">
           <Link href={`/dashboard/${appId}/understand`}>
@@ -212,7 +212,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
           <div className="mx-auto max-w-4xl rounded-sm border border-border bg-white p-6 text-slate-950 shadow-sm md:p-9 dark:bg-white dark:text-slate-950">
             <div className="border-b border-slate-200 pb-5">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                Vidicy application-readiness packet
+                RealDoor application-readiness packet
               </p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight">
                 Boston LIHTC practice journey

@@ -7,9 +7,9 @@ interface __BaseEnv_CloudflareEnv {
   R2: R2Bucket;
   NEXT_TAG_CACHE_D1: D1Database;
   ASSETS: Fetcher;
-  EMAIL_FROM: "noreply@mail.vidicy.com";
-  EMAIL_FROM_NAME: "Vidicy";
-  EMAIL_REPLY_TO: "support@vidicy.com";
+  EMAIL_FROM: "noreply@mail.realdoor.com";
+  EMAIL_FROM_NAME: "RealDoor";
+  EMAIL_REPLY_TO: "support@realdoor.com";
   NEXT_PUBLIC_APP_VERSION: "1.0.0";
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;

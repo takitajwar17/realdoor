@@ -96,9 +96,9 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
 
       <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
         <CardHeader className="border-b border-border/70 bg-muted/20">
-          <CardTitle className="text-base">How Vidicy uses your information</CardTitle>
+          <CardTitle className="text-base">How RealDoor uses your information</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Every suggested field waits for your confirmation before Vidicy uses it.
+            Every suggested field waits for your confirmation before RealDoor uses it.
           </p>
         </CardHeader>
         <CardContent className="p-5">
@@ -181,7 +181,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
 
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">What Vidicy keeps—and what it never creates</CardTitle>
+            <CardTitle className="text-base">What RealDoor keeps—and what it never creates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 p-5 text-sm leading-6">
             <Boundary

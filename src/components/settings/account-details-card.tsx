@@ -24,7 +24,7 @@ export async function AccountDetailsCard() {
     <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
       <CardHeader>
         <CardTitle>Account Details</CardTitle>
-        <CardDescription>Sign-in details for your private Vidicy sessions.</CardDescription>
+        <CardDescription>Sign-in details for your private RealDoor sessions.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Email */}
@@ -61,7 +61,7 @@ export async function AccountDetailsCard() {
           <div className="flex-1 min-w-0 space-y-1">
             <p className="text-sm font-medium">Google account</p>
             <p className="text-sm text-muted-foreground">
-              {isGoogleLinked ? "Linked for Vidicy sign-in" : "Not connected"}
+              {isGoogleLinked ? "Linked for RealDoor sign-in" : "Not connected"}
             </p>
           </div>
           {isGoogleLinked ? (

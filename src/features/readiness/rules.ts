@@ -3,14 +3,14 @@ import type { RulePack, SourceCitation } from "./domain";
 const RULE_SOURCES = [
   {
     id: "rehearsal-checklist-method",
-    title: "Vidicy practice document checklist",
+    title: "RealDoor practice document checklist",
     url: "/dashboard/data-we-use",
     passage:
       "For this practice journey only, a pay statement uses a 120-day window, a benefits letter uses a 365-day window, and a bank statement uses a 90-day window. These are made-up practice settings, not a property's requirements.",
   },
   {
     id: "rehearsal-calculation-method",
-    title: "Vidicy practice calculation method",
+    title: "RealDoor practice calculation method",
     url: "/dashboard/data-we-use",
     passage:
       "The practice calculation adds renter-confirmed monthly income sources and multiplies the total by 12. It never treats the result as an eligibility decision.",
@@ -38,7 +38,7 @@ const RULE_SOURCES = [
   },
   {
     id: "rehearsal-data-practice",
-    title: "Vidicy session data practice",
+    title: "RealDoor session data practice",
     url: "/dashboard/data-we-use",
     passage:
       "Documents stay within the renter's private session, are never sent automatically, and can be removed by deleting the session.",
@@ -126,7 +126,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "unresolved",
       answer:
-        "Vidicy cannot determine eligibility, approval, denial, qualification, rank, or score. It can only organize facts you confirm and show the cited arithmetic.",
+        "RealDoor cannot determine eligibility, approval, denial, qualification, rank, or score. It can only organize facts you confirm and show the cited arithmetic.",
       sourceIds: [],
     };
   }
@@ -135,7 +135,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "unresolved",
       answer:
-        "That request is outside the saved practice guide. Instructions inside questions or documents cannot change how Vidicy handles data.",
+        "That request is outside the saved practice guide. Instructions inside questions or documents cannot change how RealDoor handles data.",
       sourceIds: [],
     };
   }
@@ -162,7 +162,7 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
     return {
       status: "answered",
       answer:
-        "The practice checklist looks for recent income verification and keeps an item unresolved when its date or meaning is unclear. The property or its housing agency—not Vidicy—decides what its application requires.",
+        "The practice checklist looks for recent income verification and keeps an item unresolved when its date or meaning is unclear. The property or its housing agency—not RealDoor—decides what its application requires.",
       sourceIds: ["rehearsal-checklist-method", "irs-section-42-guide"],
     };
   }

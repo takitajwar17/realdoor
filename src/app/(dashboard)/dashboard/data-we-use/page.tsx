@@ -32,7 +32,7 @@ export default function DataWeUsePage() {
           </Badge>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">Data we use</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            What enters your private application-readiness journey, how Vidicy uses it, what stays
+            What enters your private application-readiness journey, how RealDoor uses it, what stays
             out, and how you remove it.
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function DataWeUsePage() {
             icon={BotIcon}
             title="AI processing"
             badge="Suggestions only"
-            body="OpenAI may read a practice file when its text cannot be read directly. It can suggest only the small set of fields you see in Vidicy. Every suggestion waits for your review, and each document-based suggestion must show the exact supporting words."
+            body="OpenAI may read a practice file when its text cannot be read directly. It can suggest only the small set of fields you see in RealDoor. Every suggestion waits for your review, and each document-based suggestion must show the exact supporting words."
           />
           <InfoCard
             icon={DatabaseIcon}
@@ -60,7 +60,7 @@ export default function DataWeUsePage() {
             icon={Trash2Icon}
             title="Deletion"
             badge="Renter controlled"
-            body="Deleting a session removes its saved files and private session details. If Vidicy cannot remove every saved file, it will not claim that deletion succeeded. A packet already downloaded to your device stays under your control."
+            body="Deleting a session removes its saved files and private session details. If RealDoor cannot remove every saved file, it will not claim that deletion succeeded. A packet already downloaded to your device stays under your control."
           />
         </section>
 
@@ -84,7 +84,7 @@ export default function DataWeUsePage() {
               this experience.
             </p>
             <p className="text-muted-foreground">
-              Vidicy does not silently reuse an older year. The built-in numbers and PDFs are
+              RealDoor does not silently reuse an older year. The built-in numbers and PDFs are
               made-up practice examples and are labeled that way wherever they appear.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -121,7 +121,7 @@ export default function DataWeUsePage() {
 
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">What Vidicy does—and does not do</CardTitle>
+            <CardTitle className="text-base">What RealDoor does—and does not do</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 p-5 md:grid-cols-3">
             <Boundary

@@ -62,7 +62,7 @@ function jsonRpcError(
 
 function buildInstructions() {
   return [
-    "Use get_public_markdown for public Vidicy pages that are optimized for agent reading.",
+    "Use get_public_markdown for public RealDoor pages that are optimized for agent reading.",
   ].join(" ");
 }
 
@@ -75,8 +75,8 @@ function buildInitializeResult() {
       },
     },
     serverInfo: {
-      name: "vidicy-public-pages",
-      title: "Vidicy Public Pages",
+      name: "realdoor-public-pages",
+      title: "RealDoor Public Pages",
       version: packageJson.version,
     },
     instructions: buildInstructions(),

@@ -61,15 +61,15 @@ export async function GET(
     })} UTC`;
     const packetMoment = preview ? `Preview generated ${createdAt}` : `Downloaded ${createdAt}`;
     const packetFooter = preview
-      ? "Previewed by the renter. Vidicy does not auto-send documents or packet content."
-      : "Downloaded by the renter. Vidicy does not auto-send documents or packet content.";
+      ? "Previewed by the renter. RealDoor does not auto-send documents or packet content."
+      : "Downloaded by the renter. RealDoor does not auto-send documents or packet content.";
 
     const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vidicy application-readiness packet</title>
+  <title>RealDoor application-readiness packet</title>
   <style>
     :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #172033; background: #f4f6f8; }
     body { margin: 0; padding: 32px 16px; }
@@ -90,7 +90,7 @@ export async function GET(
 <body>
 <main>
   <header>
-    <p class="eyebrow">Vidicy application-readiness packet</p>
+    <p class="eyebrow">RealDoor application-readiness packet</p>
     <h1>Boston LIHTC practice journey</h1>
     <p>Renter-controlled summary · packet version ${escapeHtml(workspace.session.revision)} · ${escapeHtml(packetMoment)}</p>
   </header>
@@ -112,7 +112,7 @@ export async function GET(
     return new Response(html, {
       headers: {
         "Cache-Control": "private, no-store",
-        "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="vidicy-readiness-packet-${workspace.session.id.slice(-8)}.html"`,
+        "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="realdoor-readiness-packet-${workspace.session.id.slice(-8)}.html"`,
         "Content-Type": "text/html; charset=utf-8",
         "X-Content-Type-Options": "nosniff",
       },

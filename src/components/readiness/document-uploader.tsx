@@ -32,13 +32,13 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
       const response = await fetch("/api/readiness/documents", {
         method: "POST",
         body: formData,
-        headers: { "X-Requested-With": "VidicyReadiness" },
+        headers: { "X-Requested-With": "RealDoorReadiness" },
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Upload failed");
 
       setStatus("success");
-      setMessage("Document uploaded. Vidicy is reading it for suggested fields.");
+      setMessage("Document uploaded. RealDoor is reading it for suggested fields.");
       if (inputRef.current) inputRef.current.value = "";
       router.refresh();
       window.setTimeout(() => router.refresh(), 1800);

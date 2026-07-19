@@ -2,7 +2,7 @@ export type SyntheticDocumentKind = "pay_stub" | "benefits_letter";
 
 const DOCUMENT_LINES: Record<SyntheticDocumentKind, string[]> = {
   pay_stub: [
-    "VIDICY PRACTICE PAY STATEMENT",
+    "REALDOOR PRACTICE PAY STATEMENT",
     "For guided practice only - not an official verification",
     "Employee: Maya Chen",
     "Current address: 18 Beacon Street, Boston, MA 02108",
@@ -12,7 +12,7 @@ const DOCUMENT_LINES: Record<SyntheticDocumentKind, string[]> = {
     "Gross monthly pay: $4,200.00",
   ],
   benefits_letter: [
-    "VIDICY PRACTICE BENEFITS LETTER",
+    "REALDOOR PRACTICE BENEFITS LETTER",
     "For guided practice only - not an official verification",
     "Recipient: Maya Chen",
     "Current address: 18 Beacon Street, Boston, MA 02108",

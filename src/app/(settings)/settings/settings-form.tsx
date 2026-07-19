@@ -156,7 +156,7 @@ export function SettingsForm() {
                 />
               </FormControl>
               <FormDescription>
-                This is the email you use to access Vidicy.
+                This is the email you use to access RealDoor.
               </FormDescription>
               <FormMessage />
             </FormItem>

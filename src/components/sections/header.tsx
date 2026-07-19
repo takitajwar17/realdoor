@@ -44,11 +44,11 @@ export default function Header() {
       <div className="flex items-center justify-between px-4 py-4 sm:px-6 md:px-12 lg:px-20">
         <Link
           href="/"
-          aria-label="Vidicy Agency home"
+          aria-label="RealDoor Agency home"
           className="public-landing-ink flex items-center"
         >
           <Logo
-            alt="Vidicy"
+            alt="RealDoor"
             className="h-5 w-auto sm:h-7"
             surface="light"
             variant="horizontal"

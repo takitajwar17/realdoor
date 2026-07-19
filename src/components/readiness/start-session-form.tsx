@@ -38,7 +38,7 @@ export function StartSessionForm() {
             <span>
               <span className="block text-sm font-semibold">I choose to create this session</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                Vidicy may read the practice documents I upload and suggest profile fields. Nothing
+                RealDoor may read the practice documents I upload and suggest profile fields. Nothing
                 is sent to a property or anyone else.
               </span>
             </span>

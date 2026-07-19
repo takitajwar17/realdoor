@@ -32,7 +32,7 @@ export function RuleQuestionForm({ sessionId }: { sessionId: string }) {
       <ActionMessage state={state} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          If the saved guide does not support an answer, Vidicy will say so. It does not search the
+          If the saved guide does not support an answer, RealDoor will say so. It does not search the
           live web here.
         </p>
         <Button type="submit" disabled={pending}>

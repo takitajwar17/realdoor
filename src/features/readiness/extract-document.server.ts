@@ -11,6 +11,7 @@ import {
   buildExtractionPrompt,
   containsEmbeddedInstruction,
   extractFactsFromSyntheticText,
+  isPracticeDocumentText,
   type ExtractionResult,
 } from "./extraction";
 
@@ -113,7 +114,7 @@ export async function extractReadinessDocument(input: {
   }
 
   const text = documentText.slice(0, 60_000);
-  const extraction = text.includes("VIDICY PRACTICE")
+  const extraction = isPracticeDocumentText(text)
     ? extractFactsFromSyntheticText(text)
     : await extractWithFrozenAllowlist(text);
 

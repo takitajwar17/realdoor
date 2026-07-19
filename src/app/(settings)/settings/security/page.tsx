@@ -26,7 +26,7 @@ export default async function SecurityPage() {
         <CardHeader>
           <CardTitle>Account protection</CardTitle>
           <CardDescription>
-            Keep sign-in access current for your Vidicy account.
+            Keep sign-in access current for your RealDoor account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

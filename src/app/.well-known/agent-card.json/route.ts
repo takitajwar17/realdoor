@@ -12,13 +12,13 @@ import { getPublishedAgentSkills } from "@/lib/agent-skills";
 
 function getAgentCard() {
   return {
-    name: "Vidicy Agent",
+    name: "RealDoor Agent",
     description:
-      "Public discovery card for Vidicy's structured markdown pages and application-readiness guidance.",
+      "Public discovery card for RealDoor's structured markdown pages and application-readiness guidance.",
     version: packageJson.version,
     documentationUrl: CANONICAL_SITE_URL,
     provider: {
-      organization: "Vidicy",
+      organization: "RealDoor",
       url: CANONICAL_SITE_URL,
     },
     supportedInterfaces: [

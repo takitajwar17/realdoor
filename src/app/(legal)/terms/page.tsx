@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 const termsDescription =
-  "Read the terms of service for Vidicy agency review workflows, including acceptable use, automated review limits, data processing, and service boundaries.";
+  "Read the terms of service for RealDoor agency review workflows, including acceptable use, automated review limits, data processing, and service boundaries.";
 
 export const metadata: Metadata = constructMetadata({
   title: "Terms of service",
@@ -98,7 +98,7 @@ export default function TermsPage() {
         eyebrow="Legal"
         title="Terms of Service"
         meta="Last updated: April 28, 2026"
-        description="The terms that govern Vidicy for agency review workflows, including acceptable use, automated review limitations, data processing, and liability boundaries."
+        description="The terms that govern RealDoor for agency review workflows, including acceptable use, automated review limitations, data processing, and liability boundaries."
       />
 
       <PublicPageContent className="space-y-16">

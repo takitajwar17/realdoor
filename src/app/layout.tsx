@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   metadataBase: new URL(CANONICAL_SITE_URL),
   keywords: [
-    "Vidicy",
+    "RealDoor",
     "Visa Application",
     "Visa Agency Software",
     "Visa Rejection",
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
         url: OPEN_GRAPH_IMAGE_PATH,
         width: OPEN_GRAPH_IMAGE_WIDTH,
         height: OPEN_GRAPH_IMAGE_HEIGHT,
-        alt: "Vidicy agency visa review dashboard",
+        alt: "RealDoor agency visa review dashboard",
       },
     ],
   },
