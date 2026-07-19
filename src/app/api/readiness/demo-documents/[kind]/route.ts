@@ -11,7 +11,7 @@ const fileNames: Record<SyntheticDocumentKind, string> = {
   benefits_letter: "realdoor-practice-benefits-letter.pdf",
 };
 
-export async function GET(_request: Request, { params }: { params: Promise<{ kind: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ kind: string }> }) {
   const routeSession = await requireRouteSession();
   if ("response" in routeSession) return routeSession.response;
 
@@ -20,7 +20,18 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
     return NextResponse.json({ error: "Demo document not found" }, { status: 404 });
   }
 
-  return new Response(buildSyntheticDemoPdf(kind), {
+  const logoResponse = await fetch(
+    new URL("/logo/light/transparent_logo_text_horizontal_nobuffer.png", request.url),
+  );
+  if (!logoResponse.ok) {
+    return NextResponse.json({ error: "Brand asset unavailable" }, { status: 503 });
+  }
+
+  const logoBytes = new Uint8Array(await logoResponse.arrayBuffer());
+  const pdf = await buildSyntheticDemoPdf(kind, logoBytes);
+  const body = pdf.slice().buffer as ArrayBuffer;
+
+  return new Response(body, {
     headers: {
       "Cache-Control": "private, no-store",
       "Content-Disposition": `attachment; filename="${fileNames[kind]}"`,
