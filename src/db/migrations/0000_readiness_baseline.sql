@@ -1,4 +1,4 @@
-CREATE TABLE `user` (
+CREATE TABLE IF NOT EXISTS `user` (
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	`updateCounter` integer DEFAULT 0,
@@ -14,11 +14,11 @@ CREATE TABLE `user` (
 	`avatar` text(600)
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `user_email_unique` ON `user` (`email`);--> statement-breakpoint
-CREATE INDEX `email_idx` ON `user` (`email`);--> statement-breakpoint
-CREATE INDEX `google_account_id_idx` ON `user` (`googleAccountId`);--> statement-breakpoint
-CREATE INDEX `role_idx` ON `user` (`role`);--> statement-breakpoint
-CREATE TABLE `readiness_audit` (
+CREATE UNIQUE INDEX IF NOT EXISTS `user_email_unique` ON `user` (`email`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `email_idx` ON `user` (`email`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `google_account_id_idx` ON `user` (`googleAccountId`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `role_idx` ON `user` (`role`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `readiness_audit` (
 	`createdAt` integer NOT NULL,
 	`id` text PRIMARY KEY NOT NULL,
 	`sessionId` text NOT NULL,
@@ -28,8 +28,8 @@ CREATE TABLE `readiness_audit` (
 	FOREIGN KEY (`sessionId`) REFERENCES `readiness_session`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `readiness_audit_session_idx` ON `readiness_audit` (`sessionId`,`createdAt`);--> statement-breakpoint
-CREATE TABLE `readiness_document` (
+CREATE INDEX IF NOT EXISTS `readiness_audit_session_idx` ON `readiness_audit` (`sessionId`,`createdAt`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `readiness_document` (
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	`updateCounter` integer DEFAULT 0,
@@ -48,10 +48,10 @@ CREATE TABLE `readiness_document` (
 	FOREIGN KEY (`sessionId`) REFERENCES `readiness_session`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `readiness_document_session_idx` ON `readiness_document` (`sessionId`,`createdAt`);--> statement-breakpoint
-CREATE UNIQUE INDEX `readiness_document_r2_key_idx` ON `readiness_document` (`r2Key`);--> statement-breakpoint
-CREATE INDEX `readiness_document_status_idx` ON `readiness_document` (`sessionId`,`extractionStatus`);--> statement-breakpoint
-CREATE TABLE `readiness_fact` (
+CREATE INDEX IF NOT EXISTS `readiness_document_session_idx` ON `readiness_document` (`sessionId`,`createdAt`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `readiness_document_r2_key_idx` ON `readiness_document` (`r2Key`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `readiness_document_status_idx` ON `readiness_document` (`sessionId`,`extractionStatus`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `readiness_fact` (
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	`updateCounter` integer DEFAULT 0,
@@ -68,9 +68,9 @@ CREATE TABLE `readiness_fact` (
 	FOREIGN KEY (`documentId`) REFERENCES `readiness_document`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `readiness_fact_session_key_idx` ON `readiness_fact` (`sessionId`,`key`,`status`);--> statement-breakpoint
-CREATE INDEX `readiness_fact_document_idx` ON `readiness_fact` (`documentId`);--> statement-breakpoint
-CREATE TABLE `readiness_question` (
+CREATE INDEX IF NOT EXISTS `readiness_fact_session_key_idx` ON `readiness_fact` (`sessionId`,`key`,`status`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `readiness_fact_document_idx` ON `readiness_fact` (`documentId`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `readiness_question` (
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	`updateCounter` integer DEFAULT 0,
@@ -81,8 +81,8 @@ CREATE TABLE `readiness_question` (
 	FOREIGN KEY (`sessionId`) REFERENCES `readiness_session`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `readiness_question_session_idx` ON `readiness_question` (`sessionId`,`createdAt`);--> statement-breakpoint
-CREATE TABLE `readiness_session` (
+CREATE INDEX IF NOT EXISTS `readiness_question_session_idx` ON `readiness_question` (`sessionId`,`createdAt`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `readiness_session` (
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	`updateCounter` integer DEFAULT 0,
@@ -102,5 +102,5 @@ CREATE TABLE `readiness_session` (
 	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `readiness_session_user_updated_idx` ON `readiness_session` (`userId`,`updatedAt`);--> statement-breakpoint
-CREATE INDEX `readiness_session_user_accessed_idx` ON `readiness_session` (`userId`,`lastAccessedAt`);
+CREATE INDEX IF NOT EXISTS `readiness_session_user_updated_idx` ON `readiness_session` (`userId`,`updatedAt`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `readiness_session_user_accessed_idx` ON `readiness_session` (`userId`,`lastAccessedAt`);

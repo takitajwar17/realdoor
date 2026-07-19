@@ -47,6 +47,7 @@
     "EMAIL_FROM_NAME": "RealDoor",
     "EMAIL_REPLY_TO": "support@realdoor.com",
     "GOOGLE_CLIENT_ID": "236637153222-530aijrvhuc4il1o2dmq4j89ogi86get.apps.googleusercontent.com",
+    "NEXT_PUBLIC_APP_URL": "https://hacknation.tajwaruzzaman.workers.dev",
     "NEXT_PUBLIC_SITE_URL": "https://hacknation.tajwaruzzaman.workers.dev",
     "NEXT_PUBLIC_APP_VERSION": "1.0.0"
   },
