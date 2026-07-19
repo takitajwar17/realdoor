@@ -1,7 +1,7 @@
 <div align="center">
   <h1>RealDoor</h1>
   <p><strong>Application-readiness copilot for affordable housing — Next.js 16 on Cloudflare Workers</strong></p>
-  
+
   <p>
     <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js 16" /></a>
     <a href="https://workers.cloudflare.com/"><img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare" alt="Cloudflare Workers" /></a>
@@ -12,46 +12,73 @@
 
 <br />
 
-## Overview
+## Application-readiness, without automated decisioning
 
-RealDoor helps renters prepare an affordable-housing application packet without deciding eligibility. Built as a high-performance Edge application, it runs on Cloudflare Workers using OpenNext.
+RealDoor turns synthetic household documents into a renter-confirmed profile, explains a frozen affordable-housing rule set with citations, identifies missing or expired documents, and creates a packet the renter controls.
 
-The product walks a renter through one continuous journey:
+> **The AI extracts and explains. Deterministic code calculates. The renter confirms. A qualified human decides.**
 
-1. **Profile** — upload synthetic household documents, extract allowlisted fields with evidence, and require confirmation before reuse.
-2. **Understand** — show cited practice rules and deterministic income math (no pass/fail or eligibility labels).
-3. **Prepare** — compare against a checklist, preview/edit packet contents, download, and delete the session on demand.
+## Technical walkthrough
 
-RealDoor extracts, explains, calculates, and prepares. The renter confirms. A qualified human decides.
+### One evidence-linked journey
 
-Production deploys are triggered from GitHub Actions on pushes to `main`.
+```mermaid
+flowchart LR
+    A["1 · PROFILE<br/>Extract → review → confirm"]
+    B["2 · UNDERSTAND<br/>Cite → calculate → explain"]
+    C["3 · PREPARE<br/>Check → preview → download"]
 
-## Core Features
+    A -->|Confirmed facts only| B
+    B -->|Cited calculations| C
+```
 
-- **Renter readiness workspace:** Profile → Understand → Prepare with a visible evidence trail.
-- **Confirmation before propagation:** Extracted values stay unconfirmed until the renter accepts, corrects, or removes them.
-- **Cited rules and deterministic math:** Practice-guide answers and income comparisons with formulas, sources, and effective dates—never eligibility scores.
-- **Renter-controlled packet:** Preview, include/exclude documents, download HTML, and delete the session. Nothing is auto-sent.
-- **Privacy by design:** Encrypted session payloads, field allowlists, synthetic-document practice path, audit actions without raw document contents.
-- **Authentication:** Email/password and Google OAuth with verified-email gating and KV-backed sessions.
-- **Edge native:** Cloudflare Workers with D1 (SQLite), KV (sessions/cache), and R2 (document storage).
+| Stage          | What happens                                                                                              | Trust boundary                                                                                                         |
+| -------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Profile**    | PDFs and images are parsed; OpenAI proposes only allowlisted fields.                                      | Every value is schema-validated, evidence-linked, and held back until the renter confirms or corrects it.              |
+| **Understand** | Questions are answered from a frozen 2026 LIHTC corpus with pinpoint citations.                           | Income math is deterministic and reproducible. The system never produces an eligibility verdict.                       |
+| **Prepare**    | Confirmed evidence is checked against a versioned document checklist and assembled into a branded packet. | The renter chooses what to include, previews before download, and can delete the entire session. Nothing is auto-sent. |
 
-## Tech Stack
+### Architecture at a glance
 
-### Frontend
+```mermaid
+flowchart TB
+    UI["Next.js 16 · React · TypeScript<br/>Tailwind CSS · Radix UI"]
+    APP["Cloudflare Worker<br/>OpenNext edge runtime"]
+    AI["OpenAI<br/>Constrained extraction + cited explanation"]
+    RULES["Frozen 2026 corpus<br/>Deterministic rules + calculations"]
+    D1["Cloudflare D1<br/>Structured session state"]
+    R2["Cloudflare R2<br/>Encrypted documents"]
+    KV["Cloudflare KV<br/>Authenticated sessions"]
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React Server Components)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Components:** [Shadcn UI](https://ui.shadcn.com/) (built on Radix UI)
-- **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) for client session state
-- **Emails:** [React Email](https://react.email/)
+    UI --> APP
+    APP --> AI
+    APP --> RULES
+    APP --> D1
+    APP --> R2
+    APP --> KV
+```
 
-### Backend & Infrastructure
+| Layer                 | Implementation                                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Product interface** | Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, Radix UI, and accessible server-first components                    |
+| **AI boundary**       | OpenAI Responses API, strict Zod schemas, field allowlists, source-quote validation, abstention, and prompt-injection detection   |
+| **Rules engine**      | Versioned Boston–Cambridge–Quincy 2026 corpus, authoritative source passages, fixed effective dates, and deterministic arithmetic |
+| **Data layer**        | Drizzle ORM on Cloudflare D1, AES-GCM encrypted payloads, R2 object storage, and KV-backed sessions                               |
+| **Runtime**           | OpenNext on Cloudflare Workers with edge-native D1, R2, KV, static assets, and Durable Objects                                    |
+| **Document system**   | `unpdf` for PDF reading and `pdf-lib` for selectable, branded RealDoor documents                                                  |
 
-- **Deployment:** [OpenNext](https://opennext.js.org/) on Cloudflare Workers
-- **Database:** Cloudflare D1 (Serverless SQLite) with [Drizzle ORM](https://orm.drizzle.team/)
-- **Storage:** Cloudflare R2 (Object Storage) & Cloudflare KV (Key-Value)
-- **Authentication:** Custom session auth (Lucia-style) + KV-based session management
+### Safety is implemented, not stated
+
+- **Human confirmation:** AI-extracted values cannot influence calculations, answers, checklists, or packets until confirmed.
+- **Deterministic math:** the model never calculates eligibility; code applies the frozen formula and exposes every input and intermediate value.
+- **No decisioning:** requests for approval, denial, qualification, scoring, ranking, or acceptance prediction are refused.
+- **Untrusted documents:** embedded document instructions cannot change the field allowlist, rules, tools, or access boundaries.
+- **Privacy controls:** uploads and persisted session payloads are encrypted; logs exclude raw document contents; session deletion cascades through renter-held data.
+- **Accessible workflow:** keyboard operation, visible focus, labeled status, structured headings, and text—not color alone—communicate state.
+
+### Verification coverage
+
+The automated suite covers extraction, evidence confirmation, deterministic contracts, authoritative corpus integrity, refusals, adversarial prompt injection, document policy, encryption, packet composition, and deletion behavior. Production builds are verified against the Cloudflare Worker runtime before release.
 
 ---
 
@@ -185,7 +212,7 @@ Use `pnpm preview` when you need the built Worker runtime and Cloudflare binding
 | `pnpm db:generate [name]` | Generates a new Drizzle migration file based on schema changes.                                                 |
 | `pnpm db:migrate:dev`     | Applies pending migrations to the local Cloudflare D1 database.                                                 |
 | `pnpm cf-typegen`         | Generates TypeScript interfaces for Cloudflare bindings defined in `wrangler.jsonc`. Run after binding changes. |
-| `pnpm email:dev`          | Starts the React Email preview server on port 3001.                                                             |
+| `pnpm email:dev`          | Starts the React Email preview server on port 3003.                                                             |
 | `pnpm worker:build`       | Builds the generated Cloudflare Worker and applies the repo’s post-build worker patch step.                     |
 | `pnpm worker:preview`     | Builds the Worker and runs the Cloudflare-backed local preview.                                                 |
 | `pnpm worker:deploy`      | Code deploy only: builds and deploys the Worker without local/remote migration orchestration.                   |
@@ -209,7 +236,7 @@ Use `pnpm preview` when you need the built Worker runtime and Cloudflare binding
 To access Cloudflare bindings (KV, D1, R2, Environment Variables) inside Next.js API routes or Server Components, use the provided context utility:
 
 ```typescript
-import { getCloudflareContext } from "@/utils/cf-context";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const { env, cf, ctx } = getCloudflareContext();
 ```
@@ -225,7 +252,6 @@ The deployed Worker expects the following bindings for full feature parity:
 - `WORKER_SELF_REFERENCE` is the internal service binding for the Worker itself.
 - `APP_KV` is the app KV namespace used by session/cache-related features.
 - `R2` is the document storage bucket binding.
-- `VECTORIZE` is the embeddings/index binding used by AI features.
 
 These bindings are declared in `wrangler.jsonc`; run `pnpm cf-typegen` after config changes if you need updated generated types.
 
