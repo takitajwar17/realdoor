@@ -1,0 +1,7 @@
+household_id,household_size,scenario,expected_annualized_income,frozen_60_percent_threshold,comparison,expected_readiness_status,expected_review_reasons
+HH-001,1,regular_hourly,56316,72000,below_or_equal,READY_TO_REVIEW,
+HH-002,2,overtime_variance,49920,82320,below_or_equal,NEEDS_REVIEW,PAY_STUB_TOTAL_CONFLICT
+HH-003,3,benefits_plus_wages,40230,92580,below_or_equal,READY_TO_REVIEW,
+HH-004,4,gig_and_wages,51008,102840,below_or_equal,NEEDS_REVIEW,GIG_INCOME_UNCORROBORATED
+HH-005,5,expired_letter,45968,111120,below_or_equal,NEEDS_REVIEW,EMPLOYMENT_LETTER_EXPIRED
+HH-006,6,near_threshold,105000,119340,below_or_equal,READY_TO_REVIEW,
