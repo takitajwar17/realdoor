@@ -14,6 +14,7 @@ import { DocumentUploader } from "@/components/readiness/document-uploader";
 import { DocumentControls } from "@/components/readiness/document-controls";
 import { FactReviewCard, type FactReviewItem } from "@/components/readiness/fact-review-card";
 import { ManualFactForm } from "@/components/readiness/manual-fact-form";
+import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
       current="profile"
       title="Confirm your facts"
       description="RealDoor suggests values from your documents. Review each one, fix anything wrong, and confirm only what you recognize before it is used later."
+      chatMessages={toChatMessages(workspace.questions)}
+      chatSources={workspace.rulePack.sources}
+      ruleVersion={workspace.rulePack.version}
+      ruleEffectiveDate={workspace.rulePack.effectiveDate}
       actions={
         <Button asChild>
           <Link href={`/dashboard/${appId}/understand`}>

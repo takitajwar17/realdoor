@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import type { Route } from "next";
 import { ExternalLinkIcon, LibraryIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { hasOpenableSourceUrl } from "@/features/readiness/source-url";
 
 export function SourceCitationDialog({
   source,
@@ -23,6 +22,12 @@ export function SourceCitationDialog({
   version?: string;
   effectiveDate: string;
 }) {
+  if (!hasOpenableSourceUrl(source.url)) {
+    return null;
+  }
+
+  const externalUrl = source.url.trim();
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -35,7 +40,11 @@ export function SourceCitationDialog({
         <DialogHeader>
           <DialogTitle>{source.title}</DialogTitle>
           <DialogDescription>
-            {source.id}{source.locator ? ` · ${source.locator}` : ""} · effective {effectiveDate}
+            {source.id}
+            {source.locator && !source.title.includes(source.locator)
+              ? ` · ${source.locator}`
+              : ""}{" "}
+            · effective {effectiveDate}
             {version ? ` · ${version}` : ""}
           </DialogDescription>
         </DialogHeader>
@@ -46,17 +55,13 @@ export function SourceCitationDialog({
           <p className="mt-2 text-sm leading-6">{source.passage}</p>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          This is the exact passage RealDoor used. Open the source to read it in full.
+          This is the exact passage RealDoor used. Open the official source to read it in full.
         </p>
         <Button asChild>
-          <Link
-            href={source.url as Route}
-            target={source.url.startsWith("http") ? "_blank" : undefined}
-            rel="noreferrer"
-          >
+          <a href={externalUrl} target="_blank" rel="noopener noreferrer">
             Open source
             <ExternalLinkIcon className="h-4 w-4" />
-          </Link>
+          </a>
         </Button>
       </DialogContent>
     </Dialog>

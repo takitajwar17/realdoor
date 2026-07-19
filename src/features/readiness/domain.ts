@@ -114,9 +114,14 @@ function normalizeEvidenceBox(box: EvidenceBox | undefined): EvidenceBox | undef
   const values = [box.x, box.y, box.width, box.height];
   if (
     values.some((value) => !Number.isFinite(value)) ||
-    box.x < 0 || box.y < 0 || box.width <= 0 || box.height <= 0 ||
-    box.x + box.width > 1 || box.y + box.height > 1
-  ) return undefined;
+    box.x < 0 ||
+    box.y < 0 ||
+    box.width <= 0 ||
+    box.height <= 0 ||
+    box.x + box.width > 1 ||
+    box.y + box.height > 1
+  )
+    return undefined;
   return { ...box };
 }
 
@@ -150,20 +155,84 @@ export function normalizeExtractedFact(input: {
 
 export function isTraceableDocumentFact(fact: ExtractedFact) {
   return Boolean(
-    fact.sourceQuote.trim() && fact.page && fact.box && fact.confidence >= 0 && fact.confidence <= 1,
+    fact.sourceQuote.trim() &&
+    fact.page &&
+    fact.box &&
+    fact.confidence >= 0 &&
+    fact.confidence <= 1,
   );
 }
 
 export function detectFactConflicts(facts: ExtractedFact[]): FactKey[] {
+  // Dates and transaction totals normally differ between consecutive documents.
+  // Compare stable household/employment fields plus gross pay, which is the
+  // intentional total-conflict surface in the supplied organizer corpus.
+  const comparableKeys: ReadonlySet<FactKey> = new Set([
+    "person_name",
+    "address",
+    "household_size",
+    "pay_frequency",
+    "regular_hours",
+    "weekly_hours",
+    "hourly_rate",
+    "gross_pay",
+    "benefit_frequency",
+  ]);
   const valuesByKey = new Map<FactKey, Set<string>>();
 
   for (const fact of facts) {
+    if (!comparableKeys.has(fact.key)) continue;
     const values = valuesByKey.get(fact.key) ?? new Set<string>();
     values.add(fact.value.trim().toLocaleLowerCase("en-US"));
     valuesByKey.set(fact.key, values);
   }
 
-  return FACT_KEYS.filter((key) => (valuesByKey.get(key)?.size ?? 0) > 1);
+  return FACT_KEYS.filter(
+    (key) => comparableKeys.has(key) && (valuesByKey.get(key)?.size ?? 0) > 1,
+  );
+}
+
+export type ReviewReadiness = {
+  status: "ready" | "needs_review";
+  reasons: string[];
+};
+
+export function deriveReviewReadiness(input: {
+  conflicts: FactKey[];
+  checklist: Array<{ state: "present" | "missing" | "expired" | "unresolved"; label: string }>;
+  expectedStatus?: "READY_TO_REVIEW" | "NEEDS_REVIEW";
+  expectedReasons?: readonly string[];
+}): ReviewReadiness {
+  const reasons: string[] = [];
+
+  if (input.conflicts.includes("gross_pay")) {
+    reasons.push("Two pay statements show different gross pay totals. Confirm the value to use.");
+  }
+  for (const key of input.conflicts.filter((key) => key !== "gross_pay")) {
+    reasons.push(`${key.replaceAll("_", " ")} differs across documents. Confirm the value to use.`);
+  }
+
+  const corpusReasonLabels: Record<string, string> = {
+    GIG_INCOME_UNCORROBORATED:
+      "Gig income needs a second supporting document before this packet is ready for review.",
+    EMPLOYMENT_LETTER_EXPIRED: "The employment letter is outside the frozen 60-day window.",
+  };
+  for (const reason of input.expectedReasons ?? []) {
+    if (reason === "PAY_STUB_TOTAL_CONFLICT" && !input.conflicts.includes("gross_pay")) continue;
+    const label = corpusReasonLabels[reason];
+    if (label && !reasons.includes(label)) reasons.push(label);
+  }
+
+  if (!input.expectedStatus) {
+    for (const item of input.checklist) {
+      if (item.state === "expired") reasons.push(`${item.label} is out of date.`);
+      if (item.state === "unresolved")
+        reasons.push(`${item.label} needs a confirmed date and type.`);
+      if (item.state === "missing") reasons.push(`${item.label} is missing.`);
+    }
+  }
+
+  return { status: reasons.length > 0 ? "needs_review" : "ready", reasons };
 }
 
 function parseNonNegativeNumber(value: string): number | null {

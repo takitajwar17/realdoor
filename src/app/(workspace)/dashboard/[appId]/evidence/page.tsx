@@ -10,6 +10,7 @@ import {
   HistoryIcon,
 } from "lucide-react";
 
+import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
 import { SourceCitationDialog } from "@/components/readiness/source-citation-dialog";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { FACT_STATUS } from "@/db/schema";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { formatFactValue, getFactLabel } from "@/features/readiness/presentation";
 import { summarizeConfirmedIncome } from "@/features/readiness/domain";
+import { hasOpenableSourceUrl } from "@/features/readiness/source-url";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
 export const metadata: Metadata = { title: "Evidence trail · Application readiness" };
@@ -59,7 +61,13 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
   const income = summarizeConfirmedIncome(workspace.confirmedFacts);
   const documentById = new Map(workspace.documents.map((document) => [document.id, document]));
   const latestChange = workspace.audit.find((event) =>
-    ["fact_confirmed", "fact_removed", "manual_fact_confirmed", "document_removed", "document_details_confirmed"].includes(event.action),
+    [
+      "fact_confirmed",
+      "fact_removed",
+      "manual_fact_confirmed",
+      "document_removed",
+      "document_details_confirmed",
+    ].includes(event.action),
   );
 
   return (
@@ -68,6 +76,10 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
       current="evidence"
       title="Evidence trail"
       description="Inspect every confirmed input, its source, the exact transformation it drives, and the frozen rule passage used downstream."
+      chatMessages={toChatMessages(workspace.questions)}
+      chatSources={workspace.rulePack.sources}
+      ruleVersion={workspace.rulePack.version}
+      ruleEffectiveDate={workspace.rulePack.effectiveDate}
       actions={
         <Button asChild variant="outline">
           <Link href={`/dashboard/${appId}/prepare`}>
@@ -123,21 +135,21 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
               accent
             />
             <ArrowRightIcon className="mx-auto hidden h-4 w-4 text-muted-foreground lg:block" />
-            <TrustNode
-              eyebrow="Result"
-              title="Math and packet"
-              detail="Only after you confirm"
-            />
+            <TrustNode eyebrow="Result" title="Math and packet" detail="Only after you confirm" />
           </div>
         </CardContent>
       </Card>
 
       {latestChange ? (
-        <section role="status" aria-live="polite" className="rounded-xl border border-primary/25 bg-primary/7 p-4">
+        <section
+          role="status"
+          aria-live="polite"
+          className="rounded-xl border border-primary/25 bg-primary/7 p-4"
+        >
           <h2 className="text-sm font-bold">What changed</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {auditLabels[latestChange.action] ?? "Your session changed"}. The worksheet,
-            checklist, evidence trail, preview, and downloadable packet now use packet v
+            {auditLabels[latestChange.action] ?? "Your session changed"}. The worksheet, checklist,
+            evidence trail, preview, and downloadable packet now use packet v
             {workspace.session.revision}; replaced values are no longer reused.
           </p>
         </section>
@@ -156,49 +168,116 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
               {workspace.confirmedFacts.map((fact) => {
                 const document = fact.documentId ? documentById.get(fact.documentId) : undefined;
                 return (
-                  <article key={fact.factId ?? fact.key} className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,.7fr)]">
+                  <article
+                    key={fact.factId ?? fact.key}
+                    className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,.7fr)]"
+                  >
                     <div>
                       <h3 className="text-sm font-bold">{getFactLabel(fact.key)}</h3>
-                      <p className="mt-1 text-lg font-semibold">{formatFactValue(fact.key, fact.value)}</p>
+                      <p className="mt-1 text-lg font-semibold">
+                        {formatFactValue(fact.key, fact.value)}
+                      </p>
                       <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                        <div><dt className="font-semibold">Source</dt><dd className="text-muted-foreground">{document?.payload.name ?? "Entered by renter"}{fact.page ? ` · page ${fact.page}` : ""}</dd></div>
-                        <div><dt className="font-semibold">Reading confidence</dt><dd className="text-muted-foreground">{fact.confidence === null || fact.confidence === undefined ? "Renter-entered" : `${Math.round(fact.confidence * 100)}% · confirmed by renter`}</dd></div>
-                        <div><dt className="font-semibold">Evidence location</dt><dd className="text-muted-foreground">{fact.box ? `${Math.round(fact.box.x * 100)}% from left, ${Math.round(fact.box.y * 100)}% from top, ${Math.round(fact.box.width * 100)}% wide` : "Renter-entered; no document box"}</dd></div>
-                        <div><dt className="font-semibold">Used in</dt><dd className="text-muted-foreground">{downstreamUse(fact.key)}</dd></div>
+                        <div>
+                          <dt className="font-semibold">Source</dt>
+                          <dd className="text-muted-foreground">
+                            {document?.payload.name ?? "Entered by renter"}
+                            {fact.page ? ` · page ${fact.page}` : ""}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="font-semibold">Reading confidence</dt>
+                          <dd className="text-muted-foreground">
+                            {fact.confidence === null || fact.confidence === undefined
+                              ? "Renter-entered"
+                              : `${Math.round(fact.confidence * 100)}% · confirmed by renter`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="font-semibold">Evidence location</dt>
+                          <dd className="text-muted-foreground">
+                            {fact.box
+                              ? `${Math.round(fact.box.x * 100)}% from left, ${Math.round(fact.box.y * 100)}% from top, ${Math.round(fact.box.width * 100)}% wide`
+                              : "Renter-entered; no document box"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="font-semibold">Used in</dt>
+                          <dd className="text-muted-foreground">{downstreamUse(fact.key)}</dd>
+                        </div>
                       </dl>
                     </div>
                     <div className="rounded-xl border border-border bg-muted/18 p-4">
-                      <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Exact evidence</p>
-                      <blockquote className="mt-2 border-l-2 border-primary pl-3 text-sm">{fact.sourceQuote ? `“${fact.sourceQuote}”` : "Entered directly by the renter"}</blockquote>
-                      <p className="mt-3 text-xs text-muted-foreground">Confirmation is required before every downstream use.</p>
+                      <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                        Exact evidence
+                      </p>
+                      <blockquote className="mt-2 border-l-2 border-primary pl-3 text-sm">
+                        {fact.sourceQuote
+                          ? `“${fact.sourceQuote}”`
+                          : "Entered directly by the renter"}
+                      </blockquote>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Confirmation is required before every downstream use.
+                      </p>
                     </div>
                   </article>
                 );
               })}
             </div>
-          ) : <p className="p-6 text-sm text-muted-foreground">No confirmed inputs yet.</p>}
+          ) : (
+            <p className="p-6 text-sm text-muted-foreground">No confirmed inputs yet.</p>
+          )}
         </CardContent>
       </Card>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
-          <CardHeader><CardTitle className="text-base">Deterministic transformations</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Deterministic transformations</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {income.status === "complete" ? income.components.map((component) => (
-              <div key={component.label} className="rounded-xl border border-border bg-muted/18 p-4">
-                <p className="text-sm font-bold">{component.label}</p><p className="mt-1 font-mono text-xs">{component.formula}</p>
-              </div>
-            )) : <p className="text-sm text-muted-foreground">Income arithmetic remains unresolved until the needed facts are confirmed.</p>}
-            {workspace.comparison.status === "complete" ? <p className="font-mono text-xs">{workspace.comparison.formula}</p> : null}
+            {income.status === "complete" ? (
+              income.components.map((component) => (
+                <div
+                  key={component.label}
+                  className="rounded-xl border border-border bg-muted/18 p-4"
+                >
+                  <p className="text-sm font-bold">{component.label}</p>
+                  <p className="mt-1 font-mono text-xs">{component.formula}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Income arithmetic remains unresolved until the needed facts are confirmed.
+              </p>
+            )}
+            {workspace.comparison.status === "complete" ? (
+              <p className="font-mono text-xs">{workspace.comparison.formula}</p>
+            ) : null}
           </CardContent>
         </Card>
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
-          <CardHeader><CardTitle className="text-base">Rules used</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Rules used</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-2">
-            {workspace.rulePack.sources.filter((source) => workspace.rulePack.calculationSourceIds.includes(source.id)).map((source) => (
-              <SourceCitationDialog key={source.id} source={source} version={workspace.rulePack.version} effectiveDate={workspace.rulePack.effectiveDate} />
-            ))}
-            <p className="text-xs leading-5 text-muted-foreground">Version {workspace.rulePack.version} · effective {workspace.rulePack.effectiveDate}</p>
+            {workspace.rulePack.sources
+              .filter(
+                (source) =>
+                  workspace.rulePack.calculationSourceIds.includes(source.id) &&
+                  hasOpenableSourceUrl(source.url),
+              )
+              .map((source) => (
+                <SourceCitationDialog
+                  key={source.id}
+                  source={source}
+                  version={workspace.rulePack.version}
+                  effectiveDate={workspace.rulePack.effectiveDate}
+                />
+              ))}
+            <p className="text-xs leading-5 text-muted-foreground">
+              Version {workspace.rulePack.version} · effective {workspace.rulePack.effectiveDate}
+            </p>
           </CardContent>
         </Card>
       </section>
@@ -248,7 +327,9 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
 
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">What RealDoor keeps—and what it never creates</CardTitle>
+            <CardTitle className="text-base">
+              What RealDoor keeps—and what it never creates
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 p-5 text-sm leading-6">
             <Boundary
@@ -275,8 +356,19 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
 
 function downstreamUse(key: string) {
   if (key === "household_size") return "Frozen threshold selection, worksheet, packet";
-  if (["weekly_hours", "hourly_rate", "gross_pay", "pay_frequency", "monthly_benefit", "gross_receipts"].includes(key)) return "Annualized-income worksheet, threshold comparison, packet";
-  if (["pay_date", "document_date", "application_date", "statement_month"].includes(key)) return "Checklist evidence, evidence trail, packet";
+  if (
+    [
+      "weekly_hours",
+      "hourly_rate",
+      "gross_pay",
+      "pay_frequency",
+      "monthly_benefit",
+      "gross_receipts",
+    ].includes(key)
+  )
+    return "Annualized-income worksheet, threshold comparison, packet";
+  if (["pay_date", "document_date", "application_date", "statement_month"].includes(key))
+    return "Checklist evidence, evidence trail, packet";
   return "Profile, evidence trail, selected packet facts";
 }
 

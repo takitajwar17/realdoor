@@ -17,7 +17,6 @@ data/
 │   ├── hud/
 │   └── realdoor/
 ├── extracted/hud/
-├── docs/
 └── manifests/
 ```
 
@@ -45,6 +44,7 @@ sheets, and alternate document formats are not copied into the processed corpus.
 
 Do not use LIHTC property records as evidence of vacancies, open waitlists, current rents, or
 applicant acceptance. Do not use any dataset to infer protected traits or rank renters or
-properties. The source pack is marked as a draft requiring approval; see `docs/`.
+properties. Challenge conventions are recorded as rule passages in `processed/rules.jsonl`
+with no separate in-repo source documents.
 
 See `manifests/sources.md` for provenance and `manifests/data-quality.md` for validation.

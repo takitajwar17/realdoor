@@ -5,21 +5,20 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CalculatorIcon,
-  CircleHelpIcon,
   EqualIcon,
   ShieldAlertIcon,
 } from "lucide-react";
 
+import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
-import { RuleQuestionForm } from "@/components/readiness/rule-question-form";
 import { SourceCitationDialog } from "@/components/readiness/source-citation-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { summarizeConfirmedIncome } from "@/features/readiness/domain";
 import { formatMetroLabel, formatProgramLabel } from "@/features/readiness/presentation";
 import { getRuleSource } from "@/features/readiness/rules";
+import { hasOpenableSourceUrl } from "@/features/readiness/source-url";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
@@ -58,7 +57,11 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       session={workspace.session}
       current="understand"
       title="Understand the math"
-      description="Every number below comes from a fact you confirmed or the frozen 2026 guide. This is an explanation only—not an application decision."
+      description="Every number below comes from a fact you confirmed or the frozen 2026 guide. This is an explanation only—not an application decision. Use the chat button for guide questions."
+      chatMessages={toChatMessages(workspace.questions)}
+      chatSources={workspace.rulePack.sources}
+      ruleVersion={workspace.rulePack.version}
+      ruleEffectiveDate={workspace.rulePack.effectiveDate}
       actions={
         <div className="flex gap-2">
           <Button asChild variant="outline">
@@ -75,8 +78,8 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       }
     >
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/7 px-4 py-3 text-sm leading-6 text-amber-950 dark:text-amber-100">
-        <strong>Frozen reference, not a decision.</strong> The household-size limit is from HUD’s
-        FY 2026 MTSP table for this area. A property still makes every application determination.
+        <strong>Frozen reference, not a decision.</strong> The household-size limit is from HUD’s FY
+        2026 MTSP table for this area. A property still makes every application determination.
       </div>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
@@ -155,22 +158,27 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                     ))}
                 </div>
 
-                <div>
-                  <p className="text-xs font-bold">Sources</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {comparison.sourceIds.map((sourceId) => {
-                      const source = getRuleSource(sourceId);
-                      return source ? (
-                        <SourceCitationDialog
-                          key={source.id}
-                          source={source}
-                          version={workspace.rulePack.version}
-                          effectiveDate={workspace.rulePack.effectiveDate}
-                        />
-                      ) : null;
-                    })}
+                {comparison.sourceIds.some((sourceId) => {
+                  const source = getRuleSource(sourceId);
+                  return source ? hasOpenableSourceUrl(source.url) : false;
+                }) ? (
+                  <div>
+                    <p className="text-xs font-bold">Sources</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {comparison.sourceIds.map((sourceId) => {
+                        const source = getRuleSource(sourceId);
+                        return source ? (
+                          <SourceCitationDialog
+                            key={source.id}
+                            source={source}
+                            version={workspace.rulePack.version}
+                            effectiveDate={workspace.rulePack.effectiveDate}
+                          />
+                        ) : null;
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : null}
               </div>
             ) : (
               <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
@@ -217,69 +225,6 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                 <ContextRow label="Dated" value={workspace.rulePack.effectiveDate} />
               </dl>
             </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
-          <CardHeader className="border-b border-border/70 bg-muted/20">
-            <div className="flex items-start gap-3">
-              <CircleHelpIcon className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                <CardTitle className="text-base">Ask a question</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Answers come only from the saved frozen passages in this session.
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-5">
-            <RuleQuestionForm sessionId={appId} />
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
-          <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">Your questions</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {workspace.questions.length > 0 ? (
-              <div className="divide-y divide-border/70">
-                {workspace.questions.map((question) => {
-                  const sourceIds = JSON.parse(question.sourceIds) as string[];
-                  return (
-                    <article key={question.id} className="space-y-3 p-5">
-                      <p className="text-sm font-bold">{question.payload.question}</p>
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        {question.payload.answer}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {sourceIds.length > 0 ? (
-                          sourceIds.map((sourceId) => {
-                            const source = getRuleSource(sourceId);
-                            return source ? (
-                              <SourceCitationDialog
-                                key={source.id}
-                                source={source}
-                                version={workspace.rulePack.version}
-                                effectiveDate={workspace.rulePack.effectiveDate}
-                              />
-                            ) : null;
-                          })
-                        ) : (
-                          <Badge variant="outline">Not covered by the practice guide</Badge>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="p-6 text-sm text-muted-foreground">
-                No questions yet. Try “How is monthly income annualized?”
-              </p>
-            )}
           </CardContent>
         </Card>
       </section>

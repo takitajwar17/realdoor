@@ -25,10 +25,12 @@ import { Label } from "@/components/ui/label";
 import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 
 const documentKinds = [
+  ["application_summary", "Application summary"],
   ["pay_stub", "Pay statement"],
-  ["benefits_letter", "Benefits letter"],
-  ["photo_id", "Photo ID"],
-  ["bank_statement", "Bank statement"],
+  ["employment_letter", "Employment letter"],
+  ["benefit_letter", "Benefit letter"],
+  ["gig_statement", "Gig statement"],
+  ["gig_income_corroboration", "Gig income corroboration"],
   ["other", "Other document"],
 ] as const;
 

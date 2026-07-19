@@ -19,9 +19,11 @@ import {
 } from "@/db/schema";
 
 import { openEncryptedJson, sealJson } from "./crypto";
+import { CORPUS_AS_OF, getGoldHousehold } from "./corpus";
 import {
   calculateIncomeComparison,
   deriveChecklist,
+  deriveReviewReadiness,
   detectFactConflicts,
   type ConfirmedFact,
   type EvidenceBox,
@@ -29,7 +31,8 @@ import {
   type FactKey,
   type ReadinessDocument,
 } from "./domain";
-import { AUTHORITATIVE_2026_RULE_PACK, answerRuleQuestion, getScenarioRulePack } from "./rules";
+import { answerRuleQuestionWithContext } from "./answer-question.server";
+import { AUTHORITATIVE_2026_RULE_PACK, getScenarioRulePack } from "./rules";
 
 // Keep the established local key bytes so existing development sessions remain readable
 // across the product rename. Production always requires READINESS_ENCRYPTION_KEY.
@@ -121,7 +124,7 @@ export async function createReadinessSession(userId: string, now = new Date()) {
     db.insert(readinessSessionTable).values({
       id: sessionId,
       userId,
-      consentVersion: "2026-07-19-v1",
+      consentVersion: `${CORPUS_AS_OF.date}-v1`,
       consentedAt: now,
       targetYear: 2026,
       metro: AUTHORITATIVE_2026_RULE_PACK.metro,
@@ -129,7 +132,7 @@ export async function createReadinessSession(userId: string, now = new Date()) {
       rulePackId: AUTHORITATIVE_2026_RULE_PACK.id,
       ruleAuthority: AUTHORITATIVE_2026_RULE_PACK.authority,
       ruleEffectiveDate: AUTHORITATIVE_2026_RULE_PACK.effectiveDate,
-      asOfDate: now.toISOString().slice(0, 10),
+      asOfDate: CORPUS_AS_OF.date,
       lastAccessedAt: now,
     }),
     db.insert(readinessAuditTable).values({
@@ -246,10 +249,20 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
     included: document.included,
     metadataConfirmed: document.metadataConfirmed,
   }));
-  const householdId = documents
-    .map((document) => document.payload.name.match(/^(hh-\d{3})_/iu)?.[1]?.toUpperCase())
-    .find(Boolean) ?? null;
+  const householdId =
+    documents
+      .map((document) => document.payload.name.match(/^(hh-\d{3})_/iu)?.[1]?.toUpperCase())
+      .find(Boolean) ?? null;
   const activeRulePack = getScenarioRulePack(householdId);
+  const detectedConflicts = detectFactConflicts(extractedFacts);
+  const confirmedKeys = new Set(confirmedFacts.map((fact) => fact.key));
+  const conflicts = detectedConflicts.filter((key) => !confirmedKeys.has(key));
+  const checklist = deriveChecklist({
+    asOf: session.asOfDate,
+    documents: readinessDocuments,
+    rules: activeRulePack,
+  });
+  const goldHousehold = householdId ? getGoldHousehold(householdId) : undefined;
 
   return {
     session,
@@ -258,15 +271,17 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
     questions,
     audit,
     confirmedFacts,
-    conflicts: detectFactConflicts(extractedFacts),
+    conflicts,
     comparison: calculateIncomeComparison({
       facts: confirmedFacts,
       rulePack: activeRulePack,
     }),
-    checklist: deriveChecklist({
-      asOf: session.asOfDate,
-      documents: readinessDocuments,
-      rules: activeRulePack,
+    checklist,
+    reviewReadiness: deriveReviewReadiness({
+      conflicts,
+      checklist,
+      expectedStatus: goldHousehold?.expected_readiness_status,
+      expectedReasons: goldHousehold?.expected_review_reasons,
     }),
     rulePack: activeRulePack,
     householdId,
@@ -448,8 +463,22 @@ export async function saveRuleQuestion(input: {
   userId: string;
   question: string;
 }) {
-  await assertOwnedSession(input.sessionId, input.userId);
-  const answer = answerRuleQuestion(input.question);
+  const workspace = await getReadinessWorkspace(input.sessionId, input.userId);
+  const checklistSummary =
+    workspace.checklist.length === 0
+      ? "No checklist items."
+      : workspace.checklist
+          .map((item) => `- ${item.label}: ${item.state} (${item.reason})`)
+          .join("\n");
+
+  const answer = await answerRuleQuestionWithContext({
+    question: input.question,
+    rulePack: workspace.rulePack,
+    confirmedFacts: workspace.confirmedFacts,
+    comparison: workspace.comparison,
+    checklistSummary,
+  });
+
   const id = `rdq_${crypto.randomUUID().replaceAll("-", "")}`;
   const encryptedPayload = await sealJson(
     { question: input.question, answer: answer.answer } satisfies QuestionPayload,

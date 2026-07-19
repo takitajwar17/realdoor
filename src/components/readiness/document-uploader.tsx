@@ -1,18 +1,94 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DownloadIcon, FileUpIcon, LoaderCircleIcon } from "lucide-react";
+import { FileStackIcon, FileUpIcon, LoaderCircleIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const sampleHouseholds = [
+  {
+    id: "hh-001",
+    label: "Regular hourly pay",
+    files: [
+      "hh-001_d01_application_summary.pdf",
+      "hh-001_d02_pay_stub.pdf",
+      "hh-001_d03_pay_stub.pdf",
+      "hh-001_d04_employment_letter.pdf",
+    ],
+  },
+  {
+    id: "hh-002",
+    label: "Pay statements that need a correction",
+    files: [
+      "hh-002_d01_application_summary.pdf",
+      "hh-002_d02_pay_stub.pdf",
+      "hh-002_d03_pay_stub.pdf",
+      "hh-002_d04_employment_letter.pdf",
+    ],
+  },
+  {
+    id: "hh-003",
+    label: "Wages and monthly benefits",
+    files: [
+      "hh-003_d01_application_summary.pdf",
+      "hh-003_d02_pay_stub.pdf",
+      "hh-003_d03_pay_stub.pdf",
+      "hh-003_d04_benefit_letter.pdf",
+    ],
+  },
+  {
+    id: "hh-004",
+    label: "Wages and gig income",
+    files: [
+      "hh-004_d01_application_summary.pdf",
+      "hh-004_d02_pay_stub.pdf",
+      "hh-004_d03_pay_stub.pdf",
+      "hh-004_d04_gig_statement.pdf",
+    ],
+  },
+  {
+    id: "hh-005",
+    label: "Employment letter that is out of date",
+    files: [
+      "hh-005_d01_application_summary.pdf",
+      "hh-005_d02_pay_stub.pdf",
+      "hh-005_d03_pay_stub.pdf",
+      "hh-005_d04_employment_letter.pdf",
+    ],
+  },
+  {
+    id: "hh-006",
+    label: "Wages and benefits near the benchmark",
+    files: [
+      "hh-006_d01_application_summary.pdf",
+      "hh-006_d02_pay_stub.pdf",
+      "hh-006_d03_pay_stub.pdf",
+      "hh-006_d04_benefit_letter.pdf",
+    ],
+  },
+] as const;
 
 export function DocumentUploader({ sessionId }: { sessionId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [sampleId, setSampleId] = useState<(typeof sampleHouseholds)[number]["id"]>("hh-002");
+
+  async function postDocument(file: File) {
+    const formData = new FormData();
+    formData.set("sessionId", sessionId);
+    formData.set("file", file);
+    const response = await fetch("/api/readiness/documents", {
+      method: "POST",
+      body: formData,
+      headers: { "X-Requested-With": "RealDoorReadiness" },
+    });
+    const payload = (await response.json()) as { error?: string };
+    if (!response.ok) throw new Error(payload.error || "Upload failed");
+  }
 
   async function upload() {
     const file = inputRef.current?.files?.[0];
@@ -24,18 +100,8 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
 
     setStatus("uploading");
     setMessage("Uploading and reading the document for suggested fields…");
-    const formData = new FormData();
-    formData.set("sessionId", sessionId);
-    formData.set("file", file);
-
     try {
-      const response = await fetch("/api/readiness/documents", {
-        method: "POST",
-        body: formData,
-        headers: { "X-Requested-With": "RealDoorReadiness" },
-      });
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "Upload failed");
+      await postDocument(file);
 
       setStatus("success");
       setMessage("Document uploaded. RealDoor is reading it for suggested fields.");
@@ -46,6 +112,32 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Upload failed. Try again.");
+    }
+  }
+
+  async function loadSampleHousehold() {
+    const sample = sampleHouseholds.find((item) => item.id === sampleId)!;
+    setStatus("uploading");
+    setMessage(`Adding four practice documents for ${sample.label.toLowerCase()}…`);
+    try {
+      for (const fileName of sample.files) {
+        const response = await fetch(`/api/readiness/demo-documents/${fileName}`);
+        if (!response.ok) throw new Error("A practice document could not be loaded.");
+        const file = new File([await response.blob()], fileName, { type: "application/pdf" });
+        await postDocument(file);
+      }
+      setStatus("success");
+      setMessage(
+        "Four practice documents added. Confirm their details and the values you want to use.",
+      );
+      router.refresh();
+      window.setTimeout(() => router.refresh(), 2200);
+      window.setTimeout(() => router.refresh(), 5000);
+    } catch (error) {
+      setStatus("error");
+      setMessage(
+        error instanceof Error ? error.message : "The practice documents could not be added.",
+      );
     }
   }
 
@@ -80,25 +172,43 @@ export function DocumentUploader({ sessionId }: { sessionId: string }) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground">
-          Want to try practice files?
-        </span>
-        <Button asChild type="button" variant="outline" size="sm">
-          <Link href="/api/readiness/demo-documents/hh-002_d03_pay_stub.pdf" prefetch={false}>
-            <DownloadIcon className="h-3.5 w-3.5" />
-            Sample pay statement
-          </Link>
-        </Button>
-        <Button asChild type="button" variant="outline" size="sm">
-          <Link
-            href="/api/readiness/demo-documents/hh-003_d04_benefit_letter.pdf"
-            prefetch={false}
+      <div className="rounded-xl border border-border bg-muted/15 p-4">
+        <p className="text-sm font-bold">Try a complete practice household</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Add four synthetic documents together, then review and confirm what RealDoor found.
+        </p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label htmlFor="sample-household" className="sr-only">
+            Practice household
+          </label>
+          <select
+            id="sample-household"
+            value={sampleId}
+            onChange={(event) => setSampleId(event.target.value as typeof sampleId)}
+            disabled={status === "uploading"}
+            className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            <DownloadIcon className="h-3.5 w-3.5" />
-            Sample benefit letter
-          </Link>
-        </Button>
+            {sampleHouseholds.map((sample) => (
+              <option key={sample.id} value={sample.id}>
+                {sample.label}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={loadSampleHousehold}
+            disabled={status === "uploading"}
+          >
+            {status === "uploading" ? (
+              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileStackIcon className="h-4 w-4" />
+            )}
+            Add practice set
+          </Button>
+        </div>
       </div>
 
       {status !== "idle" ? (

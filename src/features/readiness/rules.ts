@@ -1,15 +1,70 @@
-import { APPLICATION_CHECKLISTS, FROZEN_RULES, MTSP_LIMITS_2026, QA_GOLD } from "./corpus";
+import { FROZEN_RULES, MTSP_LIMITS_2026, QA_GOLD } from "./corpus";
 import type { RulePack, SourceCitation } from "./domain";
+import { hasOpenableSourceUrl } from "./source-url";
 
-const RULE_SOURCES: SourceCitation[] = FROZEN_RULES.map((rule) => ({
-  id: rule.ruleId,
-  title: rule.sourceLocator,
-  url: rule.sourceUrl,
-  passage: rule.text,
-  locator: rule.sourceLocator,
-  effectiveDate: rule.effectiveDate,
-  authority: rule.authority,
-}));
+export { hasOpenableSourceUrl } from "./source-url";
+
+function externalSourceUrl(url: string): string {
+  return hasOpenableSourceUrl(url) ? url.trim() : "";
+}
+
+/** Human label for an official source URL (not a page pin). */
+function sourceNameFromUrl(url: string): string | null {
+  if (!url) return null;
+  if (url.includes("HERA-Income-Limits-Report")) return "HERA Income Limits Report (FY 2026)";
+  if (url.includes("/datasets/mtsp")) return "HUD MTSP income limits";
+  if (url.includes("lihtc/property")) return "HUD LIHTC property data";
+  if (url.includes("LIHTC/FeatureServer") || (url.includes("arcgis") && url.includes("LIHTC"))) {
+    return "HUD LIHTC property layer";
+  }
+  if (url.includes("uscode.house.gov")) return "U.S. Code";
+  if (url.includes("ecfr.gov")) return "eCFR";
+  try {
+    return new URL(url).hostname.replace(/^www\./u, "");
+  } catch {
+    return null;
+  }
+}
+
+/** Normalize "PDF page 130" → "page 130"; leave other locators as-is. */
+function formatSourceLocator(locator: string): string {
+  const pageMatch = locator.trim().match(/^(?:PDF\s+)?page\s+(\d+)$/iu);
+  if (pageMatch) return `page ${pageMatch[1]}`;
+  return locator.trim();
+}
+
+/**
+ * Button/dialog title: source name first, optional page/pin after.
+ * e.g. "HERA Income Limits Report (FY 2026) · page 130"
+ */
+export function formatSourceCitationTitle(url: string, locator: string): string {
+  const pin = formatSourceLocator(locator);
+  const name = sourceNameFromUrl(url);
+
+  // Legal cites already name the source.
+  if (/^\d+\s+U\.S\.C\.|^\d+\s+CFR/iu.test(pin)) {
+    return pin;
+  }
+
+  if (name && pin && !name.toLocaleLowerCase("en-US").includes(pin.toLocaleLowerCase("en-US"))) {
+    return `${name} · ${pin}`;
+  }
+  return name ?? pin;
+}
+
+const RULE_SOURCES: SourceCitation[] = FROZEN_RULES.map((rule) => {
+  const url = externalSourceUrl(rule.sourceUrl);
+  const locator = formatSourceLocator(rule.sourceLocator);
+  return {
+    id: rule.ruleId,
+    title: formatSourceCitationTitle(url, rule.sourceLocator),
+    url,
+    passage: rule.text,
+    locator,
+    effectiveDate: rule.effectiveDate,
+    authority: rule.authority,
+  };
+});
 
 export const AUTHORITATIVE_2026_RULE_PACK: RulePack = {
   id: "boston-cambridge-quincy-mtsp-2026-realdoor-v1",
@@ -24,6 +79,7 @@ export const AUTHORITATIVE_2026_RULE_PACK: RulePack = {
     MTSP_LIMITS_2026.map((limit) => [limit.householdSize, limit.incomeLimit60Percent]),
   ),
   calculationSourceIds: ["CH-INCOME-001", "HUD-MTSP-002", "CH-DECISION-001"],
+  // Full pack checklist: every document kind the frozen gold corpus uses.
   checklistRequirements: [
     {
       id: "application-summary",
@@ -46,6 +102,20 @@ export const AUTHORITATIVE_2026_RULE_PACK: RulePack = {
       maxAgeDays: 60,
       sourceId: "CH-READINESS-001",
     },
+    {
+      id: "benefit-letter",
+      label: "Benefit letter",
+      kind: "benefit_letter",
+      maxAgeDays: 60,
+      sourceId: "CH-READINESS-001",
+    },
+    {
+      id: "gig-income-corroboration",
+      label: "Gig income corroboration",
+      kind: "gig_income_corroboration",
+      maxAgeDays: 60,
+      sourceId: "CH-READINESS-001",
+    },
   ],
   sources: RULE_SOURCES,
 };
@@ -54,27 +124,10 @@ export function getRuleSource(id: string) {
   return RULE_SOURCES.find((source) => source.id === id);
 }
 
-const documentLabels: Record<string, string> = {
-  application_summary: "Application summary",
-  pay_stub: "Recent pay statement",
-  employment_letter: "Employment letter",
-  benefit_letter: "Benefit letter",
-  gig_income_corroboration: "Gig income corroboration",
-};
-
-export function getScenarioRulePack(householdId: string | null): RulePack {
-  const checklist = APPLICATION_CHECKLISTS.find((item) => item.household_id === householdId);
-  if (!checklist) return AUTHORITATIVE_2026_RULE_PACK;
-  return {
-    ...AUTHORITATIVE_2026_RULE_PACK,
-    checklistRequirements: checklist.required_document_types.map((kind) => ({
-      id: kind.replaceAll("_", "-"),
-      label: documentLabels[kind] ?? kind.replaceAll("_", " "),
-      kind: kind as RulePack["checklistRequirements"][number]["kind"],
-      maxAgeDays: 60,
-      sourceId: "CH-READINESS-001",
-    })),
-  };
+/** Full pack checklist for every session (all document kinds the corpus covers). */
+export function getScenarioRulePack(_householdId: string | null): RulePack {
+  void _householdId;
+  return AUTHORITATIVE_2026_RULE_PACK;
 }
 
 export type RuleAnswer = {
@@ -87,8 +140,10 @@ const prohibitedDecisionPattern =
   /\b(eligible|eligibility|qualif(?:y|ied|ication)|approv(?:e|al|ed)|deny|denial|rank|score|predict)\b/iu;
 const instructionAttackPattern =
   /\b(ignore (?:all |the )?(?:previous|prior) instructions|system prompt|reveal .{0,20}(?:prompt|secret)|upload (?:all|every))\b/iu;
-const crossHouseholdPattern = /\b(another|other) (?:applicant|household|renter).{0,40}(?:income|document|data)\b/iu;
-const protectedTraitPattern = /\b(infer|guess|predict).{0,40}(?:disability|immigration|race|ethnicity|religion|citizenship)\b/iu;
+const crossHouseholdPattern =
+  /\b(another|other) (?:applicant|household|renter).{0,40}(?:income|document|data)\b/iu;
+const protectedTraitPattern =
+  /\b(infer|guess|predict).{0,40}(?:disability|immigration|race|ethnicity|religion|citizenship)\b/iu;
 const vacancyPattern = /\b(?:vacan(?:cy|t)|unit available|available today|waitlist)\b/iu;
 const wrongYearPattern = /\b(?:use|apply).{0,30}2025.{0,30}(?:threshold|limit)\b/iu;
 
@@ -135,7 +190,8 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
   if (vacancyPattern.test(question) && !exactGoldAnswer) {
     return {
       status: "answered",
-      answer: "The HUD property dataset is a project inventory, not a current vacancy, rent, waitlist, or application-status feed.",
+      answer:
+        "The HUD property dataset is a project inventory, not a current vacancy, rent, waitlist, or application-status feed.",
       sourceIds: ["HUD-DATA-001"],
     };
   }
@@ -153,6 +209,25 @@ export function answerRuleQuestion(rawQuestion: string): RuleAnswer {
       status: "answered",
       answer: exactGoldAnswer.answer,
       sourceIds: [...exactGoldAnswer.rule_ids],
+    };
+  }
+
+  // Fuzzy topic matches for common renter questions that are not exact gold strings.
+  if (/\b(annual|annualiz|monthly income|times 12|×\s*12|pay frequency)\b/iu.test(question)) {
+    return {
+      status: "answered",
+      answer:
+        "Recurring gross income is annualized from the documented pay frequency: weekly × 52, biweekly × 26, semimonthly × 24, monthly × 12, or annual × 1. Independently documented recurring sources are summed. Protected traits and undocumented income are never inferred.",
+      sourceIds: ["CH-INCOME-001"],
+    };
+  }
+
+  if (/\b(60%|60 percent|income limit|threshold|mtsp)\b/iu.test(question)) {
+    return {
+      status: "answered",
+      answer:
+        "This session compares confirmed annualized income with the frozen FY 2026 60% MTSP limit for the Boston-Cambridge-Quincy area and household size. The comparison is numerical only and is not an eligibility decision.",
+      sourceIds: ["HUD-MTSP-002", "HUD-MTSP-001", "CH-DECISION-001"],
     };
   }
 

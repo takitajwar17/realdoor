@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import {
-  BotIcon,
-  DatabaseIcon,
-  LockKeyholeIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { BotIcon, DatabaseIcon, LockKeyholeIcon, Trash2Icon } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FROZEN_RULES } from "@/features/readiness/corpus";
+import { formatSourceCitationTitle } from "@/features/readiness/rules";
 
 export const metadata: Metadata = { title: "Data we use" };
 
@@ -107,16 +103,26 @@ export default function DataWeUsePage() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="border-b border-border/70 bg-muted/15 text-xs text-muted-foreground">
                 <tr>
-                  <th scope="col" className="px-4 py-3 font-semibold">Field</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Why it is read</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Source</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Where it can appear</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Field
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Why it is read
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Source
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Where it can appear
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70">
                 {fieldUses.map((field) => (
                   <tr key={field.label}>
-                    <th scope="row" className="px-4 py-3 font-semibold">{field.label}</th>
+                    <th scope="row" className="px-4 py-3 font-semibold">
+                      {field.label}
+                    </th>
                     <td className="px-4 py-3 text-muted-foreground">{field.purpose}</td>
                     <td className="px-4 py-3 text-muted-foreground">{field.source}</td>
                     <td className="px-4 py-3 text-muted-foreground">{field.effects}</td>
@@ -138,7 +144,9 @@ export default function DataWeUsePage() {
           <CardContent className="divide-y divide-border/70 p-0">
             {FROZEN_RULES.map((rule) => (
               <section key={rule.ruleId} className="space-y-1 px-5 py-4">
-                <h2 className="text-sm font-bold">{rule.ruleId} · {rule.sourceLocator}</h2>
+                <h2 className="text-sm font-bold">
+                  {rule.ruleId} · {formatSourceCitationTitle(rule.sourceUrl, rule.sourceLocator)}
+                </h2>
                 <p className="text-sm leading-6 text-muted-foreground">{rule.text}</p>
                 <p className="text-xs text-muted-foreground">
                   {rule.authority.replaceAll("_", " ")}
@@ -154,20 +162,90 @@ export default function DataWeUsePage() {
 }
 
 const fieldUses = [
-  { label: "Name and address", purpose: "Match documents to the same renter record.", source: "Application summary or supporting document", effects: "Profile, evidence trail, selected packet facts" },
-  { label: "Household size", purpose: "Select the matching 2026 household-size threshold.", source: "Application summary or renter entry", effects: "Threshold worksheet and packet" },
-  { label: "Application date", purpose: "Show when the application summary was prepared.", source: "Application summary", effects: "Checklist evidence and packet index" },
-  { label: "Pay date and pay-period dates", purpose: "Trace a pay statement and calculate its age.", source: "Pay statement", effects: "Checklist, evidence trail, packet" },
-  { label: "Pay frequency", purpose: "Choose the explicit annualization multiplier.", source: "Pay statement", effects: "Income worksheet and packet" },
-  { label: "Regular or weekly hours", purpose: "Show the hours used for recurring wages.", source: "Pay statement or employment letter", effects: "Income worksheet and evidence trail" },
-  { label: "Hourly rate", purpose: "Calculate documented recurring wages.", source: "Pay statement or employment letter", effects: "Income worksheet and packet" },
-  { label: "Gross pay", purpose: "Annualize recurring wages when frequency is explicit.", source: "Pay statement", effects: "Income worksheet, conflict review, packet" },
-  { label: "Net pay", purpose: "Keep the source record inspectable; it is not used in gross-income math.", source: "Pay statement", effects: "Profile and evidence trail only" },
-  { label: "Document date", purpose: "Calculate document age against the frozen as-of date.", source: "Employment or benefit letter", effects: "Checklist and packet" },
-  { label: "Monthly benefit and frequency", purpose: "Annualize an independently documented recurring benefit.", source: "Benefit letter", effects: "Income worksheet and packet" },
-  { label: "Statement month", purpose: "Identify the period covered by a gig statement.", source: "Gig statement", effects: "Checklist and evidence trail" },
-  { label: "Gross receipts", purpose: "Show documented recurring gig receipts under the frozen convention.", source: "Gig statement", effects: "Income worksheet, review state, packet" },
-  { label: "Platform fees", purpose: "Keep the source statement inspectable; fees do not silently change gross receipts.", source: "Gig statement", effects: "Profile and evidence trail only" },
+  {
+    label: "Name and address",
+    purpose: "Match documents to the same renter record.",
+    source: "Application summary or supporting document",
+    effects: "Profile, evidence trail, selected packet facts",
+  },
+  {
+    label: "Household size",
+    purpose: "Select the matching 2026 household-size threshold.",
+    source: "Application summary or renter entry",
+    effects: "Threshold worksheet and packet",
+  },
+  {
+    label: "Application date",
+    purpose: "Show when the application summary was prepared.",
+    source: "Application summary",
+    effects: "Checklist evidence and packet index",
+  },
+  {
+    label: "Pay date and pay-period dates",
+    purpose: "Trace a pay statement and calculate its age.",
+    source: "Pay statement",
+    effects: "Checklist, evidence trail, packet",
+  },
+  {
+    label: "Pay frequency",
+    purpose: "Choose the explicit annualization multiplier.",
+    source: "Pay statement",
+    effects: "Income worksheet and packet",
+  },
+  {
+    label: "Regular or weekly hours",
+    purpose: "Show the hours used for recurring wages.",
+    source: "Pay statement or employment letter",
+    effects: "Income worksheet and evidence trail",
+  },
+  {
+    label: "Hourly rate",
+    purpose: "Calculate documented recurring wages.",
+    source: "Pay statement or employment letter",
+    effects: "Income worksheet and packet",
+  },
+  {
+    label: "Gross pay",
+    purpose: "Annualize recurring wages when frequency is explicit.",
+    source: "Pay statement",
+    effects: "Income worksheet, conflict review, packet",
+  },
+  {
+    label: "Net pay",
+    purpose: "Keep the source record inspectable; it is not used in gross-income math.",
+    source: "Pay statement",
+    effects: "Profile and evidence trail only",
+  },
+  {
+    label: "Document date",
+    purpose: "Calculate document age against the frozen as-of date.",
+    source: "Employment or benefit letter",
+    effects: "Checklist and packet",
+  },
+  {
+    label: "Monthly benefit and frequency",
+    purpose: "Annualize an independently documented recurring benefit.",
+    source: "Benefit letter",
+    effects: "Income worksheet and packet",
+  },
+  {
+    label: "Statement month",
+    purpose: "Identify the period covered by a gig statement.",
+    source: "Gig statement",
+    effects: "Checklist and evidence trail",
+  },
+  {
+    label: "Gross receipts",
+    purpose: "Show documented recurring gig receipts under the frozen convention.",
+    source: "Gig statement",
+    effects: "Income worksheet, review state, packet",
+  },
+  {
+    label: "Platform fees",
+    purpose: "Keep the source statement inspectable; fees do not silently change gross receipts.",
+    source: "Gig statement",
+    effects: "Profile and evidence trail only",
+  },
 ] as const;
 
 function InfoCard({

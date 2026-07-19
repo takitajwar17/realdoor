@@ -54,7 +54,7 @@ const SignInPage = ({ email, redirectPath, isGoogleSSOEnabled }: SignInClientPro
   });
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email },
+    defaultValues: { email, password: "" },
   });
 
   const onSubmit = async (data: SignInSchema) => {

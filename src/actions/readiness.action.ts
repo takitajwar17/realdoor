@@ -185,14 +185,16 @@ export async function saveRuleQuestionAction(
       status: "success",
       message:
         answer.status === "answered"
-          ? "Answered from the saved practice guide."
-          : "The available guide does not support an answer to that question.",
+          ? "Answered from the frozen guide passages for this session."
+          : "The frozen guide does not support a safe answer to that question.",
+      answer: answer.answer,
+      sourceIds: answer.sourceIds,
     };
   } catch (error) {
     logger.warn("Readiness rule question failed", {
       errorName: error instanceof Error ? error.name : "UnknownError",
     });
-    return errorState("The question could not be saved. Try again.");
+    return errorState("The question could not be answered right now. Try again in a moment.");
   }
 }
 

@@ -14,6 +14,7 @@ import {
 
 import { updateDocumentIncludedAction } from "@/actions/readiness.action";
 import { PacketDownloadButton } from "@/components/readiness/packet-download-button";
+import { toChatMessages } from "@/components/readiness/readiness-chat-widget";
 import { ReadinessPageShell } from "@/components/readiness/readiness-page-shell";
 import { SourceCitationDialog } from "@/components/readiness/source-citation-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { getRuleSource } from "@/features/readiness/rules";
+import { hasOpenableSourceUrl } from "@/features/readiness/source-url";
 import {
   formatFactValue,
   getDocumentKindLabel,
@@ -72,6 +74,10 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
       current="prepare"
       title="Prepare your packet"
       description="See what is present, missing, or out of date. Choose what to include, preview the packet, and download it yourself. RealDoor never sends it for you."
+      chatMessages={toChatMessages(workspace.questions)}
+      chatSources={workspace.rulePack.sources}
+      ruleVersion={workspace.rulePack.version}
+      ruleEffectiveDate={workspace.rulePack.effectiveDate}
       actions={
         <Button asChild variant="outline">
           <Link href={`/dashboard/${appId}/understand`}>
@@ -80,6 +86,42 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
         </Button>
       }
     >
+      <Card
+        className={cn(
+          "rounded-xl shadow-[var(--shadow-dashboard)]",
+          workspace.reviewReadiness.status === "ready"
+            ? "border-status-success/30 bg-status-success/5"
+            : "border-status-warning/30 bg-status-warning/5",
+        )}
+      >
+        <CardContent className="flex items-start gap-3 p-5">
+          {workspace.reviewReadiness.status === "ready" ? (
+            <CheckCircle2Icon className="mt-0.5 h-5 w-5 shrink-0 text-status-success" />
+          ) : (
+            <AlertCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-status-warning" />
+          )}
+          <div>
+            <p className="font-bold">
+              {workspace.reviewReadiness.status === "ready"
+                ? "Ready for human review"
+                : "Needs review before you download"}
+            </p>
+            {workspace.reviewReadiness.reasons.length > 0 ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {workspace.reviewReadiness.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                The supplied evidence is current, consistent, and traceable. This is an organization
+                check—not an eligibility decision.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <section className="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
@@ -117,7 +159,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                           ? " · no age window in this practice guide"
                           : ` · ${item.maxAgeDays}-day practice window`}
                       </p>
-                      {source ? (
+                      {source && hasOpenableSourceUrl(source.url) ? (
                         <div className="mt-2">
                           <SourceCitationDialog
                             source={source}

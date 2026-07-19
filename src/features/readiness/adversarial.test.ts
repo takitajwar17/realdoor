@@ -65,7 +65,7 @@ describe("supplied adversarial acceptance cases", () => {
         break;
       }
       default:
-        throw new Error(`Unhandled adversarial category: ${test.category}`);
+        throw new Error("Unhandled adversarial category");
     }
   });
 });

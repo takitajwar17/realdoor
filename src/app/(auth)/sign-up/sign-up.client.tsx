@@ -97,7 +97,7 @@ const SignUpPage = ({
       fullName: "",
       password: "",
       captchaToken: "",
-      agreeToTerms: undefined as unknown as true,
+      agreeToTerms: false as unknown as true,
     },
   });
 

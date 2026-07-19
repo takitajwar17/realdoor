@@ -5,6 +5,7 @@ import {
   buildAuditEntry,
   calculateIncomeComparison,
   deriveChecklist,
+  deriveReviewReadiness,
   detectFactConflicts,
   summarizeConfirmedIncome,
   type ConfirmedFact,
@@ -64,6 +65,43 @@ describe("frozen annualization and threshold comparison", () => {
     expect(conflicts).toEqual(["gross_pay"]);
   });
 
+  it("does not treat consecutive pay dates and net amounts as identity conflicts", () => {
+    const conflicts = detectFactConflicts(
+      DOCUMENT_GOLD.filter((document) => document.householdId === "HH-002").flatMap((document) =>
+        document.fields
+          .filter((field) => field.field !== "untrusted_instruction_text")
+          .map((field) => ({
+            key: field.field as ConfirmedFact["key"],
+            value: String(field.value),
+            confidence: 1,
+            sourceQuote: String(field.value),
+            page: field.page,
+            status: "extracted" as const,
+          })),
+      ),
+    );
+    expect(conflicts).toEqual(["gross_pay"]);
+  });
+
+  it("moves a scenario to ready after its only pay-total conflict is resolved", () => {
+    expect(
+      deriveReviewReadiness({
+        conflicts: ["gross_pay"],
+        checklist: [],
+        expectedStatus: "NEEDS_REVIEW",
+        expectedReasons: ["PAY_STUB_TOTAL_CONFLICT"],
+      }).status,
+    ).toBe("needs_review");
+    expect(
+      deriveReviewReadiness({
+        conflicts: [],
+        checklist: [],
+        expectedStatus: "NEEDS_REVIEW",
+        expectedReasons: ["PAY_STUB_TOTAL_CONFLICT"],
+      }),
+    ).toEqual({ status: "ready", reasons: [] });
+  });
+
   it("abstains until an income source and household size are confirmed", () => {
     expect(summarizeConfirmedIncome([])).toMatchObject({
       status: "unresolved",
@@ -110,7 +148,20 @@ describe("frozen checklist arithmetic", () => {
       ],
       rules: AUTHORITATIVE_2026_RULE_PACK,
     });
-    expect(result.map((item) => item.state)).toEqual(["present", "unresolved", "expired"]);
+    expect(result.map((item) => item.state)).toEqual([
+      "present",
+      "unresolved",
+      "expired",
+      "missing",
+      "missing",
+    ]);
+    expect(result.map((item) => item.label)).toEqual([
+      "Application summary",
+      "Recent pay statement",
+      "Employment letter",
+      "Benefit letter",
+      "Gig income corroboration",
+    ]);
     expect(result[2]?.reason).toContain("95 days old");
     expect(result[2]?.reason).toContain("60-day window");
   });

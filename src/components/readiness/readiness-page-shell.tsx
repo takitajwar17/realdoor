@@ -3,9 +3,14 @@ import Link from "next/link";
 import { CheckIcon, CircleIcon } from "lucide-react";
 
 import { DeleteSessionDialog } from "@/components/readiness/delete-session-dialog";
+import {
+  ReadinessChatWidget,
+  type ReadinessChatMessage,
+} from "@/components/readiness/readiness-chat-widget";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import type { ReadinessSession } from "@/db/schema";
+import type { SourceCitation } from "@/features/readiness/domain";
 import { formatMetroLabel, formatProgramLabel } from "@/features/readiness/presentation";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +45,10 @@ export function ReadinessPageShell({
   actions,
   children,
   className,
+  chatMessages = [],
+  chatSources = [],
+  ruleVersion,
+  ruleEffectiveDate,
 }: {
   session: ReadinessSession;
   current: ReadinessStage;
@@ -48,6 +57,10 @@ export function ReadinessPageShell({
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  chatMessages?: ReadinessChatMessage[];
+  chatSources?: SourceCitation[];
+  ruleVersion?: string;
+  ruleEffectiveDate?: string;
 }) {
   const activeStep = current === "evidence" ? -1 : steps.findIndex(({ id }) => id === current);
 
@@ -156,6 +169,13 @@ export function ReadinessPageShell({
         </div>
         {children}
       </main>
+      <ReadinessChatWidget
+        sessionId={session.id}
+        initialMessages={chatMessages}
+        sources={chatSources}
+        ruleVersion={ruleVersion}
+        ruleEffectiveDate={ruleEffectiveDate}
+      />
     </>
   );
 }
