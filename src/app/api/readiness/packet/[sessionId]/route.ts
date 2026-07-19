@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { requireRouteSession } from "@/app/api/_utils/request-auth";
+import { CORPUS_AS_OF } from "@/features/readiness/corpus";
+import { summarizeConfirmedIncome } from "@/features/readiness/domain";
+import { renderReadinessPacket, type PacketModel } from "@/features/readiness/packet";
 import {
   formatFactValue,
   getDocumentKindLabel,
   getFactLabel,
 } from "@/features/readiness/presentation";
 import { getReadinessWorkspace, recordPacketDownloaded } from "@/features/readiness/server";
-
-function escapeHtml(value: string | number) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 export async function GET(
   request: Request,
@@ -28,91 +22,78 @@ export async function GET(
   try {
     const workspace = await getReadinessWorkspace(sessionId, auth.session.userId);
     const preview = new URL(request.url).searchParams.get("mode") === "preview";
-    const confirmedRows = workspace.confirmedFacts
-      .map(
-        (fact) =>
-          `<tr><th scope="row">${escapeHtml(getFactLabel(fact.key))}</th><td>${escapeHtml(formatFactValue(fact.key, fact.value))}</td></tr>`,
-      )
-      .join("");
-    const checklistRows = workspace.checklist
-      .map(
-        (item) =>
-          `<tr><th scope="row">${escapeHtml(item.label)}</th><td>${escapeHtml(item.state[0].toUpperCase() + item.state.slice(1))}</td><td>${escapeHtml(item.reason)}</td></tr>`,
-      )
-      .join("");
-    const documentItems = workspace.documents
-      .filter((document) => document.included)
-      .map(
-        (document) =>
-          `<li>${escapeHtml(document.payload.name)} — ${escapeHtml(getDocumentKindLabel(document.kind))}</li>`,
-      )
-      .join("");
-    const comparison =
-      workspace.comparison.status === "complete"
-        ? `<p><strong>Confirmed annual income:</strong> $${escapeHtml(workspace.comparison.annualIncome.toLocaleString("en-US"))}</p>
-         <p><strong>Practice 60% benchmark:</strong> $${escapeHtml(workspace.comparison.incomeLimit.toLocaleString("en-US"))}</p>
-         <p><strong>Arithmetic:</strong> <code>${escapeHtml(workspace.comparison.formula)}</code></p>`
-        : `<p><strong>Unresolved:</strong> ${escapeHtml(workspace.comparison.reason)}</p>`;
+    const documentById = new Map(workspace.documents.map((document) => [document.id, document]));
+    const income = summarizeConfirmedIncome(workspace.confirmedFacts);
+    const comparison = workspace.comparison;
+    const model: PacketModel = {
+      sessionId: workspace.session.id,
+      revision: workspace.session.revision,
+      generatedAt: `${workspace.session.updatedAt.toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: CORPUS_AS_OF.timezone,
+      })} ${CORPUS_AS_OF.timezone}`,
+      metro: workspace.session.metro,
+      program: workspace.session.program,
+      asOfDate: workspace.session.asOfDate,
+      timezone: CORPUS_AS_OF.timezone,
+      ruleVersion: workspace.rulePack.version,
+      ruleEffectiveDate: workspace.rulePack.effectiveDate,
+      facts: workspace.confirmedFacts.map((fact) => {
+        const document = fact.documentId ? documentById.get(fact.documentId) : undefined;
+        return {
+          label: getFactLabel(fact.key),
+          value: formatFactValue(fact.key, fact.value),
+          source: document?.payload.name ?? "Entered by renter",
+          sourceQuote: fact.sourceQuote ?? null,
+          page: fact.page ?? null,
+        };
+      }),
+      worksheet:
+        comparison.status === "complete"
+          ? {
+              status: "complete",
+              annualIncome: comparison.annualIncome,
+              incomeLimit: comparison.incomeLimit,
+              difference: comparison.difference,
+              formula: `${income.components.map((component) => component.formula).join("; ")}. ${comparison.formula}`,
+            }
+          : { status: "unresolved", reason: comparison.reason },
+      checklist: workspace.checklist.map((item) => ({
+        label: item.label,
+        state: item.state[0]!.toUpperCase() + item.state.slice(1),
+        reason: item.reason,
+        sourceId: item.sourceId,
+      })),
+      documents: workspace.documents
+        .filter((document) => document.included)
+        .map((document) => ({
+          name: document.payload.name,
+          kind: getDocumentKindLabel(document.kind),
+          issuedOn: document.payload.issuedOn,
+        })),
+      questions: workspace.questions.map((question) => ({
+        question: question.payload.question,
+        answer: question.payload.answer,
+        sourceIds: JSON.parse(question.sourceIds) as string[],
+      })),
+      sources: workspace.rulePack.sources.map((source) => ({
+        id: source.id,
+        title: source.title,
+        url: source.url,
+        passage: source.passage,
+        locator: source.locator,
+      })),
+    };
+    const html = renderReadinessPacket(model);
 
-    const createdAt = `${new Date().toLocaleString("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-      timeZone: "UTC",
-    })} UTC`;
-    const packetMoment = preview ? `Preview generated ${createdAt}` : `Downloaded ${createdAt}`;
-    const packetFooter = preview
-      ? "Previewed by the renter. RealDoor does not auto-send documents or packet content."
-      : "Downloaded by the renter. RealDoor does not auto-send documents or packet content.";
-
-    const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RealDoor application-readiness packet</title>
-  <style>
-    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #172033; background: #f4f6f8; }
-    body { margin: 0; padding: 32px 16px; }
-    main { max-width: 850px; margin: auto; padding: 44px; background: white; border: 1px solid #dbe0e6; box-shadow: 0 10px 30px rgba(23,32,51,.08); }
-    h1 { margin: .25rem 0 .5rem; font-size: 2rem; letter-spacing: -.03em; }
-    h2 { margin-top: 2rem; padding-bottom: .5rem; border-bottom: 1px solid #dbe0e6; font-size: 1.05rem; }
-    p, li, td, th { font-size: .92rem; line-height: 1.55; }
-    .eyebrow { margin: 0; color: #596579; font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .notice { margin: 1.5rem 0; padding: 1rem; border: 1px solid #edc86c; background: #fff9e8; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: .65rem; border-bottom: 1px solid #e8ebef; text-align: left; vertical-align: top; }
-    th { width: 34%; }
-    code { white-space: normal; }
-    footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #dbe0e6; color: #596579; }
-    @media print { body { padding: 0; background: white; } main { border: 0; box-shadow: none; } }
-  </style>
-</head>
-<body>
-<main>
-  <header>
-    <p class="eyebrow">RealDoor application-readiness packet</p>
-    <h1>Boston LIHTC practice journey</h1>
-    <p>Renter-controlled summary · packet version ${escapeHtml(workspace.session.revision)} · ${escapeHtml(packetMoment)}</p>
-  </header>
-  <aside class="notice" aria-label="Important limitation"><strong>Not an eligibility decision.</strong> This packet uses clearly labeled practice values. It does not replace a property's requirements and has not been sent to anyone.</aside>
-  <section aria-labelledby="facts"><h2 id="facts">Renter-confirmed facts</h2><table><tbody>${confirmedRows || "<tr><td>No confirmed facts</td></tr>"}</tbody></table></section>
-  <section aria-labelledby="comparison"><h2 id="comparison">Cited arithmetic</h2>${comparison}</section>
-  <section aria-labelledby="checklist"><h2 id="checklist">Checklist states</h2><table><thead><tr><th scope="col">Item</th><th scope="col">State</th><th scope="col">Reason</th></tr></thead><tbody>${checklistRows}</tbody></table></section>
-  <section aria-labelledby="documents"><h2 id="documents">Documents selected for the packet</h2><ul>${documentItems || "<li>No documents selected</li>"}</ul></section>
-  <section aria-labelledby="sources"><h2 id="sources">Practice guide and sources</h2><p>${escapeHtml(workspace.rulePack.label)} · ${escapeHtml(workspace.rulePack.version)} · dated ${escapeHtml(workspace.rulePack.effectiveDate)}</p><ul>${workspace.rulePack.sources.map((source) => `<li><a href="${escapeHtml(source.url)}">${escapeHtml(source.title)}</a>: ${escapeHtml(source.passage)}</li>`).join("")}</ul></section>
-  <footer><p>${escapeHtml(packetFooter)}</p></footer>
-</main>
-</body>
-</html>`;
-
-    if (!preview) {
-      await recordPacketDownloaded(sessionId, auth.session.userId);
-    }
+    if (!preview) await recordPacketDownloaded(sessionId, auth.session.userId);
 
     return new Response(html, {
       headers: {
         "Cache-Control": "private, no-store",
         "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="realdoor-readiness-packet-${workspace.session.id.slice(-8)}.html"`,
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
         "Content-Type": "text/html; charset=utf-8",
         "X-Content-Type-Options": "nosniff",
       },

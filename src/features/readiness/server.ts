@@ -217,6 +217,12 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
       value: fact.payload.value,
       status: "confirmed",
       updatedAt: fact.updatedAt.toISOString(),
+      factId: fact.id,
+      documentId: fact.documentId,
+      sourceQuote: fact.payload.sourceQuote,
+      page: fact.payload.page,
+      box: fact.payload.box,
+      origin: fact.payload.origin,
     }));
 
   const extractedFacts: ExtractedFact[] = facts

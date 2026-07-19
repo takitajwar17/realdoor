@@ -46,6 +46,12 @@ export type ConfirmedFact = {
   value: string;
   status: "confirmed";
   updatedAt: string;
+  factId?: string;
+  documentId?: string | null;
+  sourceQuote?: string | null;
+  page?: number | null;
+  box?: EvidenceBox | null;
+  origin?: "extracted" | "manual";
 };
 
 export type SourceCitation = {
@@ -278,7 +284,7 @@ export function calculateIncomeComparison(input: {
   if (summary.status === "unresolved" || summary.annualIncome === null) {
     return {
       status: "unresolved",
-      reason: `Confirm ${summary.missing.join(", ").replaceAll("_", " ")} before comparing income.`,
+      reason: `Confirm ${summary.missing.map((key) => key.replaceAll("_", " ")).join(", ")} before comparing income.`,
       annualIncome: null,
       incomeLimit: null,
     };
@@ -301,7 +307,7 @@ export function calculateIncomeComparison(input: {
   if (typeof incomeLimit !== "number") {
     return {
       status: "unresolved",
-      reason: `No 2026 threshold is available for a household of ${householdSize}.`,
+      reason: `No practice income limit is available for a household of ${householdSize}.`,
       annualIncome: null,
       incomeLimit: null,
     };
@@ -385,7 +391,7 @@ export function deriveChecklist(input: {
         id: requirement.id,
         label: requirement.label,
         state: "missing",
-        reason: "Missing from this session.",
+        reason: "Not added to this session yet.",
         sourceId: requirement.sourceId,
         asOf: input.asOf,
         maxAgeDays: requirement.maxAgeDays,
@@ -397,7 +403,7 @@ export function deriveChecklist(input: {
         id: requirement.id,
         label: requirement.label,
         state: "unresolved",
-        reason: "Confirm the document type and date before this item can be used.",
+        reason: "Confirm the document type and date first.",
         sourceId: requirement.sourceId,
         asOf: input.asOf,
         maxAgeDays: requirement.maxAgeDays,
@@ -423,7 +429,7 @@ export function deriveChecklist(input: {
         id: requirement.id,
         label: requirement.label,
         state: "unresolved",
-        reason: "Present in this session, but its issue date is unresolved.",
+        reason: "Present, but the document date still needs confirmation.",
         sourceId: requirement.sourceId,
         asOf: input.asOf,
         maxAgeDays: requirement.maxAgeDays,
@@ -450,7 +456,7 @@ export function deriveChecklist(input: {
         id: requirement.id,
         label: requirement.label,
         state: "expired",
-        reason: `Dated ${document.issuedOn}; ${ageDays} days old on ${input.asOf} in America/New_York. The frozen guide uses a ${requirement.maxAgeDays}-day window (${ageDays} > ${requirement.maxAgeDays}).`,
+        reason: `Dated ${document.issuedOn}; ${ageDays} days old as of ${input.asOf}. This practice guide uses a ${requirement.maxAgeDays}-day window.`,
         sourceId: requirement.sourceId,
         asOf: input.asOf,
         maxAgeDays: requirement.maxAgeDays,
@@ -462,7 +468,7 @@ export function deriveChecklist(input: {
       id: requirement.id,
       label: requirement.label,
       state: "present",
-      reason: `Dated ${document.issuedOn}; ${ageDays} days old on ${input.asOf} in America/New_York (${ageDays} ≤ ${requirement.maxAgeDays}).`,
+      reason: `Dated ${document.issuedOn}; within the ${requirement.maxAgeDays}-day practice window as of ${input.asOf}.`,
       sourceId: requirement.sourceId,
       asOf: input.asOf,
       maxAgeDays: requirement.maxAgeDays,
