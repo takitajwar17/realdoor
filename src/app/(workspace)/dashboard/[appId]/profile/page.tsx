@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowRightIcon,
   CheckCircle2Icon,
+  ChevronDownIcon,
   ExternalLinkIcon,
   FileClockIcon,
   FileTextIcon,
@@ -125,9 +126,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                 {workspace.documents.map((document) => {
                   const meta = statusMeta[document.extractionStatus] ?? statusMeta.uploaded!;
                   return (
-                    <div key={document.id}>
-                      <div className="flex items-start justify-between gap-3 p-4">
-                        <div className="flex min-w-0 items-start gap-3">
+                    <details key={document.id} className="group">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                        <div className="flex min-w-0 items-center gap-3">
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/9 text-primary">
                             {document.extractionStatus === "processing" ? (
                               <FileClockIcon className="h-4 w-4" />
@@ -148,31 +149,42 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                             ) : null}
                           </div>
                         </div>
-                        <div className="flex shrink-0 flex-col items-end gap-2">
+                        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                           <Badge variant="outline" className={meta.className}>
                             {meta.label}
                           </Badge>
-                          <Button asChild variant="ghost" size="sm">
+                          <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
+                            Details
+                          </span>
+                          <ChevronDownIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                        </div>
+                      </summary>
+                      <div className="border-t border-border/70 bg-muted/10">
+                        <div className="flex items-center justify-between gap-3 px-4 pt-4">
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            Review the original file before confirming its details.
+                          </p>
+                          <Button asChild variant="outline" size="sm">
                             <Link
                               href={`/api/readiness/documents/${document.id}?sessionId=${appId}`}
                               target="_blank"
                               rel="noreferrer"
                               prefetch={false}
                             >
-                              Open <ExternalLinkIcon className="h-3.5 w-3.5" />
+                              Open document <ExternalLinkIcon className="h-3.5 w-3.5" />
                             </Link>
                           </Button>
                         </div>
+                        <DocumentControls
+                          key={`${document.id}:${document.kind}:${document.payload.issuedOn ?? ""}`}
+                          sessionId={appId}
+                          documentId={document.id}
+                          kind={document.kind}
+                          issuedOn={document.payload.issuedOn}
+                          confirmed={document.metadataConfirmed}
+                        />
                       </div>
-                      <DocumentControls
-                        key={`${document.id}:${document.kind}:${document.payload.issuedOn ?? ""}`}
-                        sessionId={appId}
-                        documentId={document.id}
-                        kind={document.kind}
-                        issuedOn={document.payload.issuedOn}
-                        confirmed={document.metadataConfirmed}
-                      />
-                    </div>
+                    </details>
                   );
                 })}
               </div>
