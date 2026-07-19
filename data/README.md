@@ -1,20 +1,30 @@
 # RealDoor Data
 
-## Required challenge data
+## Organizer challenge data
 
-The challenge brief requires a frozen 2026 MTSP corpus, synthetic household documents,
-gold extraction fields and source boxes, gold checklists, Q&A, and adversarial tests. These
-items are expected from the organizers and are not replaced by the public files below.
-
-Place the organizer pack under:
+The organizer-provided v1 starter pack is normalized under `organizer/v1/`. Its original ZIP
+and original contents checksum manifest are preserved unchanged under `organizer/source/`.
+The pack is the challenge source for the frozen 2026 MTSP corpus, synthetic household
+documents, gold extraction fields and source boxes, checklists, Q&A, and adversarial tests.
 
 ```text
 data/organizer/
-├── documents/
-├── gold/
-├── rules/2026/
-└── tests/
+├── source/             # immutable organizer ZIP and original checksums
+└── v1/                 # normalized, ready-to-use pack
+    ├── data/
+    ├── evaluation/
+    ├── governance/
+    ├── participant-guide/
+    ├── rules/
+    ├── starter/
+    └── synthetic_documents/
 ```
+
+The normalized copy excludes generated Python bytecode and one redundant copy of the gold
+document schema. The canonical schema is
+`organizer/v1/synthetic_documents/gold/field_schema.json`; the original pack remains fully
+recoverable from the source ZIP. See `manifests/organizer-v1-quality.md` for validation and
+overlap findings.
 
 ## Public reference data
 
@@ -33,7 +43,8 @@ data/organizer/
 - `processed/discover/lihtc-properties-data.csv`: Application-ready Discover dataset with
   55,345 property records and 80 columns. This was exported from the current HUD workbook.
 
-The original archives and workbooks remain unchanged under `raw/` and `extracted/`.
+The manually downloaded archives and workbooks remain unchanged under `raw/` and `extracted/`.
+They are intentionally isolated from the organizer pack so source provenance is never lost.
 
 Do not use LIHTC property records as evidence of vacancies, open waitlists, current rents,
 or applicant acceptance. Do not use any public dataset to infer protected traits or rank
@@ -45,7 +56,7 @@ Profiled on 2026-07-19 at one row per HUD project record:
 
 | Check | Result | Product implication |
 | --- | ---: | --- |
-| Rows / columns | 55,345 / 80 | National source file; organizer metro subset is still required. |
+| Rows / columns | 55,345 / 80 | National reference source; use the organizer subset for challenge flows. |
 | Missing or duplicate `hud_id` | 0 / 0 | Use `hud_id` as the record identity. |
 | Exact duplicate rows | 0 | No exact-row deduplication is needed. |
 | Missing street address | 1.42% | Show an explicit missing-address state. |
