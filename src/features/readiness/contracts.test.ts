@@ -61,7 +61,7 @@ describe("readiness request contracts", () => {
       documentMetadataSchema.safeParse({
         sessionId: "rds_abc123",
         documentId: "rdd_doc123",
-        kind: "passport",
+        kind: "tax_return",
         issuedOn: "not-a-date",
       }).success,
     ).toBe(false);

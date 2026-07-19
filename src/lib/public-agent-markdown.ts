@@ -12,11 +12,11 @@ export interface MarkdownPayload {
 }
 
 const homepageHowItWorksSteps = [
-  "Check passports, forms, bank statements, letters, bookings, and photos in one queue.",
-  "Spot missing files, unreadable scans, stale statements, and mismatched details.",
-  "Give each reviewer a case owner, open issues, and the next client fix.",
-  "Turn review notes into a client list: upload this, replace that, clarify this date.",
-  "Request pilot access or book an agency demo.",
+  "Upload synthetic household documents such as pay statements and benefits letters.",
+  "Confirm only allowlisted facts with source evidence before anything is reused.",
+  "See cited program rules and deterministic income math—never an eligibility decision.",
+  "Build a checklist-aware, renter-controlled packet you can preview, download, and delete.",
+  "Create a free account to start a private practice session.",
 ] as const;
 
 export function countEstimatedMarkdownTokens(markdown: string): string {
@@ -52,11 +52,12 @@ function createFrontmatter(input: {
 function buildHomepageMarkdown(): MarkdownPayload {
   const body = [
     createFrontmatter({
-      title: "RealDoor Agency",
-      description: "Visa file review for agency desks handling passports, forms, statements, and client fixes.",
+      title: "RealDoor",
+      description:
+        "Application-readiness copilot that turns household documents into confirmed facts, cited rules, and a renter-controlled packet.",
       canonicalPath: "/",
     }),
-    "# RealDoor Agency",
+    "# RealDoor",
     ...homepageHowItWorksSteps.map((step, index) => `${index + 1}. ${step}`),
     "## Key links",
     `- Login: ${toAbsoluteUrl("/sign-in")}`,

@@ -2,7 +2,7 @@ import type { Route } from "next";
 
 export const SITE_NAME = "RealDoor";
 export const SITE_DESCRIPTION =
-  "AI visa review software for agencies: check client documents, spot missing requirements, manage cases, and send clear follow-ups before submission.";
+  "Application-readiness copilot for affordable housing: confirm document facts, show cited rules and deterministic math, and export a renter-controlled packet—without deciding eligibility.";
 export const CANONICAL_SITE_URL = "https://hacknation.tajwaruzzaman.workers.dev";
 export const CANONICAL_SITE_DOMAIN = "hacknation.tajwaruzzaman.workers.dev";
 export const OPEN_GRAPH_IMAGE_PATH = "/og_image.png";

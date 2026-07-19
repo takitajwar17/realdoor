@@ -88,7 +88,7 @@ export default function Home() {
 
           <nav className="relative z-20 flex items-center justify-between px-4 py-4 sm:px-6 md:px-12 lg:px-20">
             <Link
-              aria-label="RealDoor Agency home"
+              aria-label="RealDoor home"
               className="public-landing-ink flex items-center"
               href="/"
             >

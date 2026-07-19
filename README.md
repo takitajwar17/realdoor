@@ -1,6 +1,6 @@
 <div align="center">
   <h1>RealDoor</h1>
-  <p><strong>A production-ready SaaS built on the Edge with Next.js 16 and Cloudflare Workers</strong></p>
+  <p><strong>Application-readiness copilot for affordable housing — Next.js 16 on Cloudflare Workers</strong></p>
   
   <p>
     <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js 16" /></a>
@@ -14,22 +14,27 @@
 
 ## Overview
 
-RealDoor is an intelligent platform designed to help users prepare, evaluate, and perfect their visa applications. Built as a high-performance Edge application, it runs entirely on Cloudflare Workers using OpenNext.
+RealDoor helps renters prepare an affordable-housing application packet without deciding eligibility. Built as a high-performance Edge application, it runs on Cloudflare Workers using OpenNext.
 
-The platform provides users with **smart document checklists**, **AI-powered readiness evaluations**, and an **expert chatbot (Atlas)** to analyze their documents, highlight risks, and suggest improvements before they apply for their visas.
+The product walks a renter through one continuous journey:
+
+1. **Profile** — upload synthetic household documents, extract allowlisted fields with evidence, and require confirmation before reuse.
+2. **Understand** — show cited practice rules and deterministic income math (no pass/fail or eligibility labels).
+3. **Prepare** — compare against a checklist, preview/edit packet contents, download, and delete the session on demand.
+
+RealDoor extracts, explains, calculates, and prepares. The renter confirms. A qualified human decides.
 
 Production deploys are triggered from GitHub Actions on pushes to `main`.
 
 ## Core Features
 
-- **Robust Authentication:** Email/Password and Google OAuth, powered by Lucia Auth.
-- **Multi-tenancy & Teams:** Team-based architecture with system/custom roles, JSON-stored granular permissions, and complete tenant isolation.
-- **AI-Powered Visa Tools:**
-  - **Smart Checklists:** Dynamically generated document requirements based on destination and visa type.
-  - **AI Evaluation:** Automated document review scoring, risk factor identification, and actionable recommendations.
-  - **Atlas Chat:** An AI assistant that knows the user's specific application and documents, ready to answer questions and provide interview tips.
-- **Admin Support Desk:** A built-in ticketing system for user inquiries and enterprise leads.
-- **Edge Native:** Runs globally on Cloudflare Workers, utilizing D1 (SQLite), KV (Sessions/Caching), and R2 (File Storage).
+- **Renter readiness workspace:** Profile → Understand → Prepare with a visible evidence trail.
+- **Confirmation before propagation:** Extracted values stay unconfirmed until the renter accepts, corrects, or removes them.
+- **Cited rules and deterministic math:** Practice-guide answers and income comparisons with formulas, sources, and effective dates—never eligibility scores.
+- **Renter-controlled packet:** Preview, include/exclude documents, download HTML, and delete the session. Nothing is auto-sent.
+- **Privacy by design:** Encrypted session payloads, field allowlists, synthetic-document practice path, audit actions without raw document contents.
+- **Authentication:** Email/password and Google OAuth with verified-email gating and KV-backed sessions.
+- **Edge native:** Cloudflare Workers with D1 (SQLite), KV (sessions/cache), and R2 (document storage).
 
 ## Tech Stack
 
@@ -37,8 +42,8 @@ Production deploys are triggered from GitHub Actions on pushes to `main`.
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router, React Server Components)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Components:** [Shadcn UI](https://ui.shadcn.com/) (built on Radix UI) & HeroUI
-- **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) (client state) & [NUQS](https://nuqs.47ng.com/) (URL search params)
+- **Components:** [Shadcn UI](https://ui.shadcn.com/) (built on Radix UI)
+- **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) for client session state
 - **Emails:** [React Email](https://react.email/)
 
 ### Backend & Infrastructure
@@ -46,7 +51,7 @@ Production deploys are triggered from GitHub Actions on pushes to `main`.
 - **Deployment:** [OpenNext](https://opennext.js.org/) on Cloudflare Workers
 - **Database:** Cloudflare D1 (Serverless SQLite) with [Drizzle ORM](https://orm.drizzle.team/)
 - **Storage:** Cloudflare R2 (Object Storage) & Cloudflare KV (Key-Value)
-- **Authentication:** Lucia Auth + KV-based session management
+- **Authentication:** Custom session auth (Lucia-style) + KV-based session management
 
 ---
 
@@ -66,8 +71,8 @@ The repo includes `.nvmrc` and `package.json` `engines` to document the expected
 ### 1. Clone & Install dependencies
 
 ```bash
-git clone https://github.com/your-username/vdc-mvp.git
-cd vdc-mvp
+git clone https://github.com/your-username/realdoor.git
+cd realdoor
 corepack enable
 # Optional, if you use nvm:
 nvm use
