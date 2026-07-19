@@ -39,7 +39,14 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
     confirmReadinessFactAction,
     INITIAL_READINESS_ACTION_STATE,
   );
-  const isNumeric = item.key.includes("income") || item.key === "household_size";
+  const numericKeys = new Set([
+    "household_size", "regular_hours", "weekly_hours", "hourly_rate", "gross_pay",
+    "net_pay", "monthly_benefit", "gross_receipts", "platform_fees",
+  ]);
+  const moneyKeys = new Set([
+    "hourly_rate", "gross_pay", "net_pay", "monthly_benefit", "gross_receipts", "platform_fees",
+  ]);
+  const isNumeric = numericKeys.has(item.key);
   const confidence = item.confidence === null ? null : Math.round(item.confidence * 100);
   const confidenceLabel =
     confidence === null ? "Entered by you" : confidence >= 90 ? "Clear reading" : "Review closely";
@@ -51,8 +58,8 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
         <input type="hidden" name="factId" value={item.id} />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              Profile field
+            <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              Field
             </p>
             <h3 className="mt-1 text-base font-bold">{getFactLabel(item.key)}</h3>
           </div>
@@ -62,7 +69,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
                 variant="outline"
                 className="border-destructive/25 bg-destructive/8 text-destructive"
               >
-                Conflict · choose one
+                Values don&apos;t match
               </Badge>
             ) : null}
             <Badge
@@ -73,7 +80,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
                   : "border-primary/20 bg-primary/7 text-primary",
               )}
             >
-              {item.status === "confirmed" ? "Renter confirmed" : confidenceLabel}
+              {item.status === "confirmed" ? "Confirmed by you" : confidenceLabel}
             </Badge>
           </div>
         </div>
@@ -81,7 +88,7 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
         <div className="space-y-2">
           <Label htmlFor={`fact-${item.id}`}>Value to confirm</Label>
           <div className="relative">
-            {item.key.includes("income") ? (
+            {moneyKeys.has(item.key) ? (
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
                 $
               </span>
@@ -94,13 +101,13 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
               type={isNumeric ? "number" : "text"}
               min={isNumeric ? 0 : undefined}
               step={
-                item.key.includes("income")
+                moneyKeys.has(item.key)
                   ? "0.01"
                   : item.key === "household_size"
                     ? "1"
                     : undefined
               }
-              className={item.key.includes("income") ? "pl-7" : undefined}
+              className={moneyKeys.has(item.key) ? "pl-7" : undefined}
             />
           </div>
           <p className="text-xs text-muted-foreground">
@@ -138,11 +145,11 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
       <div className="border-t border-border/70 bg-muted/18 p-5 lg:border-l lg:border-t-0">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              Document evidence
+            <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              Source
             </p>
             <p className="mt-1 text-sm font-semibold">
-              {item.documentName ?? "Manual renter entry"}
+              {item.documentName ?? "Entered by you"}
             </p>
           </div>
           {item.documentId ? (
@@ -162,42 +169,25 @@ export function FactReviewCard({ item, sessionId }: { item: FactReviewItem; sess
 
         {item.sourceQuote ? (
           <>
-            <div className="relative mt-4 aspect-[4/2.4] overflow-hidden rounded-lg border border-border bg-background shadow-inner">
-              <div className="absolute inset-x-5 top-5 space-y-2" aria-hidden="true">
-                <span className="block h-2 w-1/2 rounded bg-muted" />
-                <span className="block h-2 w-5/6 rounded bg-muted" />
-                <span className="block h-2 w-3/4 rounded bg-muted" />
-                <span className="block h-2 w-2/3 rounded bg-muted" />
-              </div>
-              {item.box ? (
-                <span
-                  className="absolute rounded border-2 border-primary bg-primary/12 shadow-[0_0_0_2px_rgba(255,255,255,0.8)]"
-                  style={{
-                    left: `${item.box.x * 100}%`,
-                    top: `${item.box.y * 100}%`,
-                    width: `${item.box.width * 100}%`,
-                    height: `${Math.max(item.box.height * 100, 8)}%`,
-                  }}
-                  aria-label="Source location highlighted in the uploaded document"
-                />
-              ) : (
-                <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                  <FileSearchIcon className="h-5 w-5" />
-                </span>
-              )}
+            <div className="mt-4 rounded-lg border border-border bg-background p-4">
+              <div className="flex items-center gap-2 text-sm font-semibold"><FileSearchIcon className="h-4 w-4 text-primary" />Exact source location</div>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                {item.box
+                  ? `Page ${item.page ?? 1}; box ${Math.round(item.box.x * 100)}% from the left, ${Math.round(item.box.y * 100)}% from the top, ${Math.round(item.box.width * 100)}% wide, and ${Math.round(item.box.height * 100)}% high.`
+                  : "No document box is available. This value cannot be presented as document-located evidence."}
+              </p>
             </div>
             <blockquote className="mt-3 border-l-2 border-primary pl-3 text-xs leading-5 text-foreground">
               “{item.sourceQuote}”
             </blockquote>
-            <p className="mt-2 text-2xs font-medium text-muted-foreground">
-              {item.page ? `Page ${item.page}` : "Page unavailable"}
-              {confidence !== null ? ` · ${confidence}% reading confidence` : ""}
+            <p className="mt-2 text-xs text-muted-foreground">
+              {item.page ? `Page ${item.page}` : "From the document"}
+              {item.status === "confirmed" ? " · Confirmed by you" : ""}
             </p>
           </>
         ) : (
           <p className="mt-4 rounded-lg border border-dashed border-border p-4 text-xs leading-5 text-muted-foreground">
-            This fact was entered manually. It has no document evidence and is labeled that way
-            everywhere it appears.
+            You entered this value yourself. It is labeled that way wherever it appears.
           </p>
         )}
       </div>

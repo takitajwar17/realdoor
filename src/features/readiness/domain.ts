@@ -52,6 +52,7 @@ export type ConfirmedFact = {
   page?: number | null;
   box?: EvidenceBox | null;
   origin?: "extracted" | "manual";
+  confidence?: number | null;
 };
 
 export type SourceCitation = {

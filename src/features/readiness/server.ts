@@ -223,6 +223,7 @@ export async function getReadinessWorkspace(sessionId: string, userId: string) {
       page: fact.payload.page,
       box: fact.payload.box,
       origin: fact.payload.origin,
+      confidence: fact.confidence === null ? null : fact.confidence / 1000,
     }));
 
   const extractedFacts: ExtractedFact[] = facts

@@ -60,3 +60,24 @@ export function formatFactValue(key: string, value: string) {
 export function getDocumentKindLabel(kind: string) {
   return DOCUMENT_KIND_LABELS[kind as ReadinessDocument["kind"]] ?? "Other document";
 }
+
+/** Shorten stored geography labels for renter-facing chrome. */
+export function formatMetroLabel(metro: string) {
+  return metro
+    .replace(/\s+HUD Metro FMR Area$/u, "")
+    .replace(/\s+HMFA$/u, "")
+    .replace(/,\s*MA-NH$/u, ", MA-NH")
+    .trim();
+}
+
+/** Shorten stored program labels for renter-facing chrome. */
+export function formatProgramLabel(program: string) {
+  return program
+    .replace(/\bfrozen\s+/giu, "")
+    .replace(/\bMTSP\b/gu, "income limit")
+    .replace(/\bAMI\b/gu, "income limit")
+    .replace(/\s+practice comparison$/iu, "")
+    .replace(/\s+comparison$/iu, "")
+    .replace(/\s{2,}/gu, " ")
+    .trim();
+}

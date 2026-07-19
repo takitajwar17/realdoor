@@ -1,20 +1,36 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CheckIcon, CircleIcon, FlaskConicalIcon } from "lucide-react";
+import { CheckIcon, CircleIcon } from "lucide-react";
 
 import { DeleteSessionDialog } from "@/components/readiness/delete-session-dialog";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import type { ReadinessSession } from "@/db/schema";
+import { formatMetroLabel, formatProgramLabel } from "@/features/readiness/presentation";
 import { cn } from "@/lib/utils";
 
 type ReadinessStage = "profile" | "understand" | "prepare" | "evidence";
 
 const steps = [
-  { id: "profile", label: "Profile", description: "Confirm renter facts" },
-  { id: "understand", label: "Understand", description: "Inspect cited arithmetic" },
-  { id: "prepare", label: "Prepare", description: "Control the packet" },
+  { id: "profile", label: "Profile", description: "Confirm your facts" },
+  { id: "understand", label: "Understand", description: "See the math and rules" },
+  { id: "prepare", label: "Prepare", description: "Build your packet" },
 ] as const;
+
+const stageLabels: Record<ReadinessStage, string> = {
+  profile: "Profile",
+  understand: "Understand",
+  prepare: "Prepare",
+  evidence: "Activity",
+};
+
+function MetaSeparator() {
+  return (
+    <span aria-hidden="true" className="text-border">
+      ·
+    </span>
+  );
+}
 
 export function ReadinessPageShell({
   session,
@@ -39,33 +55,36 @@ export function ReadinessPageShell({
     <>
       <PageHeader
         items={[
-          { href: "/dashboard", label: "Journey" },
-          { href: `/dashboard/${session.id}/${current}`, label: title },
+          { href: "/dashboard", label: "Sessions" },
+          { href: `/dashboard/${session.id}/${current}`, label: stageLabels[current] },
         ]}
       />
       <div className="border-b border-border/70 bg-card/70 px-4 py-3 md:px-6">
-        <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 font-bold">
-              <FlaskConicalIcon className="h-3.5 w-3.5 text-amber-600" />
-              Practice journey
-            </span>
-            <span className="text-muted-foreground">{session.metro}</span>
-            <span className="text-muted-foreground">{session.program}</span>
-            <Badge
-              variant="outline"
-              className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300"
-            >
-              2026 · practice only
-            </Badge>
-            <span className="text-2xs text-muted-foreground">
-              Packet version {session.revision}
-            </span>
-            <span className="text-2xs text-muted-foreground">
-              Guide dated {session.ruleEffectiveDate} · checklist checked {session.asOfDate}
-            </span>
+        <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className="border-amber-500/25 bg-amber-500/6 text-amber-700 dark:text-amber-300"
+              >
+                Practice only
+              </Badge>
+              <p className="text-sm font-semibold text-foreground">
+                {formatProgramLabel(session.program)}
+              </p>
+              <span className="text-sm text-muted-foreground">{session.targetYear}</span>
+            </div>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5 text-muted-foreground">
+              <span className="min-w-0">{formatMetroLabel(session.metro)}</span>
+              <MetaSeparator />
+              <span>Guide {session.ruleEffectiveDate}</span>
+              <MetaSeparator />
+              <span>Checked {session.asOfDate}</span>
+            </p>
           </div>
-          <DeleteSessionDialog sessionId={session.id} />
+          <div className="shrink-0 sm:pt-0.5">
+            <DeleteSessionDialog sessionId={session.id} />
+          </div>
         </div>
       </div>
 
@@ -77,7 +96,7 @@ export function ReadinessPageShell({
       >
         {activeStep >= 0 ? (
           <nav
-            aria-label="Application readiness stages"
+            aria-label="Steps"
             className="rounded-xl border border-border/80 bg-card p-2 shadow-[var(--shadow-dashboard)]"
           >
             <ol className="grid gap-1 md:grid-cols-3">

@@ -22,7 +22,7 @@ export default async function SessionsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Sessions
         </h1>
-        <p className="max-w-3xl text-sm text-muted-foreground">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           Devices and browsers currently signed into your account.
         </p>
       </div>

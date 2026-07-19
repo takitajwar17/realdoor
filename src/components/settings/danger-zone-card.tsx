@@ -115,7 +115,7 @@ export function DangerZoneCard() {
             <span className="text-sm font-medium">Delete My Account</span>
             <p className="text-xs text-muted-foreground">
               Permanently delete your account and all data, including
-              readiness sessions, encrypted documents, confirmed facts, and evidence history.
+              readiness sessions, documents, confirmed facts, and activity history.
             </p>
           </div>
           <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -136,12 +136,9 @@ export function DangerZoneCard() {
                     It will delete:
                   </span>
                   <span className="block">
-                    • All readiness sessions, encrypted documents, facts, and rule questions
+                    • All readiness sessions, documents, facts, and questions
                     <br />
-                    • All uploaded files from cloud storage
-                    <br />
-                    • All chat history and generated review content
-                    <br />
+                    • All uploaded files
                     <br />
                     • Your account and profile information
                   </span>

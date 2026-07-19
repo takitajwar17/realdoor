@@ -47,7 +47,7 @@ export function AppSidebar({
   const base = sessionId ? `/dashboard/${sessionId}` : null;
 
   const navMain = [
-    { title: "Journey", url: "/dashboard", icon: LayoutDashboardIcon },
+    { title: "Sessions", url: "/dashboard", icon: LayoutDashboardIcon },
     ...(base
       ? [
           { title: "Profile", url: `${base}/profile`, icon: CircleUserRoundIcon },
@@ -86,7 +86,7 @@ export function AppSidebar({
       <SidebarContent className="gap-1.5">
         <NavMain
           items={navMain}
-          label="Application readiness"
+          label="This session"
           action={{ title: "New practice session", url: "/dashboard?new=1" }}
         />
         {secondaryItems.length > 0 ? (

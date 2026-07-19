@@ -87,8 +87,7 @@ export function DocumentControls({
           </div>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          RealDoor suggests these details. Confirm or correct them before the document can satisfy
-          your checklist.
+          Confirm or correct the type and date before this document can count on your checklist.
         </p>
         <ActionMessage state={detailsState} />
         <div className="flex flex-wrap items-center justify-between gap-2">

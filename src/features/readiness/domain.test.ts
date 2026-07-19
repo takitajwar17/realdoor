@@ -111,8 +111,8 @@ describe("frozen checklist arithmetic", () => {
       rules: AUTHORITATIVE_2026_RULE_PACK,
     });
     expect(result.map((item) => item.state)).toEqual(["present", "unresolved", "expired"]);
-    expect(result[2]?.reason).toContain("95 > 60");
-    expect(result[2]?.reason).toContain("America/New_York");
+    expect(result[2]?.reason).toContain("95 days old");
+    expect(result[2]?.reason).toContain("60-day window");
   });
 
   it("marks an absent required type missing", () => {

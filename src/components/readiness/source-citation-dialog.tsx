@@ -19,8 +19,8 @@ export function SourceCitationDialog({
   version,
   effectiveDate,
 }: {
-  source: { id: string; title: string; url: string; passage: string };
-  version: string;
+  source: { id: string; title: string; url: string; passage: string; locator?: string };
+  version?: string;
   effectiveDate: string;
 }) {
   return (
@@ -35,18 +35,18 @@ export function SourceCitationDialog({
         <DialogHeader>
           <DialogTitle>{source.title}</DialogTitle>
           <DialogDescription>
-            Practice guide {version} · dated {effectiveDate}
+            {source.id}{source.locator ? ` · ${source.locator}` : ""} · effective {effectiveDate}
+            {version ? ` · ${version}` : ""}
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-xl border border-border bg-muted/25 p-4">
-          <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            Passage used for this answer
+          <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Supporting passage
           </p>
           <p className="mt-2 text-sm leading-6">{source.passage}</p>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          This is the exact saved passage RealDoor used. Open the source to read it in its original
-          context.
+          This is the exact passage RealDoor used. Open the source to read it in full.
         </p>
         <Button asChild>
           <Link

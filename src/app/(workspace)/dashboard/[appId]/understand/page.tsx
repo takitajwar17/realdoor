@@ -18,11 +18,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { summarizeConfirmedIncome } from "@/features/readiness/domain";
+import { formatMetroLabel, formatProgramLabel } from "@/features/readiness/presentation";
 import { getRuleSource } from "@/features/readiness/rules";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
-export const metadata: Metadata = { title: "Understand · Application readiness" };
+export const metadata: Metadata = { title: "Understand" };
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -32,9 +33,11 @@ const money = new Intl.NumberFormat("en-US", {
 
 const factLabels: Record<string, string> = {
   household_size: "Household size",
-  employment_monthly_income: "Employment",
-  benefits_monthly_income: "Benefits",
-  other_monthly_income: "Other income",
+  weekly_hours: "Weekly hours",
+  hourly_rate: "Hourly rate",
+  monthly_benefit: "Monthly benefit",
+  gross_pay: "Gross pay",
+  regular_hours: "Regular hours",
 };
 
 export default async function UnderstandPage({ params }: { params: Promise<{ appId: string }> }) {
@@ -54,8 +57,8 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
     <ReadinessPageShell
       session={workspace.session}
       current="understand"
-      title="Understand the arithmetic and its limits"
-      description="Every number below comes from a fact you confirmed or the clearly labeled practice guide. The comparison is an explanation, not an application outcome."
+      title="Understand the math"
+      description="Every number below comes from a fact you confirmed or the practice guide. This is an explanation only—not an application decision."
       actions={
         <div className="flex gap-2">
           <Button asChild variant="outline">
@@ -72,9 +75,8 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
       }
     >
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/7 px-4 py-3 text-sm leading-6 text-amber-950 dark:text-amber-100">
-        <strong>For practice only:</strong> the official 2026 materials needed for a real
-        application are not included here. RealDoor does not substitute an older year. The values
-        below only let you practice the review process.
+        <strong>Practice only.</strong> These numbers help you practice the review process. They
+        are not official limits for a real application.
       </div>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
@@ -85,9 +87,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                 <CalculatorIcon className="h-5 w-5" />
               </span>
               <div>
-                <CardTitle className="text-base">
-                  How your income comparison was calculated
-                </CardTitle>
+                <CardTitle className="text-base">How your income comparison works</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Your confirmed monthly amounts → annual total → cited practice benchmark →
                   difference.
@@ -105,21 +105,21 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                     tone="primary"
                   />
                   <Metric
-                    label="Practice 60% benchmark"
+                    label="Practice 60% limit"
                     value={money.format(comparison.incomeLimit)}
                     tone="amber"
                   />
                   <Metric
-                    label="Arithmetic difference"
+                    label="Difference"
                     value={money.format(Math.abs(comparison.difference))}
-                    detail={`${comparison.relationship} the practice benchmark`}
+                    detail={`${comparison.relationship} the practice limit`}
                     tone="neutral"
                   />
                 </div>
 
                 <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Formula
+                  <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    How it was calculated
                   </p>
                   <p className="mt-2 font-mono text-sm font-semibold">{income.formula}</p>
                   <div className="my-4 flex items-center gap-3 text-muted-foreground">
@@ -140,16 +140,16 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                       >
                         <span className="text-muted-foreground">{factLabels[fact.key]}</span>
                         <span className="font-bold">
-                          {fact.key === "household_size"
+                          {fact.key === "household_size" || fact.key.includes("hours")
                             ? fact.value
-                            : `${money.format(Number(fact.value))} / month`}
+                            : money.format(Number(fact.value))}
                         </span>
                       </div>
                     ))}
                 </div>
 
                 <div>
-                  <p className="text-xs font-bold">Sources used</p>
+                  <p className="text-xs font-bold">Sources</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {comparison.sourceIds.map((sourceId) => {
                       const source = getRuleSource(sourceId);
@@ -166,16 +166,16 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-64 flex-col items-center justify-center text-center">
-                <ShieldAlertIcon className="h-7 w-7 text-status-warning" />
-                <h2 className="mt-3 text-base font-bold">Arithmetic remains unresolved</h2>
-                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+              <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
+                <ShieldAlertIcon className="h-6 w-6 text-status-warning" />
+                <p className="mt-3 text-sm font-bold">Comparison not ready yet</p>
+                <p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">
                   {comparison.status === "unresolved"
                     ? comparison.reason
-                    : "Confirm all four calculation inputs first."}
+                    : "Confirm household size and income facts in Profile first."}
                 </p>
                 <Button asChild className="mt-5">
-                  <Link href={`/dashboard/${appId}/profile`}>Review Profile inputs</Link>
+                  <Link href={`/dashboard/${appId}/profile`}>Back to Profile</Link>
                 </Button>
               </div>
             )}
@@ -197,14 +197,17 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
               present in this practice guide.
             </p>
             <div className="rounded-xl border border-border bg-muted/25 p-4">
-              <p className="text-2xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                Guide details
+              <p className="text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Practice guide in use
               </p>
               <dl className="mt-3 space-y-3 text-xs">
-                <ContextRow label="Program" value={workspace.rulePack.program} />
-                <ContextRow label="Metro" value={workspace.rulePack.metro} />
-                <ContextRow label="Version" value={workspace.rulePack.version} />
-                <ContextRow label="Guide date" value={workspace.rulePack.effectiveDate} />
+                <ContextRow
+                  label="Program"
+                  value={formatProgramLabel(workspace.rulePack.program)}
+                />
+                <ContextRow label="Area" value={formatMetroLabel(workspace.rulePack.metro)} />
+                <ContextRow label="Year" value={String(workspace.rulePack.year)} />
+                <ContextRow label="Dated" value={workspace.rulePack.effectiveDate} />
               </dl>
             </div>
           </CardContent>
@@ -217,9 +220,9 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
             <div className="flex items-start gap-3">
               <CircleHelpIcon className="mt-0.5 h-5 w-5 text-primary" />
               <div>
-                <CardTitle className="text-base">Ask a rule question</CardTitle>
+                <CardTitle className="text-base">Ask a question</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Answers use only the saved practice guide shown here.
+                  Answers come only from the practice guide in this session.
                 </p>
               </div>
             </div>
@@ -231,7 +234,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
 
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">Question history</CardTitle>
+            <CardTitle className="text-base">Your questions</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {workspace.questions.length > 0 ? (
@@ -258,9 +261,7 @@ export default async function UnderstandPage({ params }: { params: Promise<{ app
                             ) : null;
                           })
                         ) : (
-                          <Badge variant="outline">
-                            No answer shown · guide did not cover this
-                          </Badge>
+                          <Badge variant="outline">Not covered by the practice guide</Badge>
                         )}
                       </div>
                     </article>
@@ -298,7 +299,7 @@ function Metric({
         : "bg-muted/50 text-foreground";
   return (
     <div className={`rounded-xl border border-border p-4 ${className}`}>
-      <p className="text-xs font-semibold opacity-75">{label}</p>
+      <p className="text-2xs font-bold uppercase tracking-[0.12em] opacity-75">{label}</p>
       <p className="mt-1 text-2xl font-bold tracking-tight">{value}</p>
       {detail ? <p className="mt-1 text-xs opacity-70">{detail}</p> : null}
     </div>

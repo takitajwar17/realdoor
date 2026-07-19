@@ -66,16 +66,9 @@ export default function Footer({ className }: { className?: string }) {
             </Link>
 
             <div className="space-y-5">
-              <div
-                className="public-footer-status inline-flex w-fit items-center gap-2.5 rounded-[1rem] bg-background/66 px-4 py-2.5 text-base font-medium tracking-tight text-foreground/78 backdrop-blur-sm"
-                role="status"
-              >
-                <span
-                  className="public-footer-status-dot h-2.5 w-2.5 shrink-0 rounded-full"
-                  aria-hidden="true"
-                />
-                <span>All systems operational</span>
-              </div>
+              <p className="max-w-md text-base leading-7 text-foreground/78">
+                Confirm your documents, see the cited math, and download a packet you control.
+              </p>
 
               <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
                 {complianceBadges.map((item) => {

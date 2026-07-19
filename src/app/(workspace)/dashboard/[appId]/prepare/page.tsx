@@ -29,26 +29,26 @@ import {
 import { cn } from "@/lib/utils";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
-export const metadata: Metadata = { title: "Prepare · Application readiness" };
+export const metadata: Metadata = { title: "Prepare" };
 
 const checklistMeta = {
   present: {
-    label: "Present in session",
+    label: "Present",
     icon: CheckCircle2Icon,
     className: "border-status-success/25 bg-status-success/8 text-status-success",
   },
   missing: {
-    label: "Missing from session",
+    label: "Missing",
     icon: AlertCircleIcon,
     className: "border-status-warning/25 bg-status-warning/8 text-status-warning",
   },
   expired: {
-    label: "Expired per checklist",
+    label: "Out of date",
     icon: FileClockIcon,
     className: "border-destructive/25 bg-destructive/8 text-destructive",
   },
   unresolved: {
-    label: "Unresolved",
+    label: "Needs details",
     icon: FileQuestionIcon,
     className: "border-status-info/25 bg-status-info/8 text-status-info",
   },
@@ -70,8 +70,8 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
     <ReadinessPageShell
       session={workspace.session}
       current="prepare"
-      title="Prepare a renter-controlled packet"
-      description="Checklist states describe only what is present in this session. Choose what to include, preview the exact packet, and download it yourself. RealDoor never sends it."
+      title="Prepare your packet"
+      description="See what is present, missing, or out of date. Choose what to include, preview the packet, and download it yourself. RealDoor never sends it for you."
       actions={
         <Button asChild variant="outline">
           <Link href={`/dashboard/${appId}/understand`}>
@@ -83,9 +83,9 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
       <section className="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">Application checklist</CardTitle>
+            <CardTitle className="text-base">Document checklist</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Each item stays present, missing, expired, or unresolved—without a score.
+              Each item is present, missing, out of date, or needs details—without a score.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -111,8 +111,8 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                         </Badge>
                       </div>
                       <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.reason}</p>
-                      <p className="mt-1 text-2xs text-muted-foreground">
-                        Checked on {item.asOf}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        As of {item.asOf}
                         {item.maxAgeDays === null
                           ? " · no age window in this practice guide"
                           : ` · ${item.maxAgeDays}-day practice window`}
@@ -151,7 +151,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                       <p className="truncate text-sm font-bold">{document.payload.name}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {getDocumentKindLabel(document.kind)} ·{" "}
-                        {document.payload.issuedOn ?? "date unresolved"}
+                        {document.payload.issuedOn ?? "date not set"}
                       </p>
                     </div>
                     <form action={updateDocumentIncludedAction}>
@@ -174,9 +174,12 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                 ))}
               </div>
             ) : (
-              <div className="flex min-h-48 flex-col items-center justify-center p-6 text-center">
-                <FileArchiveIcon className="h-7 w-7 text-muted-foreground" />
+              <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
+                <FileArchiveIcon className="h-6 w-6 text-muted-foreground" />
                 <p className="mt-3 text-sm font-bold">No documents in this session</p>
+                <p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
+                  Add practice documents in Profile, then choose which ones appear here.
+                </p>
                 <Button asChild variant="outline" size="sm" className="mt-4">
                   <Link href={`/dashboard/${appId}/profile`}>Add documents in Profile</Link>
                 </Button>
@@ -191,7 +194,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
           <div>
             <CardTitle className="text-base">Packet preview</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              Exactly what your download will contain · version {workspace.session.revision}
+              Exactly what your download will contain
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -211,14 +214,14 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
         <CardContent className="p-5 md:p-7">
           <div className="mx-auto max-w-4xl rounded-sm border border-border bg-white p-6 text-slate-950 shadow-sm md:p-9 dark:bg-white dark:text-slate-950">
             <div className="border-b border-slate-200 pb-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                RealDoor application-readiness packet
+              <p className="text-2xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                RealDoor practice packet
               </p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight">
-                Boston LIHTC practice journey
+                Boston LIHTC practice summary
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                Renter-controlled summary · not submitted · not an eligibility decision
+                Controlled by you · not submitted · not an eligibility decision
               </p>
             </div>
 
@@ -257,9 +260,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
                     <p className="font-mono text-xs">{workspace.comparison.formula}</p>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">
-                    Unresolved: {workspace.comparison.reason}
-                  </p>
+                  <p className="text-sm text-slate-500">{workspace.comparison.reason}</p>
                 )}
               </PacketSection>
 
@@ -311,7 +312,7 @@ export default async function PreparePage({ params }: { params: Promise<{ appId:
 function PacketSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="mb-3 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-700">
+      <h3 className="mb-3 border-b border-slate-200 pb-2 text-2xs font-bold uppercase tracking-[0.12em] text-slate-700">
         {title}
       </h3>
       {children}

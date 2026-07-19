@@ -35,9 +35,9 @@ export function NavMain({
   const { setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const primaryAction = action ?? {
-    title: "New rehearsal",
+    title: "New practice session",
     url: "/dashboard?new=1",
-    tooltip: "New rehearsal",
+    tooltip: "New practice session",
   };
 
   return (

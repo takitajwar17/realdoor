@@ -47,10 +47,10 @@ export function StartSessionForm() {
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
             <Checkbox name="useSyntheticRehearsal" className="mt-0.5" />
             <span>
-              <span className="block text-sm font-semibold">Use the 2026 practice guide</span>
+              <span className="block text-sm font-semibold">Use practice values only</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                The official 2026 materials needed for a real application are not included here.
-                Practice values are clearly labeled and are not official limits.
+                This session uses clearly labeled practice numbers and documents—not official limits
+                for a real application.
               </span>
             </span>
           </label>

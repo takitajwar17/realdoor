@@ -17,7 +17,7 @@ export default async function SecurityPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Security
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           Password access and safeguards for your private workspace.
         </p>
       </div>

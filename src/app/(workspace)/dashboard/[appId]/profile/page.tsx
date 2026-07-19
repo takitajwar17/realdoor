@@ -19,34 +19,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FACT_STATUS } from "@/db/schema";
+import { getDocumentKindLabel } from "@/features/readiness/presentation";
 import { getReadinessWorkspace } from "@/features/readiness/server";
 import { requireVerifiedPageSession } from "@/utils/auth-page";
 
-export const metadata: Metadata = { title: "Profile · Application readiness" };
-
-const documentKindLabels: Record<string, string> = {
-  pay_stub: "Pay stub",
-  benefits_letter: "Benefits letter",
-  photo_id: "Photo ID",
-  bank_statement: "Bank statement",
-  other: "Other document",
-};
+export const metadata: Metadata = { title: "Profile" };
 
 const statusMeta: Record<string, { label: string; className: string }> = {
   uploaded: {
-    label: "Queued",
+    label: "Uploaded",
     className: "border-status-info/25 bg-status-info/8 text-status-info",
   },
   processing: {
-    label: "Extracting",
+    label: "Reading",
     className: "border-status-warning/25 bg-status-warning/8 text-status-warning",
   },
   ready: {
-    label: "Evidence ready",
+    label: "Ready to review",
     className: "border-status-success/25 bg-status-success/8 text-status-success",
   },
   failed: {
-    label: "Needs manual entry",
+    label: "Needs your input",
     className: "border-destructive/25 bg-destructive/8 text-destructive",
   },
 };
@@ -89,13 +82,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
     <ReadinessPageShell
       session={workspace.session}
       current="profile"
-      title="Build a renter-confirmed profile"
-      description="RealDoor suggests fields from each document, but does not treat them as true until you review them. Open the source, correct anything that is wrong, and confirm only what you recognize."
+      title="Confirm your facts"
+      description="RealDoor suggests values from your documents. Review each one, fix anything wrong, and confirm only what you recognize before it is used later."
       actions={
         <Button asChild>
           <Link href={`/dashboard/${appId}/understand`}>
-            Continue to Understand
-            <ArrowRightIcon className="h-4 w-4" />
+            Continue to Understand <ArrowRightIcon className="h-4 w-4" />
           </Link>
         </Button>
       }
@@ -103,9 +95,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
-            <CardTitle className="text-base">1. Add practice documents</CardTitle>
+            <CardTitle className="text-base">1. Add documents</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Download the built-in samples or upload your own practice PDF, JPEG, or PNG.
+              Download the samples or upload your own practice PDF, JPEG, or PNG.
             </p>
           </CardHeader>
           <CardContent className="p-5">
@@ -117,7 +109,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
           <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-base">Documents in this session</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Your original file is encrypted before it is saved.
+              Files stay private to this session and are never sent automatically.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -139,9 +131,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
                           <div className="min-w-0">
                             <p className="truncate text-sm font-bold">{document.payload.name}</p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {documentKindLabels[document.kind]} ·{" "}
-                              {document.payload.issuedOn ?? "date not confirmed"} ·{" "}
-                              {(document.sizeBytes / 1024).toFixed(0)} KB
+                              {getDocumentKindLabel(document.kind)} ·{" "}
+                              {document.payload.issuedOn ?? "date not set"}
                             </p>
                             {document.payload.extractionError ? (
                               <p className="mt-1 text-xs text-destructive">
@@ -182,7 +173,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
               <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
                 <FileTextIcon className="h-6 w-6 text-muted-foreground" />
                 <p className="mt-3 text-sm font-bold">No documents yet</p>
-                <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">
+                <p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
                   Start with the two practice PDFs to try the complete journey.
                 </p>
               </div>
@@ -196,12 +187,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
           <div className="flex items-start gap-3">
             <ShieldAlertIcon className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-base">
-                2. Confirm the facts used in the comparison
-              </CardTitle>
+              <CardTitle className="text-base">2. Enter or correct key facts</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                These four fields are the only values used in the practice calculation. Manual
-                entries are always labeled.
+                Add household size and income details here when they are missing or need a
+                correction. Values you enter are labeled as entered by you.
               </p>
             </div>
           </div>
@@ -214,12 +203,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">
-              3. Review every suggested field against its document
+            <h2 className="text-base font-bold tracking-tight text-foreground">
+              3. Review suggested values
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {visibleFacts.length} fact{visibleFacts.length === 1 ? "" : "s"} ready for review ·{" "}
-              {workspace.confirmedFacts.length} confirmed
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              {visibleFacts.length} to review · {workspace.confirmedFacts.length} confirmed
             </p>
           </div>
           {workspace.conflicts.length > 0 ? (
@@ -227,8 +215,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
               variant="outline"
               className="border-destructive/25 bg-destructive/8 text-destructive"
             >
-              {workspace.conflicts.length} unresolved conflict
-              {workspace.conflicts.length === 1 ? "" : "s"}
+              {workspace.conflicts.length} value
+              {workspace.conflicts.length === 1 ? "" : "s"} don&apos;t match
             </Badge>
           ) : null}
         </div>
@@ -240,12 +228,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ appId:
             ))}
           </div>
         ) : (
-          <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-10 text-center">
-            <CheckCircle2Icon className="h-7 w-7 text-muted-foreground" />
-            <h2 className="mt-3 text-base font-bold">No suggested fields to review</h2>
-            <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">
-              Upload a practice document, or enter the calculation inputs manually above. Nothing is
-              guessed when a document is missing.
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-10 text-center">
+            <CheckCircle2Icon className="h-6 w-6 text-muted-foreground" />
+            <p className="mt-3 text-sm font-bold">Nothing to review yet</p>
+            <p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">
+              Upload a document or enter key facts above. RealDoor does not invent missing values.
             </p>
           </div>
         )}

@@ -10,20 +10,20 @@ export default function PracticeSessionNotFound() {
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <FolderXIcon className="h-6 w-6" />
         </span>
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="mt-6 text-2xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
           Session unavailable
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           We couldn&apos;t open this practice session
         </h1>
         <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-          It may have been deleted, or it may belong to another account. Your other private sessions
-          are still available from your journey.
+          It may have been deleted, or it may belong to another account. Your other sessions are
+          still available.
         </p>
         <Button asChild className="mt-7">
           <Link href="/dashboard">
             <ArrowLeftIcon className="h-4 w-4" />
-            Back to your journey
+            Back to sessions
           </Link>
         </Button>
       </div>

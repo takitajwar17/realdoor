@@ -1,37 +1,33 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   BotIcon,
   DatabaseIcon,
-  ExternalLinkIcon,
-  FileWarningIcon,
   LockKeyholeIcon,
   Trash2Icon,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FROZEN_RULES } from "@/features/readiness/corpus";
 
-export const metadata: Metadata = { title: "Data we use · Application readiness" };
+export const metadata: Metadata = { title: "Data we use" };
 
 export default function DataWeUsePage() {
   return (
     <>
       <PageHeader
         items={[
-          { href: "/dashboard", label: "Journey" },
+          { href: "/dashboard", label: "Sessions" },
           { href: "/dashboard/data-we-use", label: "Data we use" },
         ]}
       />
-      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-5 px-4 py-5 md:px-6 md:py-6">
-        <div>
-          <Badge variant="outline" className="border-primary/20 bg-primary/7 text-primary">
-            Your data and sources
-          </Badge>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight">Data we use</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+      <main className="mx-auto flex w-full max-w-[1520px] flex-1 flex-col gap-5 px-4 py-5 md:px-6 md:py-6">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+            Data we use
+          </h1>
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             What enters your private application-readiness journey, how RealDoor uses it, what stays
             out, and how you remove it.
           </p>
@@ -41,83 +37,28 @@ export default function DataWeUsePage() {
           <InfoCard
             icon={LockKeyholeIcon}
             title="Session content"
-            badge="Encrypted"
-            body="Your files are encrypted before they are saved. Filenames, suggested facts, evidence excerpts, questions, and answers are also encrypted and kept inside your private session."
+            badge="Private"
+            body="Your files, suggested facts, evidence excerpts, questions, and answers stay inside your private session. Nothing is sent to a property unless you download it yourself."
           />
           <InfoCard
             icon={BotIcon}
-            title="AI processing"
+            title="Document reading"
             badge="Suggestions only"
-            body="OpenAI may read a practice file when its text cannot be read directly. It can suggest only the small set of fields you see in RealDoor. Every suggestion waits for your review, and each document-based suggestion must show the exact supporting words."
+            body="When needed, RealDoor can suggest only the small set of fields you see on screen. Every suggestion waits for your review, and each document-based suggestion must show the exact supporting words."
           />
           <InfoCard
             icon={DatabaseIcon}
-            title="Saved practice guide"
+            title="Practice guide"
             badge="Cited"
-            body="Rule answers use only the passages you can open in the app; they do not search the live web. The comparison uses a fixed 2026 practice guide and always shows its date, location, program, version, and practice-only status."
+            body="Rule answers use only the passages you can open in the app. The comparison uses a fixed practice guide and always shows its date, area, program, and practice-only status."
           />
           <InfoCard
             icon={Trash2Icon}
             title="Deletion"
-            badge="Renter controlled"
-            body="Deleting a session removes its saved files and private session details. If RealDoor cannot remove every saved file, it will not claim that deletion succeeded. A packet already downloaded to your device stays under your control."
+            badge="You control it"
+            body="Deleting a session removes its saved files and private session details. A packet already downloaded to your device stays under your control."
           />
         </section>
-
-        <Card className="rounded-xl border-amber-500/25 shadow-[var(--shadow-dashboard)]">
-          <CardHeader className="border-b border-amber-500/20 bg-amber-500/6">
-            <div className="flex items-start gap-3">
-              <FileWarningIcon className="mt-0.5 h-5 w-5 text-amber-700 dark:text-amber-300" />
-              <div>
-                <CardTitle className="text-base">
-                  This demo uses practice data, not official 2026 guidance
-                </CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Source availability checked July 19, 2026.
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 p-5 text-sm leading-6">
-            <p>
-              The verified 2026 source material needed for an official result is not available in
-              this experience.
-            </p>
-            <p className="text-muted-foreground">
-              RealDoor does not silently reuse an older year. The built-in numbers and PDFs are
-              made-up practice examples and are labeled that way wherever they appear.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  href="https://www.huduser.gov/portal/datasets/mtsp.html"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  HUD MTSP source <ExternalLinkIcon className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  href="https://www.huduser.gov/portal/datasets/il/il26/Statement-on-FY-2026-Income-Limits.pdf"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  HUD FY2026 release statement <ExternalLinkIcon className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  href="https://www.irs.gov/pub/irs-utl/8823-guide.pdf"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  IRS Form 8823 guide <ExternalLinkIcon className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
           <CardHeader className="border-b border-border/70 bg-muted/20">
@@ -153,10 +94,81 @@ export default function DataWeUsePage() {
             />
           </CardContent>
         </Card>
+
+        <Card className="overflow-hidden rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
+          <CardHeader className="border-b border-border/70 bg-muted/20">
+            <CardTitle className="text-base">Fields RealDoor can use</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              A document value affects the worksheet, checklist, or packet only after you confirm
+              it. Anything outside this list is ignored.
+            </p>
+          </CardHeader>
+          <CardContent className="overflow-x-auto p-0">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="border-b border-border/70 bg-muted/15 text-xs text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-semibold">Field</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Why it is read</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Source</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Where it can appear</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/70">
+                {fieldUses.map((field) => (
+                  <tr key={field.label}>
+                    <th scope="row" className="px-4 py-3 font-semibold">{field.label}</th>
+                    <td className="px-4 py-3 text-muted-foreground">{field.purpose}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{field.source}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{field.effects}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
+          <CardHeader className="border-b border-border/70 bg-muted/20">
+            <CardTitle className="text-base">Frozen guide sources</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              The active corpus contains {FROZEN_RULES.length} saved passages. Rule answers never
+              search the web or fill gaps from memory.
+            </p>
+          </CardHeader>
+          <CardContent className="divide-y divide-border/70 p-0">
+            {FROZEN_RULES.map((rule) => (
+              <section key={rule.ruleId} className="space-y-1 px-5 py-4">
+                <h2 className="text-sm font-bold">{rule.ruleId} · {rule.sourceLocator}</h2>
+                <p className="text-sm leading-6 text-muted-foreground">{rule.text}</p>
+                <p className="text-xs text-muted-foreground">
+                  {rule.authority.replaceAll("_", " ")}
+                  {rule.effectiveDate ? ` · effective ${rule.effectiveDate}` : ""}
+                </p>
+              </section>
+            ))}
+          </CardContent>
+        </Card>
       </main>
     </>
   );
 }
+
+const fieldUses = [
+  { label: "Name and address", purpose: "Match documents to the same renter record.", source: "Application summary or supporting document", effects: "Profile, evidence trail, selected packet facts" },
+  { label: "Household size", purpose: "Select the matching 2026 household-size threshold.", source: "Application summary or renter entry", effects: "Threshold worksheet and packet" },
+  { label: "Application date", purpose: "Show when the application summary was prepared.", source: "Application summary", effects: "Checklist evidence and packet index" },
+  { label: "Pay date and pay-period dates", purpose: "Trace a pay statement and calculate its age.", source: "Pay statement", effects: "Checklist, evidence trail, packet" },
+  { label: "Pay frequency", purpose: "Choose the explicit annualization multiplier.", source: "Pay statement", effects: "Income worksheet and packet" },
+  { label: "Regular or weekly hours", purpose: "Show the hours used for recurring wages.", source: "Pay statement or employment letter", effects: "Income worksheet and evidence trail" },
+  { label: "Hourly rate", purpose: "Calculate documented recurring wages.", source: "Pay statement or employment letter", effects: "Income worksheet and packet" },
+  { label: "Gross pay", purpose: "Annualize recurring wages when frequency is explicit.", source: "Pay statement", effects: "Income worksheet, conflict review, packet" },
+  { label: "Net pay", purpose: "Keep the source record inspectable; it is not used in gross-income math.", source: "Pay statement", effects: "Profile and evidence trail only" },
+  { label: "Document date", purpose: "Calculate document age against the frozen as-of date.", source: "Employment or benefit letter", effects: "Checklist and packet" },
+  { label: "Monthly benefit and frequency", purpose: "Annualize an independently documented recurring benefit.", source: "Benefit letter", effects: "Income worksheet and packet" },
+  { label: "Statement month", purpose: "Identify the period covered by a gig statement.", source: "Gig statement", effects: "Checklist and evidence trail" },
+  { label: "Gross receipts", purpose: "Show documented recurring gig receipts under the frozen convention.", source: "Gig statement", effects: "Income worksheet, review state, packet" },
+  { label: "Platform fees", purpose: "Keep the source statement inspectable; fees do not silently change gross receipts.", source: "Gig statement", effects: "Profile and evidence trail only" },
+] as const;
 
 function InfoCard({
   icon: Icon,

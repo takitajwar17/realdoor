@@ -78,7 +78,7 @@ export default async function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Profile
         </h1>
-        <p className="max-w-3xl text-sm text-muted-foreground">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           Your profile, sign-in details, device preferences, and account controls.
         </p>
       </div>

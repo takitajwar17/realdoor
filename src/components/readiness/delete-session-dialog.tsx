@@ -40,8 +40,8 @@ export function DeleteSessionDialog({ sessionId }: { sessionId: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this practice session?</AlertDialogTitle>
           <AlertDialogDescription>
-            RealDoor will remove its linked facts, questions, activity history, and encrypted
-            documents. A packet you already downloaded stays on your device. This cannot be undone.
+            RealDoor will remove this session&apos;s documents, facts, questions, and activity
+            history. A packet you already downloaded stays on your device. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <form action={action} className="space-y-4">
