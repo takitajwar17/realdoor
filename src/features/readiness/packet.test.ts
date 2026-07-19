@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { renderReadinessPacket, type PacketModel } from "./packet";
+import { preparePacketFactEvidence, renderReadinessPacket, type PacketModel } from "./packet";
 
 const model: PacketModel = {
   sessionId: "rds_test",
@@ -13,14 +13,50 @@ const model: PacketModel = {
   ruleVersion: "RealDoor organizer corpus v1 · 2026-07-18",
   ruleEffectiveDate: "2026-05-01",
   facts: [{ label: "Gross pay", value: "$2,166", source: "pay.pdf", sourceQuote: "2166", page: 1 }],
-  worksheet: { status: "complete", annualIncome: 56_316, incomeLimit: 72_000, difference: -15_684, formula: "$2,166 × 26 = $56,316" },
-  checklist: [{ label: "Recent pay statement", state: "Present", reason: "21 ≤ 60", sourceId: "CH-READINESS-001" }],
+  worksheet: {
+    status: "complete",
+    annualIncome: 56_316,
+    incomeLimit: 72_000,
+    difference: -15_684,
+    formula: "$2,166 × 26 = $56,316",
+  },
+  checklist: [
+    {
+      label: "Recent pay statement",
+      state: "Present",
+      reason: "21 ≤ 60",
+      sourceId: "CH-READINESS-001",
+    },
+  ],
   documents: [{ name: "pay.pdf", kind: "Pay statement", issuedOn: "2026-06-27" }],
-  questions: [{ question: "Can I be approved?", answer: "A human decides.", sourceIds: ["CH-DECISION-001"] }],
-  sources: [{ id: "HUD-MTSP-002", title: "PDF page 130", locator: "PDF page 130", url: "https://example.test", passage: "Frozen passage" }],
+  questions: [
+    { question: "Can I be approved?", answer: "A human decides.", sourceIds: ["CH-DECISION-001"] },
+  ],
+  sources: [
+    {
+      id: "HUD-MTSP-002",
+      title: "PDF page 130",
+      locator: "PDF page 130",
+      url: "https://example.test",
+      passage: "Frozen passage",
+    },
+  ],
 };
 
 describe("renter-controlled packet", () => {
+  it("does not carry a superseded document value into the packet", () => {
+    expect(
+      preparePacketFactEvidence({
+        value: "25",
+        sourceQuote: "24",
+        documentName: "employment-letter.pdf",
+      }),
+    ).toEqual({
+      source: "Corrected by renter from employment-letter.pdf",
+      sourceQuote: null,
+    });
+  });
+
   it("renders complete, assistive-technology-readable evidence and decision boundaries", () => {
     const html = renderReadinessPacket(model);
     expect(html).toContain("Not an eligibility decision");

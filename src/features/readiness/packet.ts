@@ -49,6 +49,34 @@ function escapeHtml(value: string | number) {
     .replaceAll("'", "&#039;");
 }
 
+function valuesMatch(value: string, quote: string) {
+  const clean = (input: string) => input.trim().replaceAll("$", "").replaceAll(",", "");
+  const left = clean(value);
+  const right = clean(quote);
+  const leftNumber = Number(left);
+  const rightNumber = Number(right);
+  if (left && right && Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber === rightNumber;
+  }
+  return left.toLocaleLowerCase("en-US") === right.toLocaleLowerCase("en-US");
+}
+
+export function preparePacketFactEvidence(input: {
+  value: string;
+  sourceQuote: string | null;
+  documentName: string | null;
+}) {
+  const corrected = Boolean(input.sourceQuote && !valuesMatch(input.value, input.sourceQuote));
+  return {
+    source: input.documentName
+      ? corrected
+        ? `Corrected by renter from ${input.documentName}`
+        : input.documentName
+      : "Entered by renter",
+    sourceQuote: corrected ? null : input.sourceQuote,
+  };
+}
+
 export function renderReadinessPacket(model: PacketModel) {
   const facts = model.facts
     .map(

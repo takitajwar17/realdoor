@@ -48,19 +48,21 @@ describe("frozen 2026 rule pack", () => {
     }
   });
 
-  it("lists every pack document type on the checklist for any household", () => {
-    const kinds = getScenarioRulePack("HH-003").checklistRequirements.map((item) => item.kind);
-    expect(kinds).toEqual([
+  it("uses each supplied household's exact frozen checklist", () => {
+    expect(getScenarioRulePack("HH-002").checklistRequirements.map((item) => item.kind)).toEqual([
+      "application_summary",
+      "pay_stub",
+      "employment_letter",
+    ]);
+    expect(getScenarioRulePack("HH-003").checklistRequirements.map((item) => item.kind)).toEqual([
       "application_summary",
       "pay_stub",
       "employment_letter",
       "benefit_letter",
-      "gig_statement",
     ]);
-    expect(getScenarioRulePack("HH-001").checklistRequirements.map((item) => item.kind)).toEqual(
-      kinds,
+    expect(getScenarioRulePack("HH-004").checklistRequirements.at(-1)?.kind).toBe(
+      "gig_income_corroboration",
     );
-    expect(getScenarioRulePack(null).checklistRequirements.map((item) => item.kind)).toEqual(kinds);
     expect(
       getScenarioRulePack("HH-005").checklistRequirements.find((item) => item.kind === "pay_stub")
         ?.maxAgeDays,

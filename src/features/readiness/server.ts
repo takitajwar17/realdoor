@@ -319,6 +319,7 @@ export async function saveManualFact(input: {
   );
 
   await db.batch([
+    db.delete(readinessQuestionTable).where(eq(readinessQuestionTable.sessionId, input.sessionId)),
     db
       .update(readinessFactTable)
       .set({ status: FACT_STATUS.REJECTED, rejectedAt: now })
@@ -381,6 +382,7 @@ export async function confirmReadinessFact(input: {
 
   const now = new Date();
   await db.batch([
+    db.delete(readinessQuestionTable).where(eq(readinessQuestionTable.sessionId, input.sessionId)),
     db
       .update(readinessFactTable)
       .set({ status: FACT_STATUS.REJECTED, rejectedAt: now })
@@ -436,6 +438,7 @@ export async function rejectReadinessFact(input: {
 
   const now = new Date();
   await db.batch([
+    db.delete(readinessQuestionTable).where(eq(readinessQuestionTable.sessionId, input.sessionId)),
     db
       .update(readinessFactTable)
       .set({ status: FACT_STATUS.REJECTED, rejectedAt: now })
@@ -699,6 +702,9 @@ export async function updateDocumentExtraction(input: {
         eq(readinessFactTable.documentId, input.documentId),
       ),
     );
+  const clearSavedAnswers = db
+    .delete(readinessQuestionTable)
+    .where(eq(readinessQuestionTable.sessionId, input.sessionId));
   const updateSession = db
     .update(readinessSessionTable)
     .set({ revision: sql`${readinessSessionTable.revision} + 1`, lastAccessedAt: now })
@@ -727,12 +733,19 @@ export async function updateDocumentExtraction(input: {
     await db.batch([
       updateDocument,
       clearPriorCandidates,
+      clearSavedAnswers,
       db.insert(readinessFactTable).values(factRows),
       updateSession,
       saveAudit,
     ]);
   } else {
-    await db.batch([updateDocument, clearPriorCandidates, updateSession, saveAudit]);
+    await db.batch([
+      updateDocument,
+      clearPriorCandidates,
+      clearSavedAnswers,
+      updateSession,
+      saveAudit,
+    ]);
   }
 }
 
@@ -771,6 +784,7 @@ export async function markDocumentExtractionFailed(input: {
   const db = getDB();
   const now = new Date();
   await db.batch([
+    db.delete(readinessQuestionTable).where(eq(readinessQuestionTable.sessionId, input.sessionId)),
     db
       .update(readinessDocumentTable)
       .set({ extractionStatus: EXTRACTION_STATUS.FAILED, encryptedPayload, processedAt: now })
@@ -812,6 +826,7 @@ export async function confirmReadinessDocumentMetadata(input: {
   const now = new Date();
 
   await db.batch([
+    db.delete(readinessQuestionTable).where(eq(readinessQuestionTable.sessionId, input.sessionId)),
     db
       .update(readinessDocumentTable)
       .set({
@@ -862,6 +877,7 @@ export async function deleteReadinessDocumentRecord(input: {
   const db = getDB();
   const now = new Date();
   await db.batch([
+    db.delete(readinessQuestionTable).where(eq(readinessQuestionTable.sessionId, input.sessionId)),
     db
       .delete(readinessDocumentTable)
       .where(

@@ -149,8 +149,9 @@ export default async function EvidencePage({ params }: { params: Promise<{ appId
           <h2 className="text-sm font-bold">What changed</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {auditLabels[latestChange.action] ?? "Your session changed"}. The worksheet, checklist,
-            evidence trail, preview, and downloadable packet now use packet v
-            {workspace.session.revision}; replaced values are no longer reused.
+            guide answers, evidence trail, preview, and downloadable packet now use packet v
+            {workspace.session.revision}; replaced values and earlier context-based answers are no
+            longer reused.
           </p>
         </section>
       ) : null}

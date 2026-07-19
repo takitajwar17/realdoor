@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { requireRouteSession } from "@/app/api/_utils/request-auth";
 import { CORPUS_AS_OF } from "@/features/readiness/corpus";
 import { summarizeConfirmedIncome } from "@/features/readiness/domain";
-import { renderReadinessPacket, type PacketModel } from "@/features/readiness/packet";
+import {
+  preparePacketFactEvidence,
+  renderReadinessPacket,
+  type PacketModel,
+} from "@/features/readiness/packet";
 import {
   formatFactValue,
   getDocumentKindLabel,
@@ -41,11 +45,16 @@ export async function GET(
       ruleEffectiveDate: workspace.rulePack.effectiveDate,
       facts: workspace.confirmedFacts.map((fact) => {
         const document = fact.documentId ? documentById.get(fact.documentId) : undefined;
+        const evidence = preparePacketFactEvidence({
+          value: fact.value,
+          sourceQuote: fact.sourceQuote ?? null,
+          documentName: document?.payload.name ?? null,
+        });
         return {
           label: getFactLabel(fact.key),
           value: formatFactValue(fact.key, fact.value),
-          source: document?.payload.name ?? "Entered by renter",
-          sourceQuote: fact.sourceQuote ?? null,
+          source: evidence.source,
+          sourceQuote: evidence.sourceQuote,
           page: fact.page ?? null,
         };
       }),
@@ -93,7 +102,8 @@ export async function GET(
       headers: {
         "Cache-Control": "private, no-store",
         "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="realdoor-readiness-packet-${workspace.session.id.slice(-8)}.html"`,
-        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+        "Content-Security-Policy":
+          "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
         "Content-Type": "text/html; charset=utf-8",
         "X-Content-Type-Options": "nosniff",
       },

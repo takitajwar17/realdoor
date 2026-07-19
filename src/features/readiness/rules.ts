@@ -1,4 +1,4 @@
-import { FROZEN_RULES, MTSP_LIMITS_2026, QA_GOLD } from "./corpus";
+import { APPLICATION_CHECKLISTS, FROZEN_RULES, MTSP_LIMITS_2026, QA_GOLD } from "./corpus";
 import type { RulePack, SourceCitation } from "./domain";
 import { hasOpenableSourceUrl } from "./source-url";
 
@@ -124,10 +124,29 @@ export function getRuleSource(id: string) {
   return RULE_SOURCES.find((source) => source.id === id);
 }
 
-/** Full pack checklist for every session (all document kinds the corpus covers). */
-export function getScenarioRulePack(_householdId: string | null): RulePack {
-  void _householdId;
-  return AUTHORITATIVE_2026_RULE_PACK;
+const documentLabels: Record<string, string> = {
+  application_summary: "Application summary",
+  pay_stub: "Recent pay statement",
+  employment_letter: "Employment letter",
+  benefit_letter: "Benefit letter",
+  gig_income_corroboration: "Gig income corroboration",
+};
+
+/** Use the exact frozen checklist for a recognized supplied household. */
+export function getScenarioRulePack(householdId: string | null): RulePack {
+  const checklist = APPLICATION_CHECKLISTS.find((item) => item.household_id === householdId);
+  if (!checklist) return AUTHORITATIVE_2026_RULE_PACK;
+
+  return {
+    ...AUTHORITATIVE_2026_RULE_PACK,
+    checklistRequirements: checklist.required_document_types.map((kind) => ({
+      id: kind.replaceAll("_", "-"),
+      label: documentLabels[kind] ?? kind.replaceAll("_", " "),
+      kind: kind as RulePack["checklistRequirements"][number]["kind"],
+      maxAgeDays: 60,
+      sourceId: "CH-READINESS-001",
+    })),
+  };
 }
 
 export type RuleAnswer = {
