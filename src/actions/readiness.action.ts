@@ -212,7 +212,6 @@ export async function saveRuleQuestionAction(
     const auth = await requireReadinessActionAuth();
     await checkActionRateLimit("readinessRuleQuestion", auth.userId, 40);
     const answer = await saveRuleQuestion({ ...parsed.data, userId: auth.userId });
-    refreshSessionSurfaces(parsed.data.sessionId);
     return {
       status: "success",
       message:
