@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRightIcon,
-  CalendarClockIcon,
-  FileStackIcon,
-  MapPinIcon,
-} from "lucide-react";
+import { ArrowRightIcon, CalendarClockIcon, FileStackIcon, MapPinIcon } from "lucide-react";
 
-import { StartSessionForm } from "@/components/readiness/start-session-form";
+import { StartSessionDialog } from "@/components/readiness/start-session-form";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +18,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deleted?: string }>;
+  searchParams: Promise<{ new?: string; deleted?: string }>;
 }) {
   const [auth, params] = await Promise.all([
     requireVerifiedPageSession("/dashboard"),
@@ -49,7 +44,7 @@ export default async function DashboardPage({
           </p>
         ) : null}
 
-        <section className="border-b border-border pb-5">
+        <section className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 space-y-1">
             <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
               Your sessions
@@ -58,9 +53,11 @@ export default async function DashboardPage({
               Open a session, pick up where you left off, or start a new one.
             </p>
           </div>
+          <StartSessionDialog
+            key={params.new === "1" ? "start-open" : "start-closed"}
+            defaultOpen={params.new === "1" || sessions.length === 0}
+          />
         </section>
-
-        <StartSessionForm />
 
         {sessions.length > 0 ? (
           <>

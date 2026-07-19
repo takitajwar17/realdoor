@@ -1,45 +1,59 @@
 "use client";
 
-import { useActionState } from "react";
-import { ArrowRightIcon, LockKeyholeIcon } from "lucide-react";
+import { useActionState, useState } from "react";
+import { ArrowRightIcon, LockKeyholeIcon, PlusIcon } from "lucide-react";
 
 import { createReadinessSessionAction } from "@/actions/readiness.action";
 import { ActionMessage } from "@/components/readiness/action-message";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { INITIAL_READINESS_ACTION_STATE } from "@/features/readiness/action-state";
 
-export function StartSessionForm() {
+export function StartSessionDialog({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [state, action, pending] = useActionState(
     createReadinessSessionAction,
     INITIAL_READINESS_ACTION_STATE,
   );
 
   return (
-    <Card className="overflow-hidden rounded-xl border-border/80 shadow-[var(--shadow-dashboard)]">
-      <CardHeader className="border-b border-border/70 bg-muted/20">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <LockKeyholeIcon className="h-5 w-5" />
-          </span>
-          <div>
-            <CardTitle className="text-base">Start a private practice session</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You stay in control of every fact, document, and download.
-            </p>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusIcon className="h-4 w-4" />
+          New practice session
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[min(90vh,720px)] gap-0 overflow-y-auto p-0 sm:max-w-xl">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-5 pr-14 text-left">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <LockKeyholeIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <DialogTitle className="text-base">Start a private practice session</DialogTitle>
+              <DialogDescription className="mt-1 leading-6">
+                You stay in control of every fact, document, and download.
+              </DialogDescription>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-5">
-        <form action={action} className="space-y-5">
+        </DialogHeader>
+        <form action={action} className="space-y-5 p-6">
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/75 p-4 transition-colors hover:bg-muted/25">
             <Checkbox name="consent" className="mt-0.5" />
             <span>
               <span className="block text-sm font-semibold">I choose to create this session</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                RealDoor may read the practice documents I upload and suggest profile fields. Nothing
-                is sent to a property or anyone else.
+                RealDoor may read the practice documents I upload and suggest profile fields.
+                Nothing is sent to a property or anyone else.
               </span>
             </span>
           </label>
@@ -49,8 +63,8 @@ export function StartSessionForm() {
             <span>
               <span className="block text-sm font-semibold">Use authorized sample documents</span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                The supplied household documents are synthetic. The cited FY 2026 HUD thresholds
-                are frozen official source values, but RealDoor does not make an eligibility decision.
+                The supplied household documents are synthetic. The cited FY 2026 HUD thresholds are
+                frozen official source values, but RealDoor does not make an eligibility decision.
               </span>
             </span>
           </label>
@@ -66,7 +80,7 @@ export function StartSessionForm() {
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
